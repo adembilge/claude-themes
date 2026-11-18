@@ -3,13 +3,22 @@ import type { Surfaces, Text3, Theme } from './model.js'
 
 // Fine tuning of a built-in theme: four small dials, each from -4 to 4. Pure colour maths, nothing here touches `$`.
 
-export type Tune = { warmth: number; sat: number; bright: number; contrast: number }
+export type Tune = {
+  warmth: number
+  sat: number
+  bright: number
+  contrast: number
+  hue: number
+  tint: number
+  accent: number
+  status: number
+}
 
 export const TUNE_MAX = 4
 
-export const NO_TUNE: Tune = { warmth: 0, sat: 0, bright: 0, contrast: 0 }
+export const NO_TUNE: Tune = { warmth: 0, sat: 0, bright: 0, contrast: 0, hue: 0, tint: 0, accent: 0, status: 0 }
 
-const KEYS = ['warmth', 'sat', 'bright', 'contrast'] as const
+const KEYS = ['warmth', 'sat', 'bright', 'contrast', 'hue', 'tint', 'accent', 'status'] as const
 
 /** Saved tunes kept at most. */
 const MAX_SAVED = 80
@@ -32,7 +41,16 @@ export function cleanTune(raw: unknown): Tune {
   }
   const r = raw as Record<string, unknown>
 
-  return { warmth: step(r.warmth), sat: step(r.sat), bright: step(r.bright), contrast: step(r.contrast) }
+  return {
+    warmth: step(r.warmth),
+    sat: step(r.sat),
+    bright: step(r.bright),
+    contrast: step(r.contrast),
+    hue: step(r.hue),
+    tint: step(r.tint),
+    accent: step(r.accent),
+    status: step(r.status),
+  }
 }
 
 /** A saved map of theme id -> Tune made safe: unknown ids and all-zero entries are dropped, at most 80 are kept. */
@@ -75,6 +93,11 @@ const SAT_PER_STEP = 0.12
 const TEXT_SAT = 0.5
 const BRIGHT_PER_STEP = 1.6
 const CONTRAST_PER_STEP = 2.5
+const HUE_PER_STEP = 7
+const TINT_PER_STEP = 0.2
+const ACCENT_SAT_PER_STEP = 0.15
+const ACCENT_LIGHT_PER_STEP = 1.5
+const STATUS_PER_STEP = 0.15
 
 type Shift = {
   /** Signed share of a warm (positive) or cool (negative) tint mixed in; lightness is kept. */
@@ -83,12 +106,14 @@ type Shift = {
   sat: number
   /** Added to the lightness, in points. */
   light: number
+  /** Added to the hue, in degrees. */
+  hue?: number
 }
 
 function shift(hex: string, s: Shift): string {
   const low = hex.toLowerCase()
 
-  if (s.warm === 0 && s.sat === 1 && s.light === 0) {
+  if (s.warm === 0 && s.sat === 1 && s.light === 0 && (s.hue ?? 0) === 0) {
     return low
   }
   const [h0, s0, l0] = hslOf(low)
@@ -102,6 +127,7 @@ function shift(hex: string, s: Shift): string {
     sat = Math.max(s0, s1)
   }
   sat = Math.max(0, Math.min(100, sat * s.sat))
+  h = (((h + (s.hue ?? 0)) % 360) + 360) % 360
 
   return hslHex(h, sat, Math.max(0, Math.min(100, l0 + s.light)))
 }
@@ -114,7 +140,10 @@ function request(p: Theme, t: Tune, f: number): Theme {
   const push = CONTRAST_PER_STEP * t.contrast * f
   const page = hslOf(p.surfaces[0])[2]
 
-  const surfaces = p.surfaces.map(c => shift(c, { warm: WARM_PER_STEP * w, sat: sa, light })) as Surfaces
+  const dh = HUE_PER_STEP * t.hue * f
+  const tint = 1 + TINT_PER_STEP * t.tint * f
+
+  const surfaces = p.surfaces.map(c => shift(c, { warm: WARM_PER_STEP * w, sat: sa * tint, light, hue: dh })) as Surfaces
 
   if (p.mode === 'light') {
     surfaces[3] = surfaces[2]
@@ -122,12 +151,17 @@ function request(p: Theme, t: Tune, f: number): Theme {
   const text = p.text.map(c => {
     const away = hslOf(c)[2] >= page ? 1 : -1
 
-    return shift(c, { warm: WARM_PER_STEP * w, sat: 1 + (sa - 1) * TEXT_SAT, light: away * push })
+    return shift(c, { warm: WARM_PER_STEP * w, sat: 1 + (sa - 1) * TEXT_SAT, light: away * push, hue: dh })
   }) as Text3
 
-  const accent = shift(p.accent, { warm: WARM_PER_STEP * ACCENT_WARM * w, sat: sa, light: 0 })
+  const accent = shift(p.accent, {
+    warm: WARM_PER_STEP * ACCENT_WARM * w,
+    sat: sa * (1 + ACCENT_SAT_PER_STEP * t.accent * f),
+    light: ACCENT_LIGHT_PER_STEP * t.accent * f * (p.mode === 'dark' ? 1 : -1),
+    hue: dh,
+  })
   const roles = Object.fromEntries(
-    Object.entries(p.roles).map(([k, v]) => [k, shift(v, { warm: 0, sat: sa, light: 0 })]),
+    Object.entries(p.roles).map(([k, v]) => [k, shift(v, { warm: 0, sat: sa * (1 + STATUS_PER_STEP * t.status * f), light: 0, hue: dh })]),
   ) as Theme['roles']
 
   return { ...p, surfaces, text, accent, roles }
@@ -191,6 +225,10 @@ const AXIS_WORDS: Record<keyof Tune, [string, string]> = {
   sat: ['less saturated', 'more saturated'],
   bright: ['darker surfaces', 'lighter surfaces'],
   contrast: ['softer text', 'stronger text'],
+  hue: ['hue turned back', 'hue turned on'],
+  tint: ['less tinted surfaces', 'more tinted surfaces'],
+  accent: ['quieter accent', 'bolder accent'],
+  status: ['softer status colors', 'stronger status colors'],
 }
 
 /** The tune in plain words: "warmer, a little more saturated". */
@@ -216,4 +254,8 @@ export const TUNE_AXES: { key: keyof Tune; label: string; low: string; high: str
   { key: 'sat', label: 'Saturation', low: 'Duller', high: 'Richer' },
   { key: 'bright', label: 'Surface brightness', low: 'Darker', high: 'Lighter' },
   { key: 'contrast', label: 'Text contrast', low: 'Softer', high: 'Stronger' },
+  { key: 'hue', label: 'Hue', low: 'Back', high: 'Forward' },
+  { key: 'tint', label: 'Surface tint', low: 'Grayer', high: 'Colored' },
+  { key: 'accent', label: 'Accent', low: 'Quieter', high: 'Bolder' },
+  { key: 'status', label: 'Status colors', low: 'Softer', high: 'Stronger' },
 ]

@@ -1,10 +1,10 @@
 import type { Theme } from './model.js'
 
-import { CODE_PREFIX, cleanName, cleanWords, parseCode, sanitizeTheme } from './model.js'
+import { CODE_PREFIX, cleanName, parseCode, sanitizeTheme } from './model.js'
 
 // A theme as a link. Pure: no `$`, no Buffer, no btoa. The page at docs/t/index.html decodes the same format.
 //
-// Link:    SHARE_URL + '#v1.' + base64url(UTF-8 of  name|d-or-l|<12 colours, six hex digits each, no #>|words joined by ~)
+// Link:    SHARE_URL + '#v1.' + base64url(UTF-8 of  name|d-or-l|<12 colours, six hex digits each, no #>; a fourth part is ignored)
 // Colours: surfaces 0..3, text 0..2, accent, danger, success, warning, pro (72 hex digits in a row).
 
 export const SHARE_URL = 'https://adembilge.github.io/claude-themes/t/'
@@ -111,8 +111,7 @@ const COLOURS = (t: Theme): string[] => [...t.surfaces, ...t.text, t.accent, t.r
 /** A theme as a link that opens the share page. */
 export function themeToLink(t: Theme): string {
   const colours = COLOURS(t).map(c => c.replace('#', '').toLowerCase()).join('')
-  const words = cleanWords(t.words ?? []).join('~')
-  const text = `${cleanName(t.name)}|${t.mode === 'light' ? 'l' : 'd'}|${colours}|${words}`
+  const text = `${cleanName(t.name)}|${t.mode === 'light' ? 'l' : 'd'}|${colours}`
 
   return `${SHARE_URL}#v1.${b64urlEncode(utf8Bytes(text))}`
 }
@@ -140,9 +139,9 @@ export function parseLink(text: string): { theme: Theme } | { error: string } {
     return { error: DAMAGED }
   }
   const parts = decoded.split('|')
-  const [name, mode, colours, words] = parts
+  const [name, mode, colours] = parts
 
-  if (parts.length !== 4 || mode === undefined || (mode !== 'd' && mode !== 'l') || colours === undefined || !/^[0-9a-fA-F]{72}$/.test(colours)) {
+  if ((parts.length !== 3 && parts.length !== 4) || mode === undefined || (mode !== 'd' && mode !== 'l') || colours === undefined || !/^[0-9a-fA-F]{72}$/.test(colours)) {
     return { error: DAMAGED }
   }
   const c = Array.from({ length: 12 }, (_, i) => `#${colours.slice(i * 6, i * 6 + 6)}`)
@@ -153,7 +152,6 @@ export function parseLink(text: string): { theme: Theme } | { error: string } {
     text: c.slice(4, 7),
     accent: c[7],
     roles: { danger: c[8], success: c[9], warning: c[10], pro: c[11] },
-    words: (words ?? '').split('~'),
   })
 
   return theme === null

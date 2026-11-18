@@ -28,7 +28,7 @@ async function labelOf(ui: any, key: string): Promise<string | undefined> {
 // The host's answers, as a fresh session sees them. `prefs` and `theme` are what the store holds.
 function host(
   on: any,
-  saved: { prefs?: unknown; theme?: unknown; custom?: unknown; projects?: unknown; rules?: unknown } = {},
+  saved: { prefs?: unknown; theme?: unknown; custom?: unknown; projects?: unknown} = {},
   calls: string[] = [],
   stored: Record<string, unknown> = {},
   files: Record<string, string> = {},
@@ -37,7 +37,7 @@ function host(
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
   on('store.get', (_: unknown, e: { key: string }) => ({
-    value: e.key === 'prefs' ? saved.prefs : e.key === 'theme' ? saved.theme : e.key === 'custom' ? saved.custom : e.key === 'projects' ? saved.projects : e.key === 'rules' ? saved.rules : undefined,
+    value: e.key === 'prefs' ? saved.prefs : e.key === 'theme' ? saved.theme : e.key === 'custom' ? saved.custom : e.key === 'projects' ? saved.projects : undefined,
   }))
   on('store.set', (_: unknown, e: { key: string; value: unknown }) => {
     stored[e.key] = e.value
@@ -416,34 +416,6 @@ test('a folder keeps its own theme, and the clock does not replace it', async ($
   await ui.unmount()
 })
 
-test('Try shows a theme without keeping it, Keep saves it and Back returns', async ($, on) => {
-  const calls: string[] = []
-  const stored: Record<string, unknown> = {}
-  host(on, {}, calls, stored)
-  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
-  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-
-  expect(await ui.find({ key: 'trial-keep' })).toBeUndefined()
-  await ui.press({ key: 'try-all-dracula' })
-  expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
-  expect(await ui.find({ key: 'trial-keep' })).toBeDefined()
-  expect(await ui.find({ key: 'trial-back' })).toBeDefined()
-  // Trying saves nothing.
-  expect(stored.theme).toBeUndefined()
-
-  await ui.press({ key: 'trial-back' })
-  expect(await ui.find({ type: 'Text', text: /Active: Catppuccin Mocha/ })).toBeDefined()
-  expect(await ui.find({ key: 'trial-keep' })).toBeUndefined()
-
-  await ui.press({ key: 'try-all-nord' })
-  await ui.press({ key: 'try-all-dracula' })
-  await ui.press({ key: 'trial-keep' })
-  expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
-  expect(await ui.find({ key: 'trial-keep' })).toBeUndefined()
-  expect(stored.theme).toBe('dracula')
-  await ui.unmount()
-})
-
 test('reset: the app look, settings and everything each work, and the last two ask twice', async ($, on) => {
   const calls: string[] = []
   const stored: Record<string, unknown> = {}
@@ -504,53 +476,6 @@ test('follow system builds one look with both modes and no backdrop', async ($, 
   await ui.unmount()
 })
 
-test('folder rules pick a theme by folder name, and an exact folder pick wins', async ($, on) => {
-  host(on, { rules: [{ by: 'name', match: 'prod', theme: 'lobster' }, { by: 'path', match: '**/clients/*', theme: 'nord' }] })
-  await $.session.start({ cwd: '/work/prod-api', surface: 'desktop', isInteractive: true })
-  let ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-
-  expect(await ui.find({ type: 'Text', text: /Active: Lobster/ })).toBeDefined()
-  await ui.unmount()
-
-  await $.session.start({ cwd: '/Work/Clients/acme', surface: 'desktop', isInteractive: true })
-  ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
-  await ui.unmount()
-
-  await $.session.start({ cwd: '/work/other', surface: 'desktop', isInteractive: true })
-  ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await ui.find({ type: 'Text', text: /Active: Catppuccin Mocha/ })).toBeDefined()
-  await ui.unmount()
-})
-
-test('folder rules can be added, ordered and removed from Settings', async ($, on) => {
-  host(on)
-  await $.session.start({ cwd: '/work/staging-app', surface: 'desktop', isInteractive: true })
-  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-
-  await ui.press({ key: 'tab-settings' })
-  expect(await ui.find({ type: 'Text', text: /No rules yet/ })).toBeDefined()
-
-  // A rule with nothing to look for is explained.
-  await ui.press({ key: 'rule-add' })
-  expect(await ui.find({ type: 'Text', text: /what the folder should have/ })).toBeDefined()
-
-  // Enter in the box adds the rule with the theme chosen so far.
-  await ui.select({ key: 'rule-theme', value: 'dracula' })
-  await ui.input({ key: 'rule-match', text: 'staging' })
-  expect(await ui.find({ type: 'Text', text: /has staging/ })).toBeDefined()
-  // It applies at once to the folder it fits.
-  expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
-
-  await ui.press({ key: 'rule-preset-prod' })
-  expect(await ui.find({ type: 'Text', text: /has prod/ })).toBeDefined()
-  await ui.press({ key: 'rule-del-0' })
-  expect(await ui.find({ type: 'Text', text: /has prod/ })).toBeUndefined()
-  await ui.press({ key: 'rule-del-0' })
-  expect(await ui.find({ type: 'Text', text: /No rules yet/ })).toBeDefined()
-  await ui.unmount()
-})
-
 test('usage glow warms the backdrop as the context fills and cools when it empties', async ($, on) => {
   const calls: string[] = []
   host(on, { prefs: { glow: { on: true, source: 'context', toast: false, budget: 5 } } }, calls)
@@ -594,28 +519,21 @@ test('tuning steps shift one theme, say so, and reset', async ($, on) => {
   expect(await ui.find({ type: 'Text', text: /warmer/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /Active: Catppuccin Mocha \(dark\), tuned/ })).toBeDefined()
 
+  // More dials than warmth: each reaches the theme.
+  for (const dial of ['hue', 'tint', 'accent', 'status']) {
+    const before = calls[calls.length - 1]
+
+    await ui.press({ key: `tune-${dial}-up` })
+    expect(`${dial}: ${calls[calls.length - 1] !== before}`).toBe(`${dial}: true`)
+  }
+
   await ui.press({ key: 'tune-reset' })
   expect(calls[calls.length - 1]).toBe(plain)
   expect(await ui.find({ key: 'tune-reset' })).toBeUndefined()
   await ui.unmount()
 })
 
-test('the gallery filters by family', async ($, on) => {
-  host(on)
-  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
-  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-
-  expect(await ui.find({ key: 'fam-dark-all' })).toBeDefined()
-  expect(await ui.find({ key: 'fam-dark-Catppuccin' })).toBeDefined()
-  await ui.press({ key: 'fam-dark-Catppuccin' })
-  expect(await ui.find({ type: 'Button', text: /Catppuccin Mocha/ })).toBeDefined()
-  expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeUndefined()
-  await ui.press({ key: 'fam-dark-all' })
-  expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
-  await ui.unmount()
-})
-
-test('a share link imports like a code, and the working words are saved with a theme', async ($, on) => {
+test('a share link imports like a code', async ($, on) => {
   host(on)
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
@@ -628,12 +546,6 @@ test('a share link imports like a code, and the working words are saved with a t
   await ui.input({ key: 'share-import', text: themeToLink(parsed.theme) })
   expect(await ui.find({ key: 'maker-del-my-imported-one' })).toBeDefined()
   await ui.press({ key: 'maker-del-my-imported-one' })
-
-  await ui.input({ key: 'maker-name', text: 'Word Test' })
-  await ui.input({ key: 'maker-accent', text: '#3b82f6' })
-  await ui.input({ key: 'maker-words', text: 'Brewing, Steeping' })
-  await ui.press({ key: 'maker-save' })
-  expect(await ui.find({ type: 'Text', text: /working words/ })).toBeDefined()
   await ui.unmount()
 })
 

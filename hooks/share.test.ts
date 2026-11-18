@@ -14,7 +14,6 @@ const DARK: Theme = {
   text: ['#f3ece4', '#cfc4b8', '#a39689'],
   accent: '#d98a4e',
   roles: { danger: '#d1495b', success: '#5fa36a', warning: '#d4a02e', pro: '#9b7bc4' },
-  words: ['Brewing', 'Grinding', 'Crème brûlée'],
 }
 
 const LIGHT: Theme = {
@@ -35,7 +34,6 @@ const same = (a: Theme, b: Theme) => {
   expect(b.text).toEqual(a.text)
   expect(b.accent).toBe(a.accent)
   expect(b.roles).toEqual(a.roles)
-  expect(b.words ?? []).toEqual(a.words ?? [])
 }
 
 const payloadOf = (link: string) => link.slice(link.indexOf('#v1.') + 4)
@@ -76,7 +74,7 @@ function enc(s: string): string {
   return out
 }
 
-test('a dark theme with accents and words survives a link', () => {
+test('a dark theme with accents survives a link', () => {
   const link = themeToLink(DARK)
 
   expect(link.startsWith(`${SHARE_URL}#v1.`)).toBe(true)
@@ -87,7 +85,7 @@ test('a dark theme with accents and words survives a link', () => {
   same(DARK, (r as { theme: Theme }).theme)
 })
 
-test('a light theme with no words survives a link, even with spaces and newlines around it', () => {
+test('a light theme survives a link, even with spaces and newlines around it', () => {
   const link = themeToLink(LIGHT)
 
   expect(link.length).toBeLessThan(300)
@@ -105,12 +103,11 @@ test('the bare payload and v1. form are accepted', () => {
 
 test('the payload reads back with an independent decoder, in the format the page expects', () => {
   const text = decode(payloadOf(themeToLink(DARK)))
-  const [name, mode, colours, words] = text.split('|')
+  const [name, mode, colours] = text.split('|')
 
   expect(name).toBe('Café Noir')
   expect(mode).toBe('d')
   expect(colours).toBe('14110f1b1714231e1a2b2520f3ece4cfc4b8a39689d98a4ed1495b5fa36ad4a02e9b7bc4')
-  expect(words).toBe('Brewing~Grinding~Crème brûlée')
 })
 
 test('a damaged payload is refused with a plain message', () => {
@@ -134,13 +131,12 @@ test('a hostile payload is refused or cleaned', () => {
   const zeros = enc(`Evil|d|${'zzzzzz'.repeat(12)}|`)
 
   expect('error' in parseLink(`${SHARE_URL}#v1.${zeros}`)).toBe(true)
-  // Pull the real colours of a good theme under a hostile name and words.
+  // Pull the real colours of a good theme under a hostile name.
   const colours = decode(payloadOf(themeToLink(DARK))).split('|')[2]!
-  const r = parseLink(`${SHARE_URL}#v1.${enc(`<script>alert(1)</script>|d|${colours}|<b>x</b>~a|b`)}`)
+  const r = parseLink(`${SHARE_URL}#v1.${enc(`<script>alert(1)</script>|d|${colours}`)}`)
 
   if ('theme' in r) {
     expect(r.theme.name).not.toMatch(/[<>()/]/)
-    expect((r.theme.words ?? []).join('')).not.toMatch(/[<>/|]/)
   } else {
     expect(typeof r.error).toBe('string')
   }

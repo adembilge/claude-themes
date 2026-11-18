@@ -50,7 +50,6 @@
   .dots { display: flex; gap: 8px; align-items: center; margin: 14px 0 0; padding: 0; list-style: none; }
   .dots li { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); }
   .meta { margin: 10px 0 0; font-size: 0.95rem; }
-  .words { margin: 6px 0 0; font-size: 0.95rem; color: var(--muted); overflow-wrap: anywhere; }
   button {
     font: inherit; font-weight: 600; cursor: pointer; margin-top: 16px;
     background: var(--accent); color: var(--accent-text);
@@ -94,7 +93,6 @@
       <p class="muted" id="mode"></p>
       <div id="preview" role="img"></div>
       <ul class="dots" id="dots" aria-label="Theme colors"></ul>
-      <p class="words hide" id="words"></p>
       <button type="button" id="copy">Copy theme code</button>
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </div>
@@ -120,7 +118,7 @@
   var ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   var HEX6 = /^[0-9a-f]{6}$/i;
 
-  // Payload text of v1 (base64url, UTF-8: name|d-or-l|72 hex digits|words joined by ~) as an object, or null.
+  // Payload text of v1 (base64url, UTF-8: name|d-or-l|72 hex digits; a fourth part is ignored) as an object, or null.
   function decodeV1(payload) {
     if (!/^[A-Za-z0-9_-]*$/.test(payload) || payload.length % 4 === 1) return null;
     var bytes = [], acc = 0, bits = 0;
@@ -132,14 +130,13 @@
     var text;
     try { text = new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes)); } catch (e) { return null; }
     var parts = text.split('|');
-    if (parts.length !== 4 || (parts[1] !== 'd' && parts[1] !== 'l') || !/^[0-9a-f]{72}$/i.test(parts[2])) return null;
+    if ((parts.length !== 3 && parts.length !== 4) || (parts[1] !== 'd' && parts[1] !== 'l') || !/^[0-9a-f]{72}$/i.test(parts[2])) return null;
     var c = [];
     for (var k = 0; k < 12; k++) c.push(parts[2].slice(k * 6, k * 6 + 6).toLowerCase());
     return {
       name: parts[0],
       mode: parts[1] === 'l' ? 'light' : 'dark',
-      colors: c,
-      words: parts[3] === '' ? [] : parts[3].split('~')
+      colors: c
     };
   }
   // DECODER-END
@@ -160,7 +157,6 @@
   }
 
   function cleanName(s) { return s.replace(/[^\p{L}\p{N} _.&'-]/gu, '').trim().slice(0, 24); }
-  function cleanWord(s) { return s.replace(/[^\p{L}\p{N} '’-]/gu, '').trim().slice(0, 24); }
 
   function fail(msg) { $('badmsg').textContent = msg; show('bad'); }
 
@@ -244,8 +240,7 @@
       surfaces: c.slice(0, 4),
       text: c.slice(4, 7),
       accent: c[7],
-      roles: { danger: c[8], success: c[9], warning: c[10], pro: c[11] },
-      words: d.words.map(cleanWord).filter(function (w) { return w !== ''; }).slice(0, 6)
+      roles: { danger: c[8], success: c[9], warning: c[10], pro: c[11] }
     };
     if (t.name === '') { fail('The link has no theme name.'); return; }
 
@@ -275,13 +270,7 @@
       $('dots').appendChild(li);
     });
 
-    if (t.words.length > 0) {
-      $('words').textContent = 'Working words: ' + t.words.join(', ');
-      $('words').classList.remove('hide');
-    }
-
     var obj = { name: t.name, mode: t.mode, surfaces: t.surfaces, text: t.text, accent: t.accent, roles: t.roles };
-    if (t.words.length > 0) obj.words = t.words;
     var code = 'claude-themes:' + JSON.stringify(obj);
 
     $('copy').addEventListener('click', function () {

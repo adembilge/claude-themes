@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 import { lum, validateTheme } from './model.js'
-import { FAMILY_OF, PACK_CODE_THEMES, PACKS } from './packs.js'
+import { PACK_CODE_THEMES, PACKS } from './packs.js'
 
 // The built-in theme ids in register.tsx (the sandbox cannot read files, so they are listed here; add new
 // built-ins to this list). The first tests below read it only to catch a pack that reuses one.
@@ -18,9 +18,9 @@ async function builtinIds(): Promise<string[]> {
   return BUILTIN_IDS
 }
 
-test('there are about thirty-five new packs', async () => {
-  expect(PACKS.length >= 30).toBe(true)
-  expect(PACKS.length <= 45).toBe(true)
+test('there are about twenty-five new packs', async () => {
+  expect(PACKS.length >= 20).toBe(true)
+  expect(PACKS.length <= 35).toBe(true)
 })
 
 test('every pack passes the palette check', async () => {
@@ -76,31 +76,6 @@ test('dark packs get lighter from the page to the menu, light ones end on one co
 test('both modes are offered', async () => {
   expect(PACKS.some(t => t.mode === 'dark')).toBe(true)
   expect(PACKS.some(t => t.mode === 'light')).toBe(true)
-})
-
-test('FAMILY_OF names real built-in themes and uses the same family names as the packs', async () => {
-  const builtin = await builtinIds()
-  const families = new Set(PACKS.map(t => t.family))
-
-  for (const id of Object.keys(FAMILY_OF)) {
-    expect(`${id}: ${builtin.includes(id)}`).toBe(`${id}: true`)
-  }
-
-  // A built-in family must hold at least one other theme, or it would be a family of one.
-  const size = new Map<string, number>()
-
-  for (const f of [...Object.values(FAMILY_OF), ...PACKS.map(t => t.family!)]) {
-    size.set(f, (size.get(f) ?? 0) + 1)
-  }
-
-  for (const f of new Set(Object.values(FAMILY_OF))) {
-    expect(`${f}: ${(size.get(f) ?? 0) >= 2}`).toBe(`${f}: true`)
-  }
-
-  // The packs that join a built-in family spell it the same way.
-  for (const f of ['Catppuccin', 'Rosé Pine', 'Tokyo Night', 'Gruvbox', 'Everforest', 'Kanagawa']) {
-    expect(`${f}: ${families.has(f) && Object.values(FAMILY_OF).includes(f)}`).toBe(`${f}: true`)
-  }
 })
 
 test('PACK_CODE_THEMES only names packs', async () => {

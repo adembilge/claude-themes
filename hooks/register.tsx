@@ -4,7 +4,6 @@ import type { Register, ThemeSetArgs } from 'claude-code'
 import { listVsCodeThemes, parseThemeFile, parseVsCode, vsCodeExtensionRoots } from './import.js'
 import {
   cleanName,
-  cleanWords,
   contrast,
   fixTheme,
   hslHex,
@@ -19,7 +18,7 @@ import {
   validateTheme,
 } from './model.js'
 import type { Mode, Roles, Surfaces, Text3, Theme } from './model.js'
-import { FAMILY_OF, PACKS, PACK_CODE_THEMES } from './packs.js'
+import { PACKS, PACK_CODE_THEMES } from './packs.js'
 import { SHARE_URL, parseAny, themeToLink } from './share.js'
 import { NO_TUNE, TUNE_AXES, TUNE_MAX, cleanTunes, describeTune, isTuned, tuneTheme } from './tune.js'
 import type { Tune } from './tune.js'
@@ -164,11 +163,8 @@ const BASE_THEMES: Theme[] = [
     ['#d12f1b', '#1f8a50', '#a36b00', '#9b2393']),
 ]
 
-/** The built-ins: the hand-set themes (with their family) and the packs. */
-const THEMES: Theme[] = [
-  ...BASE_THEMES.map(t => (FAMILY_OF[t.id] === undefined ? t : { ...t, family: FAMILY_OF[t.id] })),
-  ...PACKS,
-]
+/** The built-ins: the hand-set themes and the packs. */
+const THEMES: Theme[] = [...BASE_THEMES, ...PACKS]
 
 const BY_ID = new Map(THEMES.map(t => [t.id, t]))
 const DEFAULT = (BY_ID.get(DEFAULT_THEME) ?? THEMES[0])!
@@ -370,20 +366,7 @@ function cleanProjects(raw: unknown, known: Set<string>): Record<string, string>
 
 type Tab = 'dark' | 'light' | 'favorites' | 'maker' | 'settings'
 
-type Draft = { name: string; accent: string; mode: Mode; words: string }
-
-type RuleBy = 'path' | 'name' | 'branch' | 'remote'
-
-type Rule = { by: RuleBy; match: string; theme: string }
-
-type RuleDraft = { by: RuleBy; match: string; theme: string }
-
-const RULE_KINDS: { value: RuleBy; label: string; hint: string }[] = [
-  { value: 'name', label: 'Folder name', hint: 'contains, such as prod' },
-  { value: 'path', label: 'Path', hint: 'with * and **, such as */clients/*' },
-  { value: 'remote', label: 'Git remote', hint: 'contains, such as acme-corp' },
-  { value: 'branch', label: 'Git branch', hint: 'such as main or release/*; needs the command line app' },
-]
+type Draft = { name: string; accent: string; mode: Mode }
 
 type GlowSource = 'context' | 'plan' | 'cost' | 'any'
 
@@ -419,20 +402,12 @@ type State = {
   draft: Draft
   msg: string
   importText: string
-  family: string
-  trying: string
-  backTo: string
   off: boolean
   confirm: string
-  words: boolean
   glow: Glow
   heat: Heat
   follow: boolean
   tunes: Record<string, Tune>
-  rules: Rule[]
-  ruleDraft: RuleDraft
-  ruleKey: string
-  ruleNote: string
   found: Found[]
   foundQ: string
   scanMsg: string
@@ -448,7 +423,6 @@ type Prefs = {
   strength: Strength
   tone: Tone
   off: boolean
-  words: boolean
   glow: Glow
   follow: boolean
   tunes: Record<string, Tune>
@@ -456,10 +430,6 @@ type Prefs = {
 
 const MAX_FAVS = 12
 const PREFS_KEY = 'prefs'
-const RULES_KEY = 'rules'
-const MAX_RULES = 20
-
-const DEFAULT_RULE_DRAFT: RuleDraft = { by: 'name', match: '', theme: 'lobster' }
 
 // Change the tag if the value's shape changes: it declines what an earlier version stored.
 const current = atom(
@@ -480,28 +450,20 @@ const current = atom(
     cwd: '',
     projects: {},
     custom: [],
-    draft: { name: '', accent: '#d98a4e', mode: 'dark', words: '' },
+    draft: { name: '', accent: '#d98a4e', mode: 'dark' },
     msg: '',
     importText: '',
-    family: '',
-    trying: '',
-    backTo: '',
     off: false,
     confirm: '',
-    words: true,
     glow: DEFAULT_GLOW,
     heat: 0,
     follow: false,
     tunes: {},
-    rules: [],
-    ruleDraft: DEFAULT_RULE_DRAFT,
-    ruleKey: '',
-    ruleNote: '',
     found: [],
     foundQ: '',
     scanMsg: '',
   } as State,
-  { shape: 'current-10' },
+  { shape: 'current-11' },
 )
 
 /** Known theme ids only, no repeats, at most `max`: anything else a saved value held is dropped. */
@@ -548,30 +510,10 @@ function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
       to: hour(a.to, DEFAULT_AUTO.to),
     },
     off: r.off === true,
-    words: r.words !== false,
     glow: cleanGlow(r.glow),
     follow: r.follow === true && a.on !== true,
     tunes: cleanTunes(r.tunes, known),
   }
-}
-
-function cleanRules(raw: unknown, known: Set<string>): Rule[] {
-  if (!Array.isArray(raw)) {
-    return []
-  }
-  const out: Rule[] = []
-
-  for (const item of raw) {
-    const r = (typeof item === 'object' && item !== null ? item : {}) as Record<string, unknown>
-    const by = RULE_KINDS.find(k => k.value === r.by)?.value
-    const match = typeof r.match === 'string' ? r.match.trim().slice(0, 80) : ''
-
-    if (by !== undefined && match !== '' && typeof r.theme === 'string' && known.has(r.theme)) {
-      out.push({ by, match, theme: r.theme })
-    }
-  }
-
-  return out.slice(0, MAX_RULES)
 }
 
 /** The color `t` of the way from `a` to `b` now lives in model.ts. */
@@ -633,7 +575,7 @@ function bannerSvg(p: Theme): string {
 // ---- your own themes: built from an accent, saved, shared as a code ----
 
 /** A whole palette from one accent: surfaces and text tinted by its hue, standard status colors. */
-function buildCustom(name: string, accent: string, mode: Mode, words: string[] = []): Theme {
+function buildCustom(name: string, accent: string, mode: Mode): Theme {
   const hue = hueOf(accent)
   const dark = mode === 'dark'
   const surfaces: Surfaces = dark
@@ -657,7 +599,6 @@ function buildCustom(name: string, accent: string, mode: Mode, words: string[] =
     surfaces,
     text,
     accent: a,
-    ...(words.length === 0 ? {} : { words }),
     roles: dark
       ? { danger: '#d1495b', success: '#5fa36a', warning: '#d4a02e', pro: '#9b7bc4' }
       : { danger: '#c0392b', success: '#2f7d4f', warning: '#9a6b00', pro: '#7a55a8' },
@@ -676,7 +617,7 @@ function validateDraft(d: Draft): { theme: Theme; notes?: string[] } | { error: 
   if (!isHex(accent)) {
     return { error: 'The accent must be a six-digit hex color such as #d98a4e.' }
   }
-  const theme = buildCustom(name, accent, d.mode === 'light' ? 'light' : 'dark', cleanWords(d.words))
+  const theme = buildCustom(name, accent, d.mode === 'light' ? 'light' : 'dark')
   const error = validateTheme(theme)
 
   if (error === null) {
@@ -725,7 +666,6 @@ async function savePrefs($: any): Promise<void> {
     strength: s.strength,
     tone: s.tone,
     off: s.off,
-    words: s.words,
     glow: s.glow,
     follow: s.follow,
     tunes: s.tunes,
@@ -818,9 +758,9 @@ async function applyFollow($: any): Promise<void> {
 }
 
 // Applies and remembers one choice; every path (card press, command) goes through here.
-// `save` is true for the person's own pick; `solo` applies one theme even while following the system (a trial).
+// `save` is true for the person's own pick.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function apply($: any, id: string, save: boolean, solo = false): Promise<void> {
+async function apply($: any, id: string, save: boolean): Promise<void> {
   const before = await read($, current)
   const p0 = themeById(id, before.custom)
 
@@ -828,7 +768,7 @@ async function apply($: any, id: string, save: boolean, solo = false): Promise<v
     return
   }
 
-  if (before.follow && !solo) {
+  if (before.follow) {
     if (!save) {
       await applyFollow($)
 
@@ -909,7 +849,7 @@ async function setBackdrop($: any, change: Partial<Pick<State, 'backdropStyle' |
   await savePrefs($)
 }
 
-type Flag = 'backdrop' | 'codePair' | 'highContrast' | 'words'
+type Flag = 'backdrop' | 'codePair' | 'highContrast'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function toggleFlag($: any, key: Flag): Promise<void> {
@@ -920,43 +860,6 @@ async function toggleFlag($: any, key: Flag): Promise<void> {
   await savePrefs($)
 }
 
-// ---- try before keeping ----
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function tryTheme($: any, id: string): Promise<void> {
-  const s = await read($, current)
-
-  if (themeById(id, s.custom) === undefined) {
-    return
-  }
-  const back = s.trying !== '' ? s.backTo : s.id
-
-  await apply($, id, false, true)
-  await patch($, { trying: id, backTo: back })
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function keepTrial($: any): Promise<void> {
-  const s = await read($, current)
-
-  if (s.trying === '') {
-    return
-  }
-  await patch($, { trying: '', backTo: '' })
-  await apply($, s.trying, true)
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function revertTrial($: any): Promise<void> {
-  const s = await read($, current)
-
-  if (s.trying === '') {
-    return
-  }
-  await patch($, { trying: '', backTo: '' })
-  await apply($, s.backTo, false)
-}
-
 // ---- day and night, follow system ----
 
 /** Applies the day or night theme when the period has changed since it was last applied (or when `force`). */
@@ -964,7 +867,7 @@ async function revertTrial($: any): Promise<void> {
 async function runAuto($: any, force: boolean): Promise<void> {
   const s = await read($, current)
 
-  if (!s.auto.on || s.follow || s.trying !== '' || s.off) {
+  if (!s.auto.on || s.follow || s.off) {
     return
   }
 
@@ -1022,177 +925,6 @@ async function setFollow($: any, on: boolean): Promise<void> {
     await apply($, s.id, false)
   }
 }
-
-// ---- folder rules ----
-
-type RuleCtx = { cwd: string; branch: string; remote: string }
-
-function globRe(glob: string): RegExp {
-  const escaped = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&')
-  const body = escaped.replace(/\*\*/g, '\u0000').replace(/\*/g, '[^/]*').replace(/\u0000/g, '.*').replace(/\?/g, '[^/]')
-
-  return new RegExp(`^${body}$`)
-}
-
-function ruleMatches(r: Rule, ctx: RuleCtx): boolean {
-  const m = r.match.toLowerCase()
-  const wild = /[*?]/.test(m)
-  const test = (text: string, exact: boolean) => {
-    const t = text.toLowerCase()
-
-    if (t === '') {
-      return false
-    }
-
-    return wild ? globRe(m).test(t) : exact ? t === m : t.includes(m)
-  }
-
-  switch (r.by) {
-    case 'name':
-      return test(folderName(ctx.cwd), false)
-    case 'path':
-      return test(projectKey(ctx.cwd), false)
-    case 'remote':
-      return test(ctx.remote, false)
-    case 'branch':
-      return test(ctx.branch, true)
-  }
-}
-
-function ruleLabel(r: Rule): string {
-  return `${RULE_KINDS.find(k => k.value === r.by)?.label ?? r.by} ${r.by === 'name' || r.by === 'remote' ? 'has' : 'is'} ${r.match}`
-}
-
-/** The first rule that fits, with its theme. An exact folder pick is decided before this. */
-function ruleHit(s: State, ctx: RuleCtx): { rule: Rule; index: number; theme: Theme } | null {
-  for (let i = 0; i < s.rules.length; i++) {
-    const rule = s.rules[i]!
-    const theme = themeById(rule.theme, s.custom)
-
-    if (theme !== undefined && ruleMatches(rule, ctx)) {
-      return { rule, index: i, theme }
-    }
-  }
-
-  return null
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function ruleContext($: any, s: State): Promise<RuleCtx> {
-  let branch = ''
-  let remote = ''
-
-  if (s.rules.some(r => r.by === 'remote')) {
-    try {
-      remote = (await $.session.repo())?.remote ?? ''
-    } catch {
-      // no repository information here
-    }
-  }
-
-  if (s.rules.some(r => r.by === 'branch')) {
-    try {
-      const out = await $.process.run(['git', 'branch', '--show-current'], { timeoutMs: 3000 })
-
-      branch = out.exitCode === 0 ? String(out.stdout).trim() : ''
-    } catch {
-      // the command line is not available here; a branch rule never fits
-    }
-  }
-
-  return { cwd: s.cwd, branch, remote }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function runRules($: any, announce: boolean): Promise<void> {
-  const s = await read($, current)
-
-  if (s.rules.length === 0 || s.trying !== '' || s.off || s.follow) {
-    return
-  }
-
-  // An exact folder pick is the person's own and wins over any rule.
-  if (themeById(s.projects[projectKey(s.cwd)] ?? '', s.custom) !== undefined) {
-    return
-  }
-  const ctx = await ruleContext($, s)
-  const hit = ruleHit(s, ctx)
-  const key = hit === null ? '' : `${projectKey(s.cwd)}|${ctx.branch}|${hit.index}|${hit.theme.id}`
-
-  if (key === s.ruleKey) {
-    return
-  }
-  await patch($, { ruleKey: key, ruleNote: hit === null ? '' : `${ruleLabel(hit.rule)}: using ${hit.theme.name}.` })
-
-  if (hit !== null && hit.theme.id !== s.id) {
-    await apply($, hit.theme.id, false)
-
-    if (announce) {
-      say($, `${folderName(s.cwd)}: ${hit.theme.name} (${ruleLabel(hit.rule)}).`)
-    }
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function saveRules($: any, rules: Rule[]): Promise<void> {
-  await patch($, { rules, ruleKey: '' })
-  await $.store.set(RULES_KEY, rules)
-  await runRules($, true)
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function addRule($: any, rule: Rule): Promise<void> {
-  const s = await read($, current)
-  const match = rule.match.trim().slice(0, 80)
-
-  if (match === '') {
-    await patch($, { msg: 'Type what the folder should have in it.' })
-
-    return
-  }
-
-  if (themeById(rule.theme, s.custom) === undefined) {
-    return
-  }
-  await saveRules($, [{ ...rule, match }, ...s.rules.filter(r => !(r.by === rule.by && r.match === match))].slice(0, MAX_RULES))
-  await patch($, { msg: '', ruleDraft: { ...s.ruleDraft, match: '' } })
-}
-
-// The rule being typed, read from the state so a press never acts on a stale drawing.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function addDraftRule($: any): Promise<void> {
-  await addRule($, (await read($, current)).ruleDraft)
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function removeRule($: any, index: number): Promise<void> {
-  const s = await read($, current)
-
-  await saveRules($, s.rules.filter((_, i) => i !== index))
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function moveRule($: any, index: number, by: -1 | 1): Promise<void> {
-  const s = await read($, current)
-  const to = index + by
-
-  if (to < 0 || to >= s.rules.length) {
-    return
-  }
-  const next = [...s.rules]
-  const moved = next[index]!
-
-  next[index] = next[to]!
-  next[to] = moved
-  await saveRules($, next)
-}
-
-/** One-press rules: the theme names are the app's own, so a preset only exists while its theme does. */
-const RULE_PRESETS: { key: string; label: string; match: string; theme: string }[] = [
-  { key: 'prod', label: 'Production: red', match: 'prod', theme: 'lobster' },
-  { key: 'staging', label: 'Staging: amber', match: 'staging', theme: 'espresso' },
-  { key: 'sandbox', label: 'Sandbox: green', match: 'sandbox', theme: 'everforest' },
-]
 
 // ---- usage and cost glow ----
 
@@ -1267,7 +999,6 @@ const DEFAULT_SETTINGS: Partial<State> = {
   strength: 'normal',
   tone: 'accent',
   off: false,
-  words: true,
   glow: DEFAULT_GLOW,
   heat: 0,
   follow: false,
@@ -1281,7 +1012,7 @@ async function useAppLook($: any): Promise<void> {
   } catch {
     // nothing was set
   }
-  await patch($, { off: true, trying: '', backTo: '', confirm: '', msg: "The app's own look is back. Pick any theme to use one again." })
+  await patch($, { off: true, confirm: '', msg: "The app's own look is back. Pick any theme to use one again." })
   await savePrefs($)
   rerender($)
 }
@@ -1290,7 +1021,7 @@ async function useAppLook($: any): Promise<void> {
 async function resetSettings($: any): Promise<void> {
   const s = await read($, current)
 
-  await patch($, { ...DEFAULT_SETTINGS, confirm: '', trying: '', backTo: '', msg: 'Settings are back to their defaults. Your themes, favorites and folder choices are kept.' })
+  await patch($, { ...DEFAULT_SETTINGS, confirm: '', msg: 'Settings are back to their defaults. Your themes, favorites and folder choices are kept.' })
   await savePrefs($)
   await apply($, s.id, false)
 }
@@ -1302,18 +1033,12 @@ async function eraseAll($: any): Promise<void> {
     favs: [],
     custom: [],
     projects: {},
-    rules: [],
-    ruleKey: '',
-    ruleNote: '',
     id: DEFAULT_THEME,
     confirm: '',
-    trying: '',
-    backTo: '',
-    msg: 'Everything is erased: your themes, favorites, folder choices and rules. The default theme is on.',
+    msg: 'Everything is erased: your themes, favorites and folder choices. The default theme is on.',
   })
   await $.store.set(CUSTOM_KEY, [])
   await $.store.set(PROJECTS_KEY, {})
-  await $.store.set(RULES_KEY, [])
   await apply($, DEFAULT_THEME, true)
 }
 
@@ -1439,12 +1164,10 @@ async function removeCustom($: any, id: string): Promise<void> {
       day: st.auto.day === id ? DEFAULT_AUTO.day : st.auto.day,
       night: st.auto.night === id ? DEFAULT_AUTO.night : st.auto.night,
     },
-    rules: st.rules.filter(r => r.theme !== id),
     tunes: Object.fromEntries(Object.entries(st.tunes).filter(([k]) => k !== id)),
   }))
   await saveCustom($)
   await savePrefs($)
-  await $.store.set(RULES_KEY, (await read($, current)).rules)
 
   const kept = Object.fromEntries(Object.entries((await read($, current)).projects).filter(([, v]) => v !== id))
 
@@ -1566,61 +1289,6 @@ async function importFound($: any, index: number): Promise<void> {
   await addCustom($, made.theme, made.notes ?? [])
 }
 
-// ---- spinner words ----
-
-/** A few words per theme for the working line. A theme of your own carries its own. */
-const WORDS: Record<string, string[]> = {
-  'catppuccin-mocha': ['Purring', 'Kneading', 'Pouncing', 'Napping'],
-  'catppuccin-latte': ['Steaming', 'Frothing', 'Purring'],
-  espresso: ['Brewing', 'Steeping', 'Tamping', 'Pulling a shot'],
-  dracula: ['Brooding', 'Haunting', 'Lurking', 'Rising at dusk'],
-  nord: ['Drifting', 'Thawing', 'Trekking', 'Skiing'],
-  'tokyo-night': ['Neon-walking', 'Riding the last train', 'Glowing', 'Wandering'],
-  'gruvbox-dark': ['Tinkering', 'Retro-fitting', 'Warming up', 'Whittling'],
-  'one-dark': ['Atomizing', 'Compiling', 'Linting', 'Wiring'],
-  'rose-pine': ['Blooming', 'Pressing petals', 'Drifting', 'Dreaming'],
-  'solarized-dark': ['Basking', 'Calibrating', 'Balancing'],
-  'github-dark': ['Forking', 'Rebasing', 'Pushing', 'Merging'],
-  monokai: ['Sketching', 'Highlighting', 'Painting syntax'],
-  'ayu-dark': ['Glowing', 'Sunsetting', 'Warming'],
-  everforest: ['Rustling', 'Growing', 'Foraging', 'Mossing'],
-  'material-ocean': ['Sailing', 'Diving', 'Floating', 'Rippling'],
-  'kanagawa-wave': ['Cresting', 'Inking', 'Wave-hunting', 'Brushing'],
-  synthwave: ['Cruising', 'Rewinding', 'Chasing the sunset', 'Glitching'],
-  absolutely: ['Absolutely working', 'Definitely thinking', 'Certainly on it'],
-  linear: ['Shipping', 'Triaging', 'Cycling', 'Planning'],
-  lobster: ['Molting', 'Pinching', 'Scuttling', 'Steaming'],
-  matrix: ['Decoding', 'Following the rabbit', 'Dodging bullets', 'Jacking in'],
-  'night-owl': ['Hooting', 'Night-shifting', 'Staying up', 'Perching'],
-  raycast: ['Launching', 'Searching', 'Slashing', 'Chaining'],
-  vercel: ['Deploying', 'Edge-casing', 'Building', 'Previewing'],
-  'solarized-light': ['Basking', 'Calibrating', 'Balancing'],
-  'github-light': ['Forking', 'Rebasing', 'Merging'],
-  notion: ['Organizing', 'Nesting', 'Linking', 'Templating'],
-  xcode: ['Archiving', 'Signing', 'Indexing', 'Building'],
-}
-
-/** The word to show now for a working line, or null to leave it as the app draws it. */
-function spinnerWord(s: State, now: number): string | null {
-  if (!s.words || s.off) {
-    return null
-  }
-  const p = themeById(s.id, s.custom)
-  const list = p === undefined ? undefined : (p.words !== undefined && p.words.length > 0 ? p.words : WORDS[p.id])
-
-  if (list === undefined || list.length === 0) {
-    return null
-  }
-
-  return list[Math.floor(now / 7000) % list.length] ?? null
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function setRuleDraft($: any, change: Partial<RuleDraft>): Promise<void> {
-  await update($, current, (s: State) => ({ ...s, ruleDraft: { ...s.ruleDraft, ...change }, msg: '' }))
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function setGlow($: any, change: Partial<Glow>): Promise<void> {
   const s = await read($, current)
 
@@ -1649,22 +1317,6 @@ async function setSwitch($: any, mode: Switch): Promise<void> {
     await setFollow($, false)
   }
   await setAuto($, { on: mode === 'hour' })
-}
-
-/** Families with at least two themes in a list, biggest first, for the gallery filter. */
-function familiesOf(list: Theme[]): { name: string; count: number }[] {
-  const counts = new Map<string, number>()
-
-  for (const p of list) {
-    if (p.family !== undefined) {
-      counts.set(p.family, (counts.get(p.family) ?? 0) + 1)
-    }
-  }
-
-  return [...counts.entries()]
-    .filter(([, n]) => n >= 2)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
 }
 
 const MAX_OPTIONS = 64
@@ -1701,8 +1353,8 @@ export const register: Register = on => {
     // Registered first so a failure while restoring the theme cannot leave /claude-themes missing.
     await $.command.register({
       name: 'claude-themes',
-      description: 'Open the theme gallery: /claude-themes, or /claude-themes <name> to switch directly (try, keep, back, import, follow, reset also work)',
-      argumentHint: '[theme name | try <name> | keep | back | import <code, link or file> | follow on/off | reset look/settings/all]',
+      description: 'Open the theme gallery: /claude-themes, or /claude-themes <name> to switch directly (import, follow and reset also work)',
+      argumentHint: '[theme name | import <code, link or file> | follow on/off | reset look/settings/all]',
       immediate: true,
     })
     const saved = await $.store.get(STORE_KEY)
@@ -1717,14 +1369,9 @@ export const register: Register = on => {
       custom,
       cwd: typeof e.cwd === 'string' ? e.cwd : '',
       projects: cleanProjects(await $.store.get(PROJECTS_KEY), known),
-      rules: cleanRules(await $.store.get(RULES_KEY), known),
       id,
-      trying: '',
-      backTo: '',
       confirm: '',
       heat: 0,
-      ruleKey: '',
-      ruleNote: '',
       msg: '',
     })
 
@@ -1742,18 +1389,15 @@ export const register: Register = on => {
     if (!here.follow && mine !== undefined && mine.id !== here.id) {
       await apply($, mine.id, false)
       say($, `${folderName(here.cwd)}: using ${mine.name}.`)
-    } else if (mine === undefined) {
-      await runRules($, true)
     }
 
     return next(e)
   })
 
-  // The day and night switch and the folder rules are checked as each prompt is sent; a failure here never holds a prompt back.
+  // The day and night switch is checked as each prompt is sent; a failure here never holds a prompt back.
   on('prompt.submit', async ($, e, next) => {
     try {
       await runAuto($, false)
-      await runRules($, false)
     } catch {
       // the next prompt tries again
     }
@@ -1767,27 +1411,6 @@ export const register: Register = on => {
       await measureGlow($, e)
     } catch {
       // the next measurement tries again
-    }
-
-    return next(e)
-  })
-
-  // The working line says a word of the theme. The desktop's own line names the step ("Creating notes.md"),
-  // so there only a general "Working" or a thinking line is replaced, never a real step.
-  on('ui.render', { component: 'Spinner' }, async ($, e, next) => {
-    try {
-      const s = await read($, current)
-      const generic = e.surface === 'terminal' || e.props.word === 'Working' || e.props.mode === 'thinking' || e.props.mode === 'requesting'
-
-      if (e.props.message === null && generic) {
-        const word = spinnerWord(s, await $.clock.now())
-
-        if (word !== null) {
-          return next({ ...e, props: { ...e.props, word } })
-        }
-      }
-    } catch {
-      // the app's own line stands
     }
 
     return next(e)
@@ -1824,29 +1447,6 @@ export const register: Register = on => {
       return { text: 'Reset what? /claude-themes reset look (the app\'s own look), settings (defaults, your themes stay), or all (erase everything).' }
     }
 
-    if (verb === 'keep') {
-      await keepTrial($)
-
-      return { text: state.trying === '' ? 'Nothing is being tried.' : 'Kept.' }
-    }
-
-    if (verb === 'back') {
-      await revertTrial($)
-
-      return { text: state.trying === '' ? 'Nothing is being tried.' : 'Back to the theme before the trial.' }
-    }
-
-    if (verb === 'try' && tail !== '') {
-      const found = themeById(idOf(tail), state.custom)
-
-      if (found === undefined) {
-        return { text: `No theme called "${tail}".` }
-      }
-      await tryTheme($, found.id)
-
-      return { text: `Trying ${found.name}. /claude-themes keep to keep it, /claude-themes back to go back.` }
-    }
-
     if (verb === 'import' && tail !== '') {
       await importAny($, tail)
 
@@ -1869,7 +1469,6 @@ export const register: Register = on => {
       if (found === undefined) {
         return { text: `No theme called "${args}". Try: ${[...THEMES, ...mine].map(p => p.id).join(', ')}` }
       }
-      await patch($, { trying: '', backTo: '' })
       await apply($, found.id, true)
 
       return { text: `Theme: ${found.name} (${found.mode})` }
@@ -1904,9 +1503,7 @@ export const register: Register = on => {
     const goTab = (t: Tab) => async () => {
       await patch($, { tab: t, confirm: '', msg: '' })
     }
-    const tryIt = (id: string) => async () => {
-      await tryTheme($, id)
-    }
+
     const star = (id: string) => async () => {
       await toggleFavorite($, id)
     }
@@ -1960,10 +1557,7 @@ export const register: Register = on => {
             )}
             <Text color={p.text[2]}>{p.note}</Text>
           </Box>
-          <Box backgroundColor={c2} flexDirection="column" gap={1}>
-            <Button key={`try-${section}-${p.id}`} onPress={tryIt(p.id)}>
-              Try
-            </Button>
+          <Box backgroundColor={c2}>
             <Button key={`fav-${section}-${p.id}`} onPress={star(p.id)}>
               {isFav ? '★' : '☆'}
             </Button>
@@ -2005,34 +1599,8 @@ export const register: Register = on => {
       </Box>
     )
 
-    const trial =
-      now.trying === '' ? null : (
-        <Box gap={1} alignItems="center" flexWrap="wrap" padding={1} borderStyle="round" borderColor={cur.accent} backgroundColor={c0}>
-          <Text weight="bold">{`Trying ${cur.name}.`}</Text>
-          <Button
-            key="trial-keep"
-            variant="primary"
-            onPress={async () => {
-              await keepTrial($)
-            }}
-          >
-            Keep
-          </Button>
-          <Button
-            key="trial-back"
-            onPress={async () => {
-              await revertTrial($)
-            }}
-          >
-            {`Back to ${byId(now.backTo)?.name ?? 'before'}`}
-          </Button>
-        </Box>
-      )
-
     const modeTab = (mode: Mode) => () => {
-      const inMode = all.filter(p => p.mode === mode)
-      const fams = familiesOf(inMode)
-      const shown = inMode.filter(p => matches(p) && (now.family === '' || p.family === now.family))
+      const shown = all.filter(p => p.mode === mode && matches(p))
 
       return (
         <Box flexDirection="column" gap={1}>
@@ -2050,33 +1618,8 @@ export const register: Register = on => {
             />
           )}
 
-          {fams.length === 0 ? null : (
-            <Box gap={1} flexWrap="wrap">
-              <Button
-                key={`fam-${mode}-all`}
-                variant={now.family === '' ? 'primary' : 'secondary'}
-                onPress={async () => {
-                  await patch($, { family: '' })
-                }}
-              >
-                All
-              </Button>
-              {fams.map(f => (
-                <Button
-                  key={`fam-${mode}-${f.name}`}
-                  variant={now.family === f.name ? 'primary' : 'secondary'}
-                  onPress={async () => {
-                    await patch($, { family: now.family === f.name ? '' : f.name })
-                  }}
-                >
-                  {f.name}
-                </Button>
-              ))}
-            </Box>
-          )}
-
           {shown.length === 0 ? (
-            <Text dimColor>{q === '' && now.family === '' ? `No ${mode} themes.` : `No ${mode} theme matches that.`}</Text>
+            <Text dimColor>{q === '' ? `No ${mode} themes.` : `No ${mode} theme matches "${now.q.trim()}".`}</Text>
           ) : (
             shown.map(p => guard(p.name, () => row(p, 'all')))
           )}
@@ -2132,12 +1675,6 @@ export const register: Register = on => {
       const runImport = async (v: string) => {
         await importAny($, v)
       }
-      const setWords = async (v: string) => {
-        await setDraft($, { words: v.slice(0, 160) })
-      }
-      const setFoundQ = async (v: string) => {
-        await patch($, { foundQ: v.slice(0, 40) })
-      }
       const good = /^(Saved|Copied|Deleted)/.test(now.msg)
 
       const preview =
@@ -2182,7 +1719,6 @@ export const register: Register = on => {
               ),
             )}
           </Box>
-          {field('maker-words', 'Working words (optional)', 'Brewing, Steeping, Tamping', now.draft.words, setWords, setWords)}
           <Text dimColor>Base</Text>
           <Box gap={1} flexWrap="wrap">
             <Button
@@ -2231,7 +1767,7 @@ export const register: Register = on => {
                 {Svg === undefined ? null : <Svg source={previewSvg(t, false)} alt={`${t.name} preview`} width={96} height={48} />}
                 <Box flexDirection="column" flexGrow={1}>
                   <Text weight="bold">{t.name}</Text>
-                  <Text dimColor>{`${t.mode} · ${t.accent}${t.words === undefined ? '' : ' · working words'}`}</Text>
+                  <Text dimColor>{`${t.mode} · ${t.accent}`}</Text>
                 </Box>
                 <Button key={`maker-use-${t.id}`} variant={t.id === now.id ? 'primary' : 'secondary'} onPress={pick(t.id)}>
                   {t.id === now.id ? '✓ Using' : 'Use'}
@@ -2248,53 +1784,6 @@ export const register: Register = on => {
             ))}
           </Box>
         ),
-      )
-
-      const needle = now.foundQ.trim().toLowerCase()
-      const foundShown = now.found
-        .map((f, index) => ({ f, index }))
-        .filter(({ f }) => needle === '' || f.label.toLowerCase().includes(needle))
-        .slice(0, 10)
-
-      const vscode = card(
-        'vscode',
-        'From VS Code',
-        <Box flexDirection="column" gap={1}>
-          <Text dimColor>Lists the color themes of the editors installed on this computer (VS Code, Cursor and others); one press adds a theme here.</Text>
-          <Box gap={1} alignItems="center" flexWrap="wrap">
-            <Button
-              key="vscode-scan"
-              onPress={async () => {
-                await scanVsCode($)
-              }}
-            >
-              Find my VS Code themes
-            </Button>
-            {now.scanMsg === '' ? null : <Text dimColor>{now.scanMsg}</Text>}
-          </Box>
-          {now.found.length === 0 ? null : (
-            <Box flexDirection="column" gap={1}>
-              {field('vscode-search', 'Search', 'Name of a theme', now.foundQ, setFoundQ, setFoundQ)}
-              {foundShown.map(({ f, index }) => (
-                <Box key={`found-${index}`} alignItems="center" gap={1}>
-                  <Box flexDirection="column" flexGrow={1}>
-                    <Text weight="bold">{f.label}</Text>
-                    <Text dimColor>{f.uiTheme === 'vs' ? 'light' : 'dark'}</Text>
-                  </Box>
-                  <Button
-                    key={`found-add-${index}`}
-                    onPress={async () => {
-                      await importFound($, index)
-                    }}
-                  >
-                    Add
-                  </Button>
-                </Box>
-              ))}
-              {foundShown.length === 0 ? <Text dimColor>No theme matches that.</Text> : null}
-            </Box>
-          )}
-        </Box>,
       )
 
       const share = card(
@@ -2330,7 +1819,6 @@ export const register: Register = on => {
         <Box flexDirection="column" gap={1}>
           {guard('The maker', () => make)}
           {guard('My themes', () => mine)}
-          {guard('From VS Code', () => vscode)}
           {guard('Share', () => share)}
         </Box>
       )
@@ -2437,11 +1925,69 @@ export const register: Register = on => {
 
       const t = now.tunes[cur.id] ?? NO_TUNE
       const limited = isTuned(t) && tuneTheme(cur, t).limited
+      // A label above its box, so every box starts at the same edge.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const field = (key: string, label: string, placeholder: string, value: string, change: (v: string) => Promise<void>, submit: (v: string) => Promise<void>): any =>
+        Input === undefined ? null : (
+          <Box key={`field-${key}`} flexDirection="column" alignItems="stretch" flexGrow={1}>
+            <Text dimColor>{label}</Text>
+            <Input key={key} placeholder={placeholder} value={value} onInput={change} onSubmit={submit} />
+          </Box>
+        )
+      const setFoundQ = async (v: string) => {
+        await patch($, { foundQ: v.slice(0, 40) })
+      }
+      const needle = now.foundQ.trim().toLowerCase()
+      const foundShown = now.found
+        .map((f, index) => ({ f, index }))
+        .filter(({ f }) => needle === '' || f.label.toLowerCase().includes(needle))
+        .slice(0, 10)
+
+      const vscode = card(
+        'vscode',
+        'From VS Code',
+        <Box flexDirection="column" gap={1}>
+          <Text dimColor>Lists the color themes of the editors installed on this computer (VS Code, Cursor and others); one press adds a theme here.</Text>
+          <Box gap={1} alignItems="center" flexWrap="wrap">
+            <Button
+              key="vscode-scan"
+              onPress={async () => {
+                await scanVsCode($)
+              }}
+            >
+              Find my VS Code themes
+            </Button>
+            {now.scanMsg === '' ? null : <Text dimColor>{now.scanMsg}</Text>}
+          </Box>
+          {now.found.length === 0 ? null : (
+            <Box flexDirection="column" gap={1}>
+              {field('vscode-search', 'Search', 'Name of a theme', now.foundQ, setFoundQ, setFoundQ)}
+              {foundShown.map(({ f, index }) => (
+                <Box key={`found-${index}`} alignItems="center" gap={1}>
+                  <Box flexDirection="column" flexGrow={1}>
+                    <Text weight="bold">{f.label}</Text>
+                    <Text dimColor>{f.uiTheme === 'vs' ? 'light' : 'dark'}</Text>
+                  </Box>
+                  <Button
+                    key={`found-add-${index}`}
+                    onPress={async () => {
+                      await importFound($, index)
+                    }}
+                  >
+                    Add
+                  </Button>
+                </Box>
+              ))}
+              {foundShown.length === 0 ? <Text dimColor>No theme matches that.</Text> : null}
+            </Box>
+          )}
+        </Box>,
+      )
+
       const tune = card(
         'tune',
         `Tune ${cur.name}`,
         <Box flexDirection="column" gap={1}>
-          {Svg === undefined ? null : <Svg source={previewSvg(curT, false)} alt={`${cur.name} tuned preview`} width={264} height={132} />}
           {TUNE_AXES.map(ax => (
             <Box key={`tune-row-${ax.key}`} alignItems="center" gap={1}>
               <Box flexDirection="column" flexGrow={1}>
@@ -2481,14 +2027,6 @@ export const register: Register = on => {
             </Box>
           )}
         </Box>,
-      )
-
-      const workingWords = card(
-        'words',
-        'Working line',
-        toggleRow('words-toggle', 'Words from the theme', 'While Claude works the line says a word of the theme, such as "Brewing" on Espresso. Real steps like "Creating notes.md" are left alone.', now.words, async () => {
-          await toggleFlag($, 'words')
-        }),
       )
 
       const glow = card(
@@ -2538,104 +2076,6 @@ export const register: Register = on => {
               <Text dimColor>{`Right now: ${['calm', 'warm', 'hot'][now.heat]}.${now.backdrop ? '' : ' The backdrop is off, so only the notice shows.'}${now.follow ? ' Following the system keeps the backdrop off.' : ''}`}</Text>
             </Box>
           )}
-        </Box>,
-      )
-
-      const kindOptions = RULE_KINDS.map(k => ({ value: k.value, label: k.label }))
-      const draft = now.ruleDraft
-      const rules = card(
-        'rules',
-        'Folder rules',
-        <Box flexDirection="column" gap={1}>
-          <Text dimColor>
-            A rule picks a theme by the folder, the git remote or the branch you are working in. The first rule that fits wins. A theme set for one exact folder (above) comes before any rule.
-          </Text>
-          {now.rules.length === 0 ? (
-            <Text dimColor>No rules yet.</Text>
-          ) : (
-            now.rules.map((r, i) => (
-              <Box key={`rule-${i}`} alignItems="center" gap={1} padding={1} borderStyle="round" borderColor={c3}>
-                <Box flexDirection="column" flexGrow={1}>
-                  <Text weight="bold">{ruleLabel(r)}</Text>
-                  <Text dimColor>{`uses ${byId(r.theme)?.name ?? r.theme}`}</Text>
-                </Box>
-                <Button
-                  key={`rule-up-${i}`}
-                  onPress={async () => {
-                    await moveRule($, i, -1)
-                  }}
-                >
-                  ↑
-                </Button>
-                <Button
-                  key={`rule-down-${i}`}
-                  onPress={async () => {
-                    await moveRule($, i, 1)
-                  }}
-                >
-                  ↓
-                </Button>
-                <Button
-                  key={`rule-del-${i}`}
-                  onPress={async () => {
-                    await removeRule($, i)
-                  }}
-                >
-                  ✕
-                </Button>
-              </Box>
-            ))
-          )}
-          {now.ruleNote === '' ? null : <Text color={cur.accent}>{`Now: ${now.ruleNote}`}</Text>}
-          {Select === undefined || Input === undefined ? null : (
-            <Box flexDirection="column" gap={1}>
-              <Box gap={1} flexWrap="wrap">
-                {picker('rule-kind', 'When the', kindOptions, draft.by, async v => {
-                  await setRuleDraft($, { by: v as RuleBy })
-                })}
-                {picker('rule-theme', 'Use', themeOptions(all, draft.theme, now.favs), draft.theme, async v => {
-                  await setRuleDraft($, { theme: v })
-                })}
-              </Box>
-              <Box flexDirection="column" alignItems="stretch">
-                <Text dimColor>{RULE_KINDS.find(k => k.value === draft.by)?.hint ?? ''}</Text>
-                <Input
-                  key="rule-match"
-                  placeholder="Text to look for"
-                  value={draft.match}
-                  onInput={async (v: string) => {
-                    await setRuleDraft($, { match: v.slice(0, 80) })
-                  }}
-                  onSubmit={async (v: string) => {
-                    await setRuleDraft($, { match: v.slice(0, 80) })
-                    await addDraftRule($)
-                  }}
-                />
-              </Box>
-              <Box gap={1} flexWrap="wrap" alignItems="center">
-                <Button
-                  key="rule-add"
-                  variant="primary"
-                  onPress={async () => {
-                    await addDraftRule($)
-                  }}
-                >
-                  Add rule
-                </Button>
-                {RULE_PRESETS.filter(x => byId(x.theme) !== undefined).map(x => (
-                  <Button
-                    key={`rule-preset-${x.key}`}
-                    onPress={async () => {
-                      await addRule($, { by: 'name', match: x.match, theme: x.theme })
-                    }}
-                  >
-                    {x.label}
-                  </Button>
-                ))}
-              </Box>
-            </Box>
-          )}
-          {now.msg === '' ? null : <Text color={cur.roles.danger}>{now.msg}</Text>}
         </Box>,
       )
 
@@ -2805,13 +2245,12 @@ export const register: Register = on => {
       return (
         <Box flexDirection="column" gap={1}>
           {guard('Tune', () => tune)}
+          {guard('From VS Code', () => vscode)}
           {guard('Appearance', () => appearance)}
           {guard('Readability', () => readability)}
-          {guard('Working line', () => workingWords)}
           {guard('Usage glow', () => glow)}
           {guard('Day and night', () => dayNight)}
           {project === null ? null : guard('This project', () => project)}
-          {guard('Folder rules', () => rules)}
           {guard('Reset', () => reset)}
           {guard('About', () => about)}
         </Box>
@@ -2830,7 +2269,6 @@ export const register: Register = on => {
 
         {guard('The current theme', () => hero)}
 
-        {trial}
 
         <Box gap={1} flexWrap="wrap">
           <Button key="tab-dark" variant={tab === 'dark' ? 'primary' : 'secondary'} onPress={goTab('dark')}>

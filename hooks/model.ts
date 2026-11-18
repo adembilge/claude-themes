@@ -27,8 +27,6 @@ export type Theme = {
   roles: Roles
   /** A family the theme belongs to ("Catppuccin"), for the gallery filter. */
   family?: string
-  /** Words for the working line while this theme is on: up to 6, 24 characters each. */
-  words?: string[]
 }
 
 export const HEX = /^#[0-9a-f]{6}$/i
@@ -104,19 +102,6 @@ export const slug = (name: string): string =>
     .slice(0, 24) || 'theme'
 
 export const cleanName = (name: string): string => name.replace(/[^\p{L}\p{N} _.&'-]/gu, '').trim().slice(0, 24)
-
-export const MAX_WORDS = 6
-
-/** Up to six short words, letters and spaces only; anything else is dropped. */
-export function cleanWords(raw: unknown): string[] {
-  const list = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(',') : []
-
-  return list
-    .filter((w): w is string => typeof w === 'string')
-    .map(w => w.replace(/[^\p{L}\p{N} '’-]/gu, '').trim().slice(0, 24))
-    .filter(w => w !== '')
-    .slice(0, MAX_WORDS)
-}
 
 /** A Theme as the app's color object. Throws on a palette make-colors cannot use. */
 export function look(p: Theme): ThemeSetArgs {
@@ -316,7 +301,6 @@ export function sanitizeTheme(o: unknown): Theme | null {
     return null
   }
   const low = (v: string) => v.toLowerCase()
-  const words = cleanWords(r.words)
   const t: Theme = {
     id: `my-${slug(name)}`,
     name,
@@ -326,7 +310,6 @@ export function sanitizeTheme(o: unknown): Theme | null {
     text: r.text.map(low) as Text3,
     accent: low(r.accent),
     roles: { danger: low(danger), success: low(success), warning: low(warning), pro: low(pro) },
-    ...(words.length === 0 ? {} : { words }),
   }
 
   return validateTheme(t) === null ? t : null
@@ -341,7 +324,6 @@ export function themeToCode(t: Theme): string {
     text: t.text,
     accent: t.accent,
     roles: t.roles,
-    ...(t.words === undefined || t.words.length === 0 ? {} : { words: t.words }),
   })}`
 }
 

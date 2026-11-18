@@ -47,26 +47,11 @@ export const PACKS: Theme[] = [
   pack('Nightfox', 'dark', 'nightfox', 'Nightfox', 'cool navy, soft blue',
     ['#131a24', '#192330', '#212e3f', '#29394f'], ['#cdcecf', '#aeafb0', '#74859d'], '#719cd6',
     ['#c94f6d', '#81b29a', '#dbc074', '#9d79d6']),
-  // https://github.com/EdenEast/nightfox.nvim/blob/main/lua/nightfox/palette/duskfox.lua
-  // shifted: muted text #6e6a86 -> #837f9b
-  pack('Nightfox', 'dark', 'duskfox', 'Duskfox', 'dusky purple, muted pastels',
-    ['#191726', '#232136', '#2d2a45', '#373354'], ['#e0def4', '#cdcbe0', '#837f9b'], '#c4a7e7',
-    ['#eb6f92', '#a3be8c', '#f6c177', '#eb98c3']),
-  // https://github.com/EdenEast/nightfox.nvim/blob/main/lua/nightfox/palette/terafox.lua
-  // shifted: muted text #587b7b -> #708d8d
-  pack('Nightfox', 'dark', 'terafox', 'Terafox', 'deep teal-green, sandy orange',
-    ['#0f1c1e', '#152528', '#1d3337', '#254147'], ['#e6eaea', '#cbd9d8', '#708d8d'], '#5a93aa',
-    ['#e85c51', '#7aa4a1', '#fda47f', '#ad5c7c']),
   // https://github.com/EdenEast/nightfox.nvim/blob/main/extra/carbonfox/base16.yaml
   // shifted: muted text #7b7c7e -> #7f8082
   pack('Nightfox', 'dark', 'carbonfox', 'Carbonfox', 'neutral carbon black, bright blue',
     ['#0c0c0c', '#161616', '#252525', '#353535'], ['#f2f4f8', '#b6b8bb', '#7f8082'], '#78a9ff',
     ['#ee5396', '#25be6a', '#08bdba', '#be95ff']),
-  // https://github.com/EdenEast/nightfox.nvim/blob/main/lua/nightfox/palette/nordfox.lua
-  // shifted: muted text #7e8188 -> #989ba0
-  pack('Nightfox', 'dark', 'nordfox', 'Nordfox', 'Nord colors, a touch warmer',
-    ['#232831', '#2e3440', '#39404f', '#444c5e'], ['#cdcecf', '#abb1bb', '#989ba0'], '#81a1c1',
-    ['#bf616a', '#a3be8c', '#ebcb8b', '#b48ead']),
   // https://github.com/rebelot/kanagawa.nvim/blob/master/lua/kanagawa/colors.lua
   pack('Kanagawa', 'dark', 'kanagawa-dragon', 'Kanagawa Dragon', 'ink black, ash and stone',
     ['#0d0c0c', '#181616', '#282727', '#393836'], ['#c5c9c5', '#a6a69c', '#9e9b93'], '#8ba4b0',
@@ -86,16 +71,6 @@ export const PACKS: Theme[] = [
   pack('Material', 'dark', 'palenight', 'Palenight', 'dusky purple-blue, Material',
     ['#232635', '#292d3e', '#31364a', '#383d51'], ['#bfc7d5', '#969db8', '#8088a9'], '#c792ea',
     ['#ff5572', '#a9c77d', '#ffcb6b', '#82aaff']),
-  // https://github.com/jolaleye/horizon-theme-vscode (via shikijs tm-themes horizon.json)
-  // shifted: surface 4 derived; second text derived; muted text #6c6f93 -> #8487a3
-  pack('Horizon', 'dark', 'horizon', 'Horizon', 'warm dark, sunset pink',
-    ['#1c1e26', '#232530', '#2e303e', '#3b3c4a'], ['#d5d8da', '#a1a4b7', '#8487a3'], '#e95378',
-    ['#e95678', '#29d398', '#fab795', '#ee64ac']),
-  // https://github.com/Everblush/nvim/blob/main/lua/everblush/palette.lua
-  // shifted: muted text #404749 -> #7b7f81
-  pack('Everblush', 'dark', 'everblush', 'Everblush', 'cool green-black, soft pastels',
-    ['#141b1e', '#161d1f', '#232a2d', '#2d3437'], ['#dadada', '#b3b9b8', '#7b7f81'], '#67b0e8',
-    ['#e57474', '#8ccf7e', '#e5c76b', '#c47fd5']),
   // https://github.com/ayu-theme/ayu-colors (via shikijs tm-themes ayu-mirage.json)
   // shifted: surface 4 derived; second text derived; muted text #707a8c -> #7f8695
   pack('Ayu', 'dark', 'ayu-mirage', 'Ayu Mirage', 'dusky blue-grey with gold',
@@ -114,30 +89,6 @@ export const PACKS: Theme[] = [
   pack('Everforest', 'dark', 'everforest-hard', 'Everforest Hard', 'forest greens, deeper contrast',
     ['#1e2326', '#272e33', '#2e383c', '#374145'], ['#d3c6aa', '#9da9a0', '#859289'], '#a7c080',
     ['#e67e80', '#a7c080', '#dbbc7f', '#d699b6']),
-  // https://github.com/bbatsov/zenburn-emacs/blob/master/zenburn-theme.el
-  // shifted: second text derived; muted text #989890 -> #a0a098
-  pack('Zenburn', 'dark', 'zenburn', 'Zenburn', 'low-contrast warm grey, easy',
-    ['#2b2b2b', '#3f3f3f', '#494949', '#4f4f4f'], ['#dcdccc', '#babaae', '#a0a098'], '#8cd0d3',
-    ['#cc9393', '#7f9f7f', '#dfaf8f', '#dc8cc3']),
-  // https://github.com/mhartington/oceanic-next/blob/master/colors/OceanicNext.vim
-  // shifted: surface 1 derived
-  pack('Oceanic Next', 'dark', 'oceanic-next', 'Oceanic Next', 'blue-green slate, calm',
-    ['#131e24', '#1b2b34', '#343d46', '#4f5b66'], ['#d8dee9', '#c0c5ce', '#a7adba'], '#6699cc',
-    ['#ec5f67', '#99c794', '#fac863', '#c594c5']),
-  // https://github.com/ahmadawais/shades-of-purple-vscode/blob/master/themes/shades-of-purple-color-theme.json
-  // shifted: surface 3 derived; muted text derived
-  pack('Shades of Purple', 'dark', 'shades-of-purple', 'Shades of Purple', 'electric indigo, bold yellow',
-    ['#1e1e3f', '#2d2b55', '#3b396d', '#494685'], ['#ffffff', '#a599e9', '#9e98ca'], '#fad000',
-    ['#ec3a37', '#3ad900', '#ff9d00', '#b362ff']),
-  // https://github.com/atomiks/moonlight-vscode-theme/blob/master/src/colors.ts
-  // shifted: muted text #828bb8 -> #9099c5
-  pack('Moonlight', 'dark', 'moonlight', 'Moonlight', 'night-sky indigo, pastel glow',
-    ['#1e2030', '#222436', '#2f334d', '#444a73'], ['#c8d3f5', '#a9b8e8', '#9099c5'], '#7cafff',
-    ['#ff757f', '#c3e88d', '#ffc777', '#c4a2ff']),
-  // https://github.com/bluz71/vim-nightfly-colors/blob/master/autoload/nightfly.vim
-  pack('Nightfly', 'dark', 'nightfly', 'Nightfly', 'midnight blue, bright pastels',
-    ['#011627', '#081e2f', '#0e293f', '#1d3b53'], ['#c3ccdc', '#acb4c2', '#7c8f8f'], '#82aaff',
-    ['#fc514e', '#a1cd5e', '#e3d18a', '#c792ea']),
   // https://github.com/raunofreiberg/vesper (via shikijs tm-themes vesper.json)
   pack('Vesper', 'dark', 'vesper', 'Vesper', 'near-black, peach and mint',
     ['#101010', '#161616', '#1c1c1c', '#232323'], ['#ffffff', '#a0a0a0', '#7e7e7e'], '#ffc799',
@@ -188,31 +139,6 @@ export const PACKS: Theme[] = [
     ['#de3d3b', '#08916a', '#e0af02', '#994cc3']),
 ]
 
-/** The built-in themes that belong to a family, by id, so the gallery can filter by family. Names match PACKS. */
-export const FAMILY_OF: Record<string, string> = {
-  'catppuccin-mocha': 'Catppuccin',
-  'catppuccin-latte': 'Catppuccin',
-  'rose-pine': 'Rosé Pine',
-  'rose-pine-dawn': 'Rosé Pine',
-  'tokyo-night': 'Tokyo Night',
-  'tokyo-night-day': 'Tokyo Night',
-  'gruvbox-dark': 'Gruvbox',
-  'gruvbox-light': 'Gruvbox',
-  everforest: 'Everforest',
-  'everforest-light': 'Everforest',
-  'solarized-dark': 'Solarized',
-  'solarized-light': 'Solarized',
-  'github-dark': 'GitHub',
-  'github-light': 'GitHub',
-  'one-dark': 'One',
-  'one-light': 'One',
-  'ayu-dark': 'Ayu',
-  'ayu-light': 'Ayu',
-  'kanagawa-wave': 'Kanagawa',
-  'material-ocean': 'Material',
-  'night-owl': 'Night Owl',
-}
-
 /** The code-highlighting theme to pair with a pack, by the name the app's highlighter knows (a wrong name is ignored). */
 export const PACK_CODE_THEMES: Record<string, string> = {
   'catppuccin-frappe': 'catppuccin-frappe',
@@ -223,7 +149,6 @@ export const PACK_CODE_THEMES: Record<string, string> = {
   'kanagawa-lotus': 'kanagawa-lotus',
   poimandres: 'poimandres',
   palenight: 'material-theme-palenight',
-  horizon: 'horizon',
   'ayu-mirage': 'ayu-mirage',
   'github-dark-dimmed': 'github-dark-dimmed',
   'gruvbox-dark-hard': 'gruvbox-dark-hard',

@@ -13,7 +13,7 @@ const T = (
   text: Theme['text'],
   accent: string,
   [danger, success, warning, pro]: [string, string, string, string],
-): Theme => ({ id, name, note: 'test', mode, surfaces, text, accent, roles: { danger, success, warning, pro }, words: ['Mixing'] })
+): Theme => ({ id, name, note: 'test', mode, surfaces, text, accent, roles: { danger, success, warning, pro } })
 
 const MOCHA = T('dark', 'catppuccin-mocha', 'Catppuccin Mocha',
   ['#181825', '#1e1e2e', '#313244', '#3d3f51'], ['#cdd6f4', '#bac2de', '#a6adc8'], '#cba6f7',
@@ -67,7 +67,7 @@ for (const p of THEMES) {
       for (const sat of STEPS) {
         for (const bright of STEPS) {
           for (const c of STEPS) {
-            const out = tuneTheme(p, { warmth, sat, bright, contrast: c })
+            const out = tuneTheme(p, { ...NO_TUNE, warmth, sat, bright, contrast: c })
 
             expect(validateTheme(out.theme)).toBeNull()
             expect(colours(out.theme).every(h => SIX.test(h))).toBe(true)
@@ -75,7 +75,6 @@ for (const p of THEMES) {
             expect(out.theme.name).toBe(p.name)
             expect(out.theme.note).toBe(p.note)
             expect(out.theme.mode).toBe(p.mode)
-            expect(out.theme.words).toEqual(p.words)
 
             if (out.limited) {
               limited++
@@ -100,7 +99,7 @@ test('limited is only set when the result is smaller than asked', () => {
   }
   // A limited result is still different from the original only if something was kept.
   for (const p of THEMES) {
-    const out = tuneTheme(p, { warmth: 4, sat: 4, bright: -4, contrast: -4 })
+    const out = tuneTheme(p, { ...NO_TUNE, warmth: 4, sat: 4, bright: -4, contrast: -4 })
 
     expect(typeof out.limited).toBe('boolean')
     expect(validateTheme(out.theme)).toBeNull()
@@ -175,7 +174,7 @@ test('light themes keep the last two surfaces equal', () => {
     for (const warmth of STEPS) {
       for (const bright of STEPS) {
         for (const sat of STEPS) {
-          const out = tuneTheme(p, { warmth, sat, bright, contrast: 2 }).theme
+          const out = tuneTheme(p, { ...NO_TUNE, warmth, sat, bright, contrast: 2 }).theme
 
           expect(out.surfaces[2]).toBe(out.surfaces[3])
         }
@@ -185,14 +184,14 @@ test('light themes keep the last two surfaces equal', () => {
 })
 
 test('tuning is deterministic and fast', () => {
-  const a = tuneTheme(MOCHA, { warmth: 3, sat: -2, bright: 4, contrast: 1 })
-  const b = tuneTheme(MOCHA, { warmth: 3, sat: -2, bright: 4, contrast: 1 })
+  const a = tuneTheme(MOCHA, { ...NO_TUNE, warmth: 3, sat: -2, bright: 4, contrast: 1 })
+  const b = tuneTheme(MOCHA, { ...NO_TUNE, warmth: 3, sat: -2, bright: 4, contrast: 1 })
 
   expect(a).toEqual(b)
   const start = Date.now()
 
   for (let i = 0; i < 75; i++) {
-    tuneTheme(THEMES[i % THEMES.length]!, { warmth: 2, sat: 2, bright: 2, contrast: 2 })
+    tuneTheme(THEMES[i % THEMES.length]!, { ...NO_TUNE, warmth: 2, sat: 2, bright: 2, contrast: 2 })
   }
   // A gallery of 75 themes in a fraction of a second.
   expect(Date.now() - start).toBeLessThan(150)
@@ -203,8 +202,8 @@ test('cleanTune and cleanTunes sanitise garbage', () => {
   expect(cleanTune('warm')).toEqual(NO_TUNE)
   expect(cleanTune(7)).toEqual(NO_TUNE)
   expect(cleanTune([1, 2, 3, 4])).toEqual(NO_TUNE)
-  expect(cleanTune({ warmth: 2.6, sat: -9, bright: 'x', contrast: Number.NaN })).toEqual({ warmth: 3, sat: -4, bright: 0, contrast: 0 })
-  expect(cleanTune({ warmth: 99, sat: Infinity, bright: -0.2, contrast: 1 })).toEqual({ warmth: 4, sat: 0, bright: 0, contrast: 1 })
+  expect(cleanTune({ warmth: 2.6, sat: -9, bright: 'x', contrast: Number.NaN })).toEqual(t({ warmth: 3, sat: -4 }))
+  expect(cleanTune({ warmth: 99, sat: Infinity, bright: -0.2, contrast: 1 })).toEqual(t({ warmth: 4, contrast: 1 }))
 
   const known = new Set(['a', 'b', 'c'])
   const raw = {
@@ -230,6 +229,6 @@ test('describeTune and the dial list read in plain words', () => {
   expect(describeTune(t({ warmth: 2, sat: 1 }))).toBe('warmer, a little more saturated')
   expect(describeTune(t({ warmth: -1 }))).toBe('a little cooler')
   expect(describeTune(t({ bright: 4, contrast: -2 }))).toBe('much lighter surfaces, softer text')
-  expect(TUNE_AXES.map(a => a.key)).toEqual(['warmth', 'sat', 'bright', 'contrast'])
-  expect(TUNE_AXES.map(a => a.label)).toEqual(['Warmth', 'Saturation', 'Surface brightness', 'Text contrast'])
+  expect(TUNE_AXES.map(a => a.key)).toEqual(['warmth', 'sat', 'bright', 'contrast', 'hue', 'tint', 'accent', 'status'])
+  expect(TUNE_AXES.map(a => a.label)).toEqual(['Warmth', 'Saturation', 'Surface brightness', 'Text contrast', 'Hue', 'Surface tint', 'Accent', 'Status colors'])
 })
