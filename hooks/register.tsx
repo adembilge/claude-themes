@@ -373,7 +373,7 @@ export const register: Register = on => {
                   </Box>
                 </Box>
                 <Box flexDirection="column" paddingX={1} backgroundColor={s1}>
-                  <Button variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
+                  <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
                     {isCurrent ? '● ' : ''}
                     {p.name} <Text dimColor>{p.note}</Text>
                   </Button>
