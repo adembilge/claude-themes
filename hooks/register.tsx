@@ -359,12 +359,15 @@ export const register: Register = on => {
               if (Svg !== undefined) {
                 // The theme name is the button, full width over its drawn card. It sits on the app's own background, so it is always readable.
                 return (
-                  <Box key={`card-${p.id}`} flexDirection="column" alignItems="stretch">
-                    <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                      {isCurrent ? '✓ ' : ''}
-                      {p.name}
-                    </Button>
+                  <Box key={`card-${p.id}`} position="relative">
                     <Svg source={cardSvg(p, isCurrent)} alt={`${p.name}, ${p.mode} theme: ${p.note}`} width={340} height={112} />
+                    {/* The name button lies over the card where its title would be; offsets are in character cells. */}
+                    <Box position="absolute" top={1} left={20}>
+                      <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
+                        {isCurrent ? '✓ ' : ''}
+                        {p.name}
+                      </Button>
+                    </Box>
                   </Box>
                 )
               }
