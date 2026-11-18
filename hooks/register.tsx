@@ -421,14 +421,16 @@ export const register: Register = on => {
                     isInteractive={isCurrent}
                   />
                 )}
-                {/* One press target per card: the name row, with the note and swatch dots inside it. */}
+                {/* One press target per card: the name row. The dots sit outside it, because a Button does not keep a Text's color. */}
                 <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
                   {isCurrent ? '✓ ' : ''}
-                  {p.name} <Text dimColor>{p.note}</Text>{' '}
-                  {dots.map((c, i) => (
-                    <Text key={`dot${i}`} color={c}>●</Text>
-                  ))}
+                  {p.name} <Text dimColor>{p.note}</Text>
                 </Button>
+                <Text>
+                  {dots.map((c, i) => (
+                    <Text key={`dot${i}`} color={c}>● </Text>
+                  ))}
+                </Text>
               </Box>
             )
           })}
