@@ -421,20 +421,13 @@ export const register: Register = on => {
                     isInteractive={isCurrent}
                   />
                 )}
-                <Box flexDirection="column">
-                  <Text weight="bold" color={v.text[0]}>
-                    {isCurrent ? '✓ ' : ''}
-                    {p.name}
-                  </Text>
-                  <Text color={v.text[2]}>{p.note}</Text>
-                </Box>
-                <Text>
-                  {dots.map((c, i) => (
-                    <Text key={`dot${i}`} color={c}>● </Text>
-                  ))}
-                </Text>
+                {/* One press target per card: the name row, with the note and swatch dots inside it. */}
                 <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                  {isCurrent ? 'Selected' : `Use ${p.name}`}
+                  {isCurrent ? '✓ ' : ''}
+                  {p.name} <Text dimColor>{p.note}</Text>{' '}
+                  {dots.map((c, i) => (
+                    <Text key={`dot${i}`} color={c}>●</Text>
+                  ))}
                 </Button>
               </Box>
             )

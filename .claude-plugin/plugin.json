@@ -1,6 +1,6 @@
 {
   "name": "deskmod",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Recolor the Claude desktop app with 16 themes in dark and light: a gallery pane with live previews and swatch dots, plus time-of-day auto mode.",
   "author": { "name": "adembilge", "url": "https://github.com/adembilge" },
   "homepage": "https://github.com/adembilge/claude-deskmod",
