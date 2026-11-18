@@ -276,6 +276,98 @@ function periodOf(cfg: AutoCfg, hour: number): 'day' | 'night' {
   return (cfg.from < cfg.to ? hour >= cfg.from && hour < cfg.to : hour >= cfg.from || hour < cfg.to) ? 'day' : 'night'
 }
 
+type BackdropStyle = 'glow' | 'grid' | 'dots' | 'waves' | 'aurora'
+
+const STYLES: { value: BackdropStyle; label: string }[] = [
+  { value: 'glow', label: 'Glow' },
+  { value: 'grid', label: 'Grid' },
+  { value: 'dots', label: 'Dots' },
+  { value: 'waves', label: 'Waves' },
+  { value: 'aurora', label: 'Aurora' },
+]
+const BLURS = [0, 8, 16, 24, 32]
+const MAX_PROJECTS = 50
+const PROJECTS_KEY = 'projects'
+
+/** A folder as one stable key: slashes forward, no trailing slash, lower case. */
+const projectKey = (cwd: string): string => cwd.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
+
+/** The last part of a folder's path, for showing. */
+const folderName = (cwd: string): string => cwd.replace(/\\/g, '/').replace(/\/+$/, '').split('/').pop() || cwd
+
+/**
+ * A scene behind the conversation, drawn in the theme's own colors. It fills the window (`slice`), and
+ * the app frosts its panels over it. Everything but the glow is a scene; the glow is a plain gradient.
+ */
+function sceneSvg(p: Theme, style: Exclude<BackdropStyle, 'glow'>): string {
+  const [s0, s1] = p.surfaces
+  const head = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">'
+  const base = `<defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s1}"/><stop offset="1" stop-color="${s0}"/></linearGradient></defs><rect width="1600" height="1000" fill="url(#b)"/>`
+  let art = ''
+
+  if (style === 'grid') {
+    const lines: string[] = []
+
+    for (let x = 0; x <= 1600; x += 64) {
+      lines.push(`M${x} 0V1000`)
+    }
+
+    for (let y = 0; y <= 1000; y += 64) {
+      lines.push(`M0 ${y}H1600`)
+    }
+    art = `<path d="${lines.join('')}" stroke="${p.accent}" stroke-opacity="0.17" stroke-width="1.4" fill="none"/>`
+  } else if (style === 'dots') {
+    const dots: string[] = []
+
+    for (let y = 32; y < 1000; y += 48) {
+      for (let x = 32; x < 1600; x += 48) {
+        dots.push(`M${x} ${y}h0.1`)
+      }
+    }
+    art = `<path d="${dots.join('')}" stroke="${p.accent}" stroke-opacity="0.4" stroke-width="5" stroke-linecap="round" fill="none"/>`
+  } else if (style === 'waves') {
+    // Each layer repeats every 800 and slides one period, so the loop has no seam.
+    const wave = (y: number, amp: number, color: string, op: number, dur: number) => {
+      let d = `M-800 ${y}`
+
+      for (let i = 0; i < 9; i++) {
+        d += `Q${-800 + i * 400 + 200} ${y + (i % 2 === 0 ? -amp : amp)} ${-800 + (i + 1) * 400} ${y}`
+      }
+
+      return `<path d="${d}V1000H-800Z" fill="${color}" fill-opacity="${op}"><animateTransform attributeName="transform" type="translate" values="0 0;-800 0" dur="${dur}s" repeatCount="indefinite"/></path>`
+    }
+
+    art = wave(640, 70, p.accent, 0.1, 38) + wave(740, 55, p.roles.pro, 0.1, 52) + wave(840, 40, p.accent, 0.14, 70)
+  } else {
+    const blob = (cx: number, cy: number, rx: number, ry: number, color: string, op: number, dx: number, dur: number) =>
+      `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${color}" fill-opacity="${op}"><animate attributeName="cx" values="${cx};${cx + dx};${cx}" dur="${dur}s" repeatCount="indefinite"/></ellipse>`
+
+    art =
+      '<defs><filter id="f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="90"/></filter></defs><g filter="url(#f)">' +
+      blob(420, 300, 460, 170, p.accent, 0.34, 360, 24) +
+      blob(1150, 520, 420, 190, p.roles.pro, 0.28, -380, 31) +
+      blob(800, 820, 520, 150, p.roles.success, 0.18, 300, 40) +
+      '</g>'
+  }
+
+  return `${head}${base}${art}</svg>`
+}
+
+function cleanProjects(raw: unknown, known: Set<string>): Record<string, string> {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    return {}
+  }
+  const out: [string, string][] = []
+
+  for (const [k, v] of Object.entries(raw)) {
+    if (k !== '' && typeof v === 'string' && known.has(v)) {
+      out.push([k, v])
+    }
+  }
+
+  return Object.fromEntries(out.slice(-MAX_PROJECTS))
+}
+
 type Tab = 'dark' | 'light' | 'favorites' | 'maker' | 'settings'
 
 type Draft = { name: string; accent: string; mode: Mode }
@@ -290,13 +382,26 @@ type State = {
   codePair: boolean
   auto: AutoCfg
   autoPeriod: string
+  backdropStyle: BackdropStyle
+  glassBlur: number
+  cwd: string
+  projects: Record<string, string>
+  prevId: string
   custom: Theme[]
   draft: Draft
   msg: string
   importText: string
 }
 
-type Prefs = { favs: string[]; backdrop: boolean; highContrast: boolean; codePair: boolean; auto: AutoCfg }
+type Prefs = {
+  favs: string[]
+  backdrop: boolean
+  highContrast: boolean
+  codePair: boolean
+  auto: AutoCfg
+  backdropStyle: BackdropStyle
+  glassBlur: number
+}
 
 const MAX_FAVS = 12
 const PREFS_KEY = 'prefs'
@@ -314,12 +419,17 @@ const current = atom(
     codePair: true,
     auto: DEFAULT_AUTO,
     autoPeriod: '',
+    backdropStyle: 'glow',
+    glassBlur: 16,
+    cwd: '',
+    projects: {},
+    prevId: '',
     custom: [],
     draft: { name: '', accent: '#d98a4e', mode: 'dark' },
     msg: '',
     importText: '',
   } as State,
-  { shape: 'current-6' },
+  { shape: 'current-7' },
 )
 
 /** Known theme ids only, no repeats, at most `max`: anything else a saved value held is dropped. */
@@ -343,6 +453,8 @@ function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
     backdrop: r.backdrop !== false,
     highContrast: r.highContrast === true,
     codePair: r.codePair !== false,
+    backdropStyle: STYLES.some(x => x.value === r.backdropStyle) ? (r.backdropStyle as BackdropStyle) : 'glow',
+    glassBlur: BLURS.includes(r.glassBlur as number) ? (r.glassBlur as number) : 16,
     auto: {
       on: a.on === true,
       day: id(a.day, DEFAULT_AUTO.day),
@@ -653,7 +765,7 @@ function parseCode(text: string): { theme: Theme } | { error: string } {
 async function savePrefs($: any): Promise<void> {
   const s = await read($, current)
 
-  await $.store.set(PREFS_KEY, { favs: s.favs, backdrop: s.backdrop, highContrast: s.highContrast, codePair: s.codePair, auto: s.auto })
+  await $.store.set(PREFS_KEY, { favs: s.favs, backdrop: s.backdrop, highContrast: s.highContrast, codePair: s.codePair, auto: s.auto, backdropStyle: s.backdropStyle, glassBlur: s.glassBlur })
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -685,7 +797,13 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
 
     // Nothing is reported if no client draws themes yet; the theme still stands for one that attaches.
     try {
-      await $.theme.set(before.backdrop ? { ...chosen, backdrop: backdropFor(p) } : chosen)
+      const backdrop = !before.backdrop
+        ? undefined
+        : before.backdropStyle === 'glow'
+          ? backdropFor(p)
+          : { scene: `style-${before.backdropStyle}`, glass: { blur: before.glassBlur } }
+
+      await $.theme.set(backdrop === undefined ? chosen : ({ ...chosen, backdrop } as ThemeSetArgs))
     } catch {
       // A surface that refuses the backdrop still gets the colors.
       await $.theme.set(chosen)
@@ -694,7 +812,14 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
     // A palette that cannot be built is skipped; the current look stays.
     return
   }
-  await update($, current, (s: State) => ({ ...s, id }))
+  await update($, current, (s: State) => ({ ...s, id, prevId: s.id !== id ? s.id : s.prevId }))
+
+  // A scene is drawn from the theme's colors, so it is drawn again for the new one.
+  try {
+    $.ui.invalidate('ui.render')
+  } catch {
+    // nothing is drawn yet
+  }
 
   if (save) {
     await $.store.set(STORE_KEY, id)
@@ -709,6 +834,60 @@ async function toggleFavorite($: any, id: string): Promise<void> {
     favs: s.favs.includes(id) ? s.favs.filter(f => f !== id) : [id, ...s.favs].slice(0, MAX_FAVS),
   }))
   await savePrefs($)
+}
+
+/** The person's pick for this folder, or null for none. Only the id is kept, under the folder's key. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function setProject($: any, id: string | null): Promise<void> {
+  const s = await read($, current)
+  const key = projectKey(s.cwd)
+
+  if (key === '') {
+    return
+  }
+  const next: Record<string, string> = { ...s.projects }
+
+  if (id === null) {
+    delete next[key]
+  } else {
+    delete next[key]
+    next[key] = id
+
+    // The oldest pick makes room.
+    for (const old of Object.keys(next).slice(0, Math.max(0, Object.keys(next).length - MAX_PROJECTS))) {
+      delete next[old]
+    }
+  }
+  await patch($, { projects: next })
+  await $.store.set(PROJECTS_KEY, next)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function setBackdrop($: any, change: Partial<Pick<State, 'backdropStyle' | 'glassBlur'>>): Promise<void> {
+  const s = await read($, current)
+
+  await patch($, change)
+  await apply($, s.id, false)
+  await savePrefs($)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function undoTheme($: any): Promise<void> {
+  const s = await read($, current)
+
+  if (s.prevId !== '' && themeById(s.prevId, s.custom) !== undefined) {
+    await apply($, s.prevId, true)
+  }
+}
+
+// A line on screen; where there is no screen to show it on, nothing happens.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function say($: any, text: string): void {
+  try {
+    $.ui.toast(text)
+  } catch {
+    // no screen
+  }
 }
 
 type Flag = 'backdrop' | 'codePair' | 'highContrast'
@@ -730,6 +909,11 @@ async function runAuto($: any, force: boolean): Promise<void> {
   if (!s.auto.on) {
     return
   }
+
+  // A theme chosen for this folder is not replaced by the clock.
+  if (themeById(s.projects[projectKey(s.cwd)] ?? '', s.custom) !== undefined) {
+    return
+  }
   const period = periodOf(s.auto, new Date().getHours())
 
   if (!force && s.autoPeriod === period) {
@@ -738,8 +922,15 @@ async function runAuto($: any, force: boolean): Promise<void> {
   await patch($, { autoPeriod: period })
   const id = period === 'day' ? s.auto.day : s.auto.night
 
-  if (themeById(id, s.custom) !== undefined && id !== s.id) {
+  const next = themeById(id, s.custom)
+
+  if (next !== undefined && id !== s.id) {
     await apply($, id, false)
+
+    // Only a switch the clock made on its own is announced, not one the person just asked for.
+    if (!force) {
+      say($, `Day and night: switched to ${next.name}.`)
+    }
   }
 }
 
@@ -811,6 +1002,11 @@ async function removeCustom($: any, id: string): Promise<void> {
   await saveCustom($)
   await savePrefs($)
 
+  const kept = Object.fromEntries(Object.entries((await read($, current)).projects).filter(([, v]) => v !== id))
+
+  await patch($, { projects: kept })
+  await $.store.set(PROJECTS_KEY, kept)
+
   if (s.id === id) {
     await apply($, DEFAULT_THEME, true)
   }
@@ -851,9 +1047,23 @@ export const register: Register = on => {
     const id = typeof saved === 'string' && known.has(saved) ? saved : DEFAULT_THEME
 
     // Your own themes, favorites and the backdrop switch come back before the theme is drawn.
-    await patch($, { ...cleanPrefs(await $.store.get(PREFS_KEY), known), custom })
+    await patch($, {
+      ...cleanPrefs(await $.store.get(PREFS_KEY), known),
+      custom,
+      cwd: typeof e.cwd === 'string' ? e.cwd : '',
+      projects: cleanProjects(await $.store.get(PROJECTS_KEY), known),
+    })
     await apply($, id, false)
     await runAuto($, true)
+
+    // This folder's own theme comes last, so it wins over the saved one and the clock.
+    const here = await read($, current)
+    const mine = themeById(here.projects[projectKey(here.cwd)] ?? '', here.custom)
+
+    if (mine !== undefined && mine.id !== here.id) {
+      await apply($, mine.id, false)
+      say($, `${folderName(here.cwd)}: using ${mine.name}.`)
+    }
 
     return next(e)
   })
@@ -867,6 +1077,20 @@ export const register: Register = on => {
     }
 
     return next(e)
+  })
+
+  // The scene behind the conversation, in the current theme's colors. Another mod's scene is left alone.
+  on('ui.render', { component: 'Backdrop' }, async ($, e, next) => {
+    if (e.props.plugin !== 'desktop-themes' || (e.surface !== 'desktop' && e.surface !== 'mobile')) {
+      return next(e)
+    }
+    const now = await read($, current)
+    const p = themeById(now.id, now.custom) ?? DEFAULT
+    const style = STYLES.find(x => x.value === now.backdropStyle && x.value !== 'glow')?.value ?? 'grid'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { Svg } = $.ui.resolve(e) as any
+
+    return <Svg source={sceneSvg(p, style as Exclude<BackdropStyle, 'glow'>)} alt={`${p.name} backdrop`} />
   })
 
   // The command is the person's own ask, so the pane is placed at any width.
@@ -902,6 +1126,7 @@ export const register: Register = on => {
     const all = [...THEMES, ...now.custom]
     const byId = (id: string) => themeById(id, now.custom)
     const cur = byId(now.id) ?? DEFAULT
+    const prev = now.prevId === '' || now.prevId === now.id ? undefined : byId(now.prevId)
     const [c0, c1, c2] = cur.surfaces
     const tab: Tab = now.tab === 'light' || now.tab === 'settings' || now.tab === 'favorites' || now.tab === 'maker' ? now.tab : 'dark'
     const q = now.q.trim().toLowerCase()
@@ -1180,9 +1405,55 @@ export const register: Register = on => {
         <Select key={key} label={label} options={options} value={value} onSelect={set} />
       )
 
+      const styleControls =
+        !now.backdrop || Select === undefined ? null : (
+          <Box key="backdrop-style" flexDirection="column" gap={1}>
+            {picker('backdrop-style', 'Backdrop style', STYLES, now.backdropStyle, async v => {
+              await setBackdrop($, { backdropStyle: v as BackdropStyle })
+            })}
+            {now.backdropStyle === 'glow'
+              ? null
+              : picker('glass-blur', 'Panel blur', BLURS.map(b => ({ value: String(b), label: b === 0 ? 'None' : String(b) })), String(now.glassBlur), async v => {
+                  await setBackdrop($, { glassBlur: Number(v) })
+                })}
+          </Box>
+        )
+      const folder = projectKey(now.cwd)
+      const mineHere = folder === '' ? undefined : themeById(now.projects[folder] ?? '', now.custom)
+      const projectBox =
+        folder === '' ? null : (
+          <Box key="project" flexDirection="column" gap={1}>
+            <Text weight="bold">This project</Text>
+            <Text dimColor>
+              {`${folderName(now.cwd)}: ${mineHere === undefined ? 'no theme of its own.' : `uses ${mineHere.name} whenever a session starts here.`}`}
+            </Text>
+            <Box gap={1} flexWrap="wrap">
+              <Button
+                key="project-use"
+                onPress={async () => {
+                  await setProject($, now.id)
+                }}
+              >
+                {`Use ${cur.name} here`}
+              </Button>
+              {mineHere === undefined ? null : (
+                <Button
+                  key="project-clear"
+                  onPress={async () => {
+                    await setProject($, null)
+                  }}
+                >
+                  Stop using one here
+                </Button>
+              )}
+            </Box>
+          </Box>
+        )
+
       return (
         <Box flexDirection="column" gap={1}>
           {flag('backdrop-toggle', 'backdrop', 'Backdrop', "A soft glow of the theme's accent behind the conversation. Off keeps the app's plain background.", now.backdrop)}
+          {styleControls}
           {flag('code-toggle', 'codePair', 'Code colors', 'Pairs the code highlighting in replies with the theme where the app has a matching one.', now.codePair)}
           {flag('contrast-toggle', 'highContrast', 'High contrast', 'Stronger borders and focus rings, useful on the light themes.', now.highContrast)}
 
@@ -1220,6 +1491,8 @@ export const register: Register = on => {
             )}
           </Box>
 
+          {projectBox}
+
           <Text dimColor>
             Documents and source code: <Link href={REPO_URL}>{REPO_URL}</Link>
           </Text>
@@ -1238,6 +1511,19 @@ export const register: Register = on => {
         </Box>
 
         {guard('The current theme', () => hero)}
+
+        {prev === undefined ? null : (
+          <Box>
+            <Button
+              key="undo"
+              onPress={async () => {
+                await undoTheme($)
+              }}
+            >
+              {`↶ Undo: back to ${prev.name}`}
+            </Button>
+          </Box>
+        )}
 
         <Box gap={1} flexWrap="wrap">
           <Button key="tab-dark" variant={tab === 'dark' ? 'primary' : 'secondary'} onPress={goTab('dark')}>

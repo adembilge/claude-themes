@@ -17,12 +17,12 @@ const PANE = {
 const SURFACES = ['terminal', 'desktop', 'vscode', 'mobile'] as const
 
 // The host's answers, as a fresh session sees them. `prefs` and `theme` are what the store holds.
-function host(on: any, saved: { prefs?: unknown; theme?: unknown; custom?: unknown } = {}, calls: string[] = []) {
+function host(on: any, saved: { prefs?: unknown; theme?: unknown; custom?: unknown; projects?: unknown } = {}, calls: string[] = []) {
   on('command.register', () => ({ value: { command: 'claude-themes' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
   on('store.get', (_: unknown, e: { key: string }) => ({
-    value: e.key === 'prefs' ? saved.prefs : e.key === 'theme' ? saved.theme : e.key === 'custom' ? saved.custom : undefined,
+    value: e.key === 'prefs' ? saved.prefs : e.key === 'theme' ? saved.theme : e.key === 'custom' ? saved.custom : e.key === 'projects' ? saved.projects : undefined,
   }))
   on('store.set', () => ({ value: undefined }))
   on('theme.set', (_: unknown, e: unknown) => {
@@ -321,5 +321,90 @@ test('corrupted saved settings fall back to the defaults', async ($, on) => {
   expect(await ui.find({ type: 'Button', text: /Day and night: off/ })).toBeDefined()
   expect(await ui.find({ type: 'Button', text: /High contrast: off/ })).toBeDefined()
   expect(await ui.find({ type: 'Button', text: /Code colors: on/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('backdrop styles and panel blur reach the theme, and the scene is drawn', async ($, on) => {
+  const calls: string[] = []
+  host(on, {}, calls)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-settings' })
+  expect(await ui.find({ key: 'backdrop-style' })).toBeDefined()
+  // The glow is a plain gradient and has no blur to set.
+  expect(await ui.find({ key: 'glass-blur' })).toBeUndefined()
+
+  await ui.select({ key: 'backdrop-style', value: 'waves' })
+  expect(calls[calls.length - 1]).toContain('"scene":"style-waves"')
+  expect(calls[calls.length - 1]).toContain('"blur":16')
+  expect(await ui.find({ key: 'glass-blur' })).toBeDefined()
+
+  await ui.select({ key: 'glass-blur', value: '24' })
+  expect(calls[calls.length - 1]).toContain('"blur":24')
+
+  await ui.select({ key: 'backdrop-style', value: 'glow' })
+  expect(calls[calls.length - 1]).toContain('"gradient"')
+  expect(calls[calls.length - 1]).not.toContain('"scene"')
+
+  // Switched off, there is no backdrop at all.
+  await ui.press({ key: 'backdrop-toggle' })
+  expect(calls[calls.length - 1]).not.toContain('"backdrop"')
+  expect(await ui.find({ key: 'backdrop-style' })).toBeUndefined()
+  await ui.unmount()
+
+  // The scene itself is an Svg in the current theme's colors, for each style.
+  for (const style of ['grid', 'dots', 'waves', 'aurora']) {
+    const scene = await $.ui.mount({
+      plugin: 'desktop-themes',
+      component: 'Backdrop',
+      requestId: 'backdrop',
+      surface: 'desktop',
+      props: { scene: `style-${style}`, plugin: 'desktop-themes', glass: { blur: 16, opacity: 0.6 } },
+    } as never)
+
+    expect(await scene.find({ type: 'Svg' })).toBeDefined()
+    await scene.unmount()
+  }
+})
+
+test('a folder keeps its own theme, and the clock does not replace it', async ($, on) => {
+  host(on, { projects: { '/work/app': 'dracula', '/work/gone': 'not-a-theme' } })
+  await $.session.start({ cwd: '/Work/App/', surface: 'desktop', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  // Folder keys ignore case and the trailing slash.
+  expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
+  await ui.press({ key: 'tab-settings' })
+  expect(await ui.find({ type: 'Text', text: /App: uses Dracula/ })).toBeDefined()
+  expect(await ui.find({ key: 'project-clear' })).toBeDefined()
+
+  await ui.press({ key: 'project-clear' })
+  expect(await ui.find({ type: 'Text', text: /no theme of its own/ })).toBeDefined()
+  expect(await ui.find({ key: 'project-clear' })).toBeUndefined()
+
+  await ui.press({ key: 'project-use' })
+  expect(await ui.find({ type: 'Text', text: /uses Dracula/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('undo goes back one theme, and back again', async ($, on) => {
+  host(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  expect(await ui.find({ key: 'undo' })).toBeUndefined()
+  await ui.press({ key: 'pick-all-dracula' })
+  expect(await ui.find({ key: 'undo' })).toBeDefined()
+  await ui.press({ key: 'pick-all-nord' })
+  expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
+
+  await ui.press({ key: 'undo' })
+  expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
+  await ui.press({ key: 'undo' })
+  expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
   await ui.unmount()
 })
