@@ -386,7 +386,6 @@ type State = {
   glassBlur: number
   cwd: string
   projects: Record<string, string>
-  prevId: string
   custom: Theme[]
   draft: Draft
   msg: string
@@ -423,7 +422,6 @@ const current = atom(
     glassBlur: 16,
     cwd: '',
     projects: {},
-    prevId: '',
     custom: [],
     draft: { name: '', accent: '#d98a4e', mode: 'dark' },
     msg: '',
@@ -812,7 +810,7 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
     // A palette that cannot be built is skipped; the current look stays.
     return
   }
-  await update($, current, (s: State) => ({ ...s, id, prevId: s.id !== id ? s.id : s.prevId }))
+  await update($, current, (s: State) => ({ ...s, id }))
 
   // A scene is drawn from the theme's colors, so it is drawn again for the new one.
   try {
@@ -869,15 +867,6 @@ async function setBackdrop($: any, change: Partial<Pick<State, 'backdropStyle' |
   await patch($, change)
   await apply($, s.id, false)
   await savePrefs($)
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function undoTheme($: any): Promise<void> {
-  const s = await read($, current)
-
-  if (s.prevId !== '' && themeById(s.prevId, s.custom) !== undefined) {
-    await apply($, s.prevId, true)
-  }
 }
 
 // A line on screen; where there is no screen to show it on, nothing happens.
@@ -1126,7 +1115,6 @@ export const register: Register = on => {
     const all = [...THEMES, ...now.custom]
     const byId = (id: string) => themeById(id, now.custom)
     const cur = byId(now.id) ?? DEFAULT
-    const prev = now.prevId === '' || now.prevId === now.id ? undefined : byId(now.prevId)
     const [c0, c1, c2] = cur.surfaces
     const tab: Tab = now.tab === 'light' || now.tab === 'settings' || now.tab === 'favorites' || now.tab === 'maker' ? now.tab : 'dark'
     const q = now.q.trim().toLowerCase()
@@ -1511,19 +1499,6 @@ export const register: Register = on => {
         </Box>
 
         {guard('The current theme', () => hero)}
-
-        {prev === undefined ? null : (
-          <Box>
-            <Button
-              key="undo"
-              onPress={async () => {
-                await undoTheme($)
-              }}
-            >
-              {`↶ Undo: back to ${prev.name}`}
-            </Button>
-          </Box>
-        )}
 
         <Box gap={1} flexWrap="wrap">
           <Button key="tab-dark" variant={tab === 'dark' ? 'primary' : 'secondary'} onPress={goTab('dark')}>

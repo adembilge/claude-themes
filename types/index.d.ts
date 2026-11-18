@@ -25,7 +25,6 @@ export type ThemeState = {
   glassBlur: number
   cwd: string
   projects: Record<string, ThemeId>
-  prevId: string
   custom: CustomTheme[]
   draft: { name: string; accent: string; mode: 'dark' | 'light' }
   msg: string

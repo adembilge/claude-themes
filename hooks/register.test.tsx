@@ -389,22 +389,3 @@ test('a folder keeps its own theme, and the clock does not replace it', async ($
   expect(await ui.find({ type: 'Text', text: /uses Dracula/ })).toBeDefined()
   await ui.unmount()
 })
-
-test('undo goes back one theme, and back again', async ($, on) => {
-  host(on)
-  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
-
-  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-
-  expect(await ui.find({ key: 'undo' })).toBeUndefined()
-  await ui.press({ key: 'pick-all-dracula' })
-  expect(await ui.find({ key: 'undo' })).toBeDefined()
-  await ui.press({ key: 'pick-all-nord' })
-  expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
-
-  await ui.press({ key: 'undo' })
-  expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
-  await ui.press({ key: 'undo' })
-  expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
-  await ui.unmount()
-})
