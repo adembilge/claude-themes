@@ -343,9 +343,12 @@ export const register: Register = on => {
                   )}
                   <Box flexDirection="column" alignItems="flex-start" flexGrow={1}>
                     <Box alignItems="center" gap={1} flexWrap="wrap">
-                      <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                        {isCurrent ? '✓ ' : ''}
-                        {p.name}
+                      {/* Drawn in the row's own colors: a themed button would take the app's current theme and fade on a row of the other mode. */}
+                      <Button key={`pick-${p.id}`} plain label={p.name} onPress={pick(p.id)}>
+                        <Text weight="bold" color={isCurrent ? p.accent : p.text[0]}>
+                          {isCurrent ? '✓ ' : ''}
+                          {p.name}
+                        </Text>
                       </Button>
                       {Svg === undefined ? (
                         <Text>
