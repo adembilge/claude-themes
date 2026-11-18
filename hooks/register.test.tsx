@@ -1,9 +1,9 @@
 import { expect, test } from 'claude-code/testing'
 
 const PANE = {
-  plugin: 'deskmod',
+  plugin: 'desktop-themes',
   component: 'Pane',
-  requestId: 'deskmod',
+  requestId: 'desktop-themes',
   props: {
     title: 'Themes',
     isFocused: false,
@@ -15,7 +15,7 @@ const PANE = {
 } as const
 
 test('the gallery draws a card for every theme, on every surface', async ($, on) => {
-  on('command.register', () => ({ value: { command: 'claude-deskmod' } }))
+  on('command.register', () => ({ value: { command: 'claude-themes' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('store.get', () => ({ value: undefined }))
@@ -29,6 +29,9 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
     // A dark and a light theme are both listed, and each is one press.
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
     expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeDefined()
+
+    // The dock ends with a link to the docs and source.
+    expect(await ui.find({ type: 'Link', text: /github\.com\/adembilge\/claude-themes/ })).toBeDefined()
 
     // The terminal has no Svg and keeps a preview built from boxes.
     if (surface === 'terminal') {

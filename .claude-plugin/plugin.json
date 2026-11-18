@@ -1,10 +1,10 @@
 {
-  "name": "deskmod",
-  "version": "2.0.0",
+  "name": "desktop-themes",
+  "version": "2.1.0",
   "description": "Recolor the Claude desktop app with 16 well-known dark and light UI themes (Catppuccin, Dracula, Nord, Tokyo Night, Gruvbox and more) from a gallery pane with live previews.",
   "author": { "name": "adembilge", "url": "https://github.com/adembilge" },
-  "homepage": "https://github.com/adembilge/claude-deskmod",
-  "repository": "https://github.com/adembilge/claude-deskmod",
+  "homepage": "https://github.com/adembilge/claude-themes",
+  "repository": "https://github.com/adembilge/claude-themes",
   "license": "MIT",
   "keywords": ["theme", "desktop", "mod", "colors"],
   "types": "./types/index.d.ts"

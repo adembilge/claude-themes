@@ -3,7 +3,8 @@ import type { Register, ThemeSetArgs } from 'claude-code'
 
 import { makeColors } from './make-colors.js'
 
-const PANE = 'deskmod'
+const PANE = 'desktop-themes'
+const REPO_URL = 'https://github.com/adembilge/claude-themes'
 const STORE_KEY = 'theme'
 const DEFAULT_THEME = 'catppuccin-mocha'
 
@@ -159,7 +160,7 @@ const idOf = (text: string): string =>
 type State = { id: string }
 
 // Change the tag if the value's shape changes: it declines what an earlier version stored.
-const current = atom({ plugin: 'deskmod', key: 'current' } as const, { id: DEFAULT_THEME } as State, {
+const current = atom({ plugin: 'desktop-themes', key: 'current' } as const, { id: DEFAULT_THEME } as State, {
   shape: 'current-3',
 })
 
@@ -236,10 +237,10 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
-    // Registered first so a failure while restoring the theme cannot leave /claude-deskmod missing.
+    // Registered first so a failure while restoring the theme cannot leave /claude-themes missing.
     await $.command.register({
-      name: 'claude-deskmod',
-      description: 'Open the theme gallery: /claude-deskmod, or /claude-deskmod <name> to switch directly',
+      name: 'claude-themes',
+      description: 'Open the theme gallery: /claude-themes, or /claude-themes <name> to switch directly',
       argumentHint: '[theme name]',
       immediate: true,
     })
@@ -252,7 +253,7 @@ export const register: Register = on => {
   })
 
   // The command is the person's own ask, so the pane is placed at any width.
-  on('command.run', { command: 'claude-deskmod' }, async ($, e) => {
+  on('command.run', { command: 'claude-themes' }, async ($, e) => {
     const want = idOf(e.args)
 
     if (want !== '') {
@@ -271,7 +272,7 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text, Button } = $.ui.resolve(e)
+    const { Box, Text, Button, Link } = $.ui.resolve(e)
     // The terminal has no Svg; it keeps a preview and dots built from text.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Svg = e.surface === 'terminal' ? undefined : ($.ui.resolve(e) as any).Svg
@@ -286,7 +287,7 @@ export const register: Register = on => {
     return (
       <Box flexDirection="column" gap={1} paddingX={1}>
         {Svg === undefined ? null : (
-          <Svg source={bannerSvg(cur)} alt="Animated band in the current theme's colors" width={264} height={30} isInteractive />
+          <Svg source={bannerSvg(cur)} alt="Animated band in the current theme's colors" width={264} height={30} />
         )}
         <Box flexDirection="column">
           <Text weight="bold" size="heading">Themes</Text>
@@ -313,7 +314,7 @@ export const register: Register = on => {
               </Box>
             </Box>
           ) : (
-            <Svg source={previewSvg(cur, true)} alt={`${cur.name} preview`} width={264} height={132} isInteractive />
+            <Svg source={previewSvg(cur, true)} alt={`${cur.name} preview`} width={264} height={132} />
           )}
           <Text weight="bold" color={cur.text[0]}>Now: {cur.name} ({cur.mode})</Text>
         </Box>
@@ -363,6 +364,10 @@ export const register: Register = on => {
             })}
           </Box>
         ))}
+
+        <Text dimColor>
+          Documents and source code: <Link href={REPO_URL}>{REPO_URL}</Link>
+        </Text>
       </Box>
     )
   })

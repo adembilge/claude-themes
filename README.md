@@ -1,12 +1,12 @@
-# claude-deskmod
+# claude-themes
 
 A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 16 well-known UI themes, 9 dark and 7 light, and a gallery pane where you see each one before you pick it.
 
-## What you get (v2.0.0)
+## What you get (v2.1.0)
 
-- **`/claude-deskmod` opens a gallery pane.** The top shows the current theme as a drawn app preview under a slow animated band in its colors. Below it, themes are grouped into dark and light; each row has a small preview, the name, round color dots and a short note.
+- **`/claude-themes` opens a gallery pane.** The top shows the current theme as a drawn app preview under a slow animated band in its colors. Below it, themes are grouped into dark and light; each row has a small preview, the name, round color dots and a short note.
 - **A theme sets its own mode.** Pick a dark theme and the app goes dark; pick a light theme and it goes light. There are no separate Dark, Light or Auto buttons.
-- **`/claude-deskmod <name>`** switches directly, for example `/claude-deskmod dracula`.
+- **`/claude-themes <name>`** switches directly, for example `/claude-themes dracula`.
 - Your choice is saved.
 
 | Dark | Light |
@@ -28,15 +28,15 @@ The colors are the published palettes of each theme, with a few small shifts to 
 In Claude Code:
 
 ```
-/plugin marketplace add adembilge/claude-deskmod
-/plugin install deskmod@claude-deskmod
+/plugin marketplace add adembilge/claude-themes
+/plugin install desktop-themes@claude-themes
 ```
 
-Then restart the session and type `/claude-deskmod`.
+Then restart the session and type `/claude-themes`.
 
 ## Status
 
-Tested on Windows only. Upgrading from 1.x: the saved theme resets to the default once, and the time-of-day Auto mode is gone (pick a dark or light theme instead). Planned next: a backdrop for each theme and a theme maker.
+Tested on Windows only. Renamed from `claude-deskmod` in 2.1.0 (the plugin is now `desktop-themes`, the marketplace and command `claude-themes`; the saved theme resets to the default once). Upgrading from 1.x: the saved theme resets to the default once, and the time-of-day Auto mode is gone (pick a dark or light theme instead). Planned next: a backdrop for each theme and a theme maker.
 
 ## Develop
 
