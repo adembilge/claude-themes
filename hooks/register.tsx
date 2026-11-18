@@ -339,7 +339,7 @@ export const register: Register = on => {
                   hover={{ borderColor: p.accent, backgroundColor: s1 }}
                 >
                   {Svg === undefined ? null : (
-                    <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={96} height={48} />
+                    <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={128} height={64} />
                   )}
                   <Box flexDirection="column" alignItems="center" flexGrow={1}>
                     {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so the name button sits on a plate of that same theme: it stays readable on a row of the other mode. */}
