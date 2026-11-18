@@ -1,8 +1,8 @@
 # claude-themes
 
-Recolor the whole Claude desktop app, not just the chat area. 64 themes, a gallery where you preview each one before you pick it, a theme maker, eight tuning dials, and import and export for the tools you already use.
+Recolor the whole Claude desktop app, not just the chat area. 60 themes, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.4.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.5.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -24,36 +24,33 @@ Restart the session, then type `/claude-themes`.
 
 ## Themes
 
-64 themes: 39 classics and 25 more from popular families (Catppuccin, Nightfox, Kanagawa, Gruvbox and Everforest variants, Rosé Pine Moon, Tokyo Night Storm, GitHub Dark Dimmed and others). Palettes are the published ones, with small shifts to the lightest surface and the muted text where the app would otherwise refuse them (it rejects text that is too faint).
+60 themes: 39 classics and 21 more from popular families (Catppuccin, Nightfox, Kanagawa, Gruvbox and Everforest variants, Rosé Pine Moon, GitHub Dark Dimmed and others). Palettes are the published ones, with small shifts to the lightest surface and the muted text where the app would otherwise refuse them (it rejects text that is too faint).
 
 | Dark | Light |
 |---|---|
-| Catppuccin Mocha (default), Frappé, Macchiato | Catppuccin Latte |
+| Catppuccin Mocha (default) | Catppuccin Latte |
 | Espresso, Dracula, Nord, Monokai | GitHub Light, Solarized Light, Xcode, Notion |
-| Tokyo Night, Tokyo Night Storm | Tokyo Night Day, One Light |
+| Tokyo Night | Tokyo Night Day, One Light |
 | Gruvbox Dark, Gruvbox Dark Hard | Gruvbox Light, Gruvbox Light Hard |
 | One Dark, Rosé Pine, Rosé Pine Moon | Rosé Pine Dawn, Ayu Light |
 | Solarized Dark, GitHub Dark, GitHub Dark Dimmed | Everforest Light, Everforest Light Hard |
 | Ayu Dark, Ayu Mirage, Everforest, Everforest Hard | Dawnfox, Dayfox, Kanagawa Lotus |
 | Material Ocean, Kanagawa Wave, Kanagawa Dragon | Oceanic Next Light, Bluloco Light |
-| Nightfox, Carbonfox, Synthwave, Matrix, Night Owl | Winter is Coming Light, Night Owl Light |
+| Nightfox, Carbonfox, Synthwave, Matrix, Night Owl | Night Owl Light |
 | Cobalt2, Palenight, Poimandres, Vesper, Houston | |
 | Absolutely, Linear, Lobster, OG, Oscurange, Raycast, Sentry, Temple, Vercel, VS Code Plus | |
 
 ## Make your own
 
 - **Maker.** Type a name, an accent color and a dark or light base, and see the palette before you save. Colors the app would refuse are adjusted for you, and the tab lists what it changed.
-- **Tuning.** Eight dials per theme, each moved with `-` and `+`: warmth, saturation, surface brightness, text contrast, hue, surface tint, accent and status colors. Every result still has to pass the app's checks, so a dial stops where the palette would break.
-- **Backdrop** (Appearance tab). Nine smooth color fields drawn in the theme's own colors (Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, Halo), with a Strength switch (Subtle, Normal, Bold) and a Color switch (accent or second color).
+- **Tuning.** Seven dials per theme, each moved with `-` and `+`: warmth, saturation, surface brightness, text contrast, surface tint, accent and status colors. Every result still has to pass the app's checks, so a dial stops where the palette would break.
+- **Backdrop** (Appearance tab). Nine smooth color fields drawn in the theme's own colors (Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, Halo), with a Strength switch (Subtle, Normal, Bold).
 - **Day and night.** Pick a day theme, a night theme and the hours, or switch to **Follow system** so the app uses the night theme in dark mode and the day theme in light mode.
 - **Per folder.** Tie the current theme to the folder you are in (Settings tab); a session started there uses it.
-- **Readability** (Appearance tab). High contrast for stronger borders and focus rings, and code colors matched to the theme, plus options that apply to every theme:
-  - **Color-blind safe status colors**: red-green or blue-yellow sets that keep danger, success, warning and purple apart (an approximation, not a simulation).
+- **Readability** (Appearance tab). High contrast for stronger borders and focus rings, and code colors matched to the theme, plus two options that apply to every theme:
   - **Soften glare**: dims the main text on dark themes and the lightest surfaces on light ones.
   - **Night comfort**: a warmer cast with less blue, optionally only at night by the Day and night hours.
-  - **Muted text**: lifts the faintest text (hints, timestamps) to a readable contrast.
-  - **Accent visibility**: makes the accent, used for focus rings and links, stand out from the page.
-  Every combination is still checked against the app's rules, and an option backs off by itself where a theme could not take it. One button resets them. Border strength cannot be set apart from High contrast, because the app derives borders itself.
+  Both are still checked against the app's rules, and an option backs off by itself where a theme could not take it. One button resets them.
 
 ## Import
 
@@ -67,8 +64,6 @@ Paste into the Import box (Maker tab) or run `/claude-themes import <thing>`. Th
 | base16 / base24 | A `.yaml` or `.json` scheme |
 | Windows Terminal | A scheme `.json`, or your `settings.json` (the first scheme is read) |
 | iTerm2 | An `.itermcolors` file |
-| Alacritty | A `.toml` file with `[colors.*]` tables |
-| Kitty | A `.conf` file with `foreground`, `background` and `color0` to `color15` |
 
 Paths work on every system, and `~/` at the start means your home folder. Imports go through an automatic contrast fix, so the result is always accepted by the app; the notice says what it adjusted. Themes that color only the editor give an approximate result.
 
@@ -81,8 +76,6 @@ The Share card has one button per format and copies the theme you are on (with i
 | VS Code | `vscode` | `name.json` |
 | base16 YAML | `base16` | `name.yaml` |
 | Windows Terminal | `wt` | `name.json` |
-| Alacritty | `alacritty` | `name.toml` |
-| Kitty | `kitty` | `name.conf` |
 
 The terminal formats get a full set of 16 ANSI colors built from the theme's accent and status colors. Importing an export again gives back the same mode and accent.
 
@@ -97,7 +90,7 @@ The terminal formats get a full set of 16 ANSI colors built from the theme's acc
 | `/claude-themes` | Open the gallery |
 | `/claude-themes <name>` | Switch theme, for example `dracula` |
 | `/claude-themes import <code, link, path or address>` | Add a theme |
-| `/claude-themes export <vscode\|base16\|wt\|alacritty\|kitty>` | Print the current theme as a file for another tool |
+| `/claude-themes export <vscode\|base16\|wt>` | Print the current theme as a file for another tool |
 | `/claude-themes follow on\|off` | Follow the system's light and dark |
 | `/claude-themes reset look\|settings\|all` | Use the app's own look, restore settings, or erase everything |
 
@@ -117,9 +110,9 @@ claude plugin test .
 | `hooks/register.tsx` | The mod: commands, the pane, state |
 | `hooks/model.ts` | Theme type, color maths, contrast fixing, share codes |
 | `hooks/import.ts` | VS Code and base16/24 readers |
-| `hooks/terminal.ts` | Windows Terminal, iTerm2, Alacritty and Kitty readers |
-| `hooks/export.ts` | The five exporters |
-| `hooks/tune.ts` | The eight tuning dials |
+| `hooks/terminal.ts` | Windows Terminal and iTerm2 readers |
+| `hooks/export.ts` | The three exporters |
+| `hooks/tune.ts` | The seven tuning dials |
 | `hooks/share.ts` | Share links |
 | `hooks/packs.ts` | The 25 extra built-in themes |
 | `hooks/make-colors.js` | Generated by the design system; kept as copied |

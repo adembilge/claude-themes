@@ -3,7 +3,7 @@ import type { Imported } from './import.js'
 import { contrast, lum, mix } from './model.js'
 import type { Mode, Roles, Text3 } from './model.js'
 
-// Reads terminal colour schemes (Windows Terminal, iTerm2, Alacritty, Kitty) into a Theme. Pure: no `$`, no files.
+// Reads terminal colour schemes (Windows Terminal, iTerm2) into a Theme. Pure: no `$`, no files.
 
 type Failed = { error: string }
 
@@ -120,80 +120,15 @@ export function parseIterm(text: string, stem = ''): Imported | Failed {
   return fromScheme({ name: stem, bg, fg, ansi: Array.from({ length: 16 }, (_, i) => plistColor(text, `Ansi ${i} Color`)) }, 'iTerm2')
 }
 
-// ---- Alacritty (TOML) ----
-
-const ALA_NAMES = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
-
-export function parseAlacritty(text: string, stem = ''): Imported | Failed {
-  const vals: Record<string, string> = {}
-  let section = ''
-
-  for (const line of text.replace(/^﻿/, '').split(/\r?\n/)) {
-    const head = /^\s*\[([^\]]+)\]/.exec(line)
-
-    if (head !== null) {
-      section = head[1]!.trim().toLowerCase()
-      continue
-    }
-    const kv = /^\s*([A-Za-z_]+)\s*=\s*["']([^"']+)["']/.exec(line)
-
-    if (kv !== null) {
-      vals[`${section}.${kv[1]!.toLowerCase()}`] = kv[2]!
-    }
-  }
-  const bg = anyHex(vals['colors.primary.background'])
-  const fg = anyHex(vals['colors.primary.foreground'])
-
-  if (bg === undefined || fg === undefined) {
-    return { error: MISSING }
-  }
-  const ansi = [
-    ...ALA_NAMES.map(n => anyHex(vals[`colors.normal.${n}`])),
-    ...ALA_NAMES.map(n => anyHex(vals[`colors.bright.${n}`])),
-  ]
-
-  return fromScheme({ name: stem, bg, fg, ansi }, 'Alacritty')
-}
-
-// ---- Kitty (conf) ----
-
-export function parseKitty(text: string, stem = ''): Imported | Failed {
-  const vals: Record<string, string> = {}
-
-  for (const line of text.replace(/^﻿/, '').split(/\r?\n/)) {
-    const m = /^\s*(foreground|background|color\d{1,2})\s+(#?[0-9a-fA-F]{3,6})\b/.exec(line)
-
-    if (m !== null && !(m[1]! in vals)) {
-      vals[m[1]!] = m[2]!
-    }
-  }
-  const bg = anyHex(vals.background)
-  const fg = anyHex(vals.foreground)
-
-  if (bg === undefined || fg === undefined) {
-    return { error: MISSING }
-  }
-
-  return fromScheme({ name: stem, bg, fg, ansi: Array.from({ length: 16 }, (_, i) => anyHex(vals[`color${i}`])) }, 'Kitty')
-}
-
 // ---- any file ----
 
-/** Every theme file the mod can read: VS Code, base16/24, and the four terminal formats. */
+/** Every theme file the mod can read: VS Code, base16/24, and the two terminal formats. */
 export function readThemeFile(text: string, fileName?: string): Imported | Failed {
   const body = text.replace(/^﻿/, '').trim()
   const stem = stemOf(fileName)
 
   if (/<plist|<key>Ansi \d+ Color<\/key>/.test(body)) {
     return parseIterm(body, stem)
-  }
-
-  if (/^\s*\[colors[.\]]/m.test(body)) {
-    return parseAlacritty(body, stem)
-  }
-
-  if (/^\s*(foreground|background)\s+#?[0-9a-f]{6}\b/im.test(body) && !body.startsWith('{')) {
-    return parseKitty(body, stem)
   }
 
   if (body.startsWith('{') || body.startsWith('[')) {

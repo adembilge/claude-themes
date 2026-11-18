@@ -17,19 +17,15 @@ export type TuneState = {
   sat: number
   bright: number
   contrast: number
-  hue: number
   tint: number
   accent: number
   status: number
 }
 
 export type ReadingState = {
-  colorblind: 'off' | 'redgreen' | 'blueyellow'
   glare: 0 | 1 | 2
   night: 0 | 1 | 2
   nightOnly: boolean
-  muted: 0 | 1 | 2
-  focus: 0 | 1 | 2
 }
 
 export type ThemeState = {

@@ -7,7 +7,7 @@ export type Imported = { theme: Theme; notes: string[] }
 type Failed = { error: string }
 
 const NOT_A_THEME =
-  'That is not a theme file I know. Use a VS Code theme (.json), a base16 or base24 scheme (.yaml or .json), or a terminal scheme: Windows Terminal (.json), iTerm2 (.itermcolors), Alacritty (.toml) or Kitty (.conf).'
+  'That is not a theme file I know. Use a VS Code theme (.json), a base16 or base24 scheme (.yaml or .json), or a terminal scheme: Windows Terminal (.json) or iTerm2 (.itermcolors).'
 
 // ---- reading text ----
 
@@ -428,7 +428,7 @@ export function parseBase16(text: string): Imported | Failed {
 export function stemOf(fileName: string | undefined): string {
   const leaf = (fileName ?? '').split(/[\\/]/).pop() ?? ''
 
-  return leaf.replace(/\.(jsonc?|ya?ml|toml|conf|itermcolors)$/i, '').replace(/[-_.]+/g, ' ').trim()
+  return leaf.replace(/\.(jsonc?|ya?ml|itermcolors)$/i, '').replace(/[-_.]+/g, ' ').trim()
 }
 
 export function parseThemeFile(text: string, fileName?: string): Imported | Failed {

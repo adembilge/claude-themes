@@ -6,7 +6,7 @@ import type { ExportFormat } from './export.js'
 import { contrast, validateTheme } from './model.js'
 import type { Theme } from './model.js'
 import { PACKS } from './packs.js'
-import { anyHex, parseAlacritty, parseIterm, parseKitty, parseWindowsTerminal, readThemeFile } from './terminal.js'
+import { anyHex, parseIterm, parseWindowsTerminal, readThemeFile } from './terminal.js'
 
 function good(r: Imported | { error: string }): Imported {
   if ('error' in r) {
@@ -27,54 +27,6 @@ const WT_DRACULA = `{
   "brightBlack": "#6272A4", "brightRed": "#FF6E6E", "brightGreen": "#69FF94", "brightYellow": "#FFFFA5",
   "brightBlue": "#D6ACFF", "brightPurple": "#FF92DF", "brightCyan": "#A4FFFF", "brightWhite": "#FFFFFF"
 }`
-
-const ALACRITTY_NORD = `# Nord
-[colors.primary]
-background = "#2e3440"
-foreground = '#d8dee9'
-
-[colors.normal]
-black   = "#3b4252"
-red     = "#bf616a"
-green   = "#a3be8c"
-yellow  = "#ebcb8b"
-blue    = "#81a1c1"
-magenta = "#b48ead"
-cyan    = "#88c0d0"
-white   = "#e5e9f0"
-
-[colors.bright]
-black   = "#4c566a"
-red     = "#bf616a"
-green   = "#a3be8c"
-yellow  = "#ebcb8b"
-blue    = "#81a1c1"
-magenta = "#b48ead"
-cyan    = "#8fbcbb"
-white   = "#eceff4"
-`
-
-const KITTY_SOLARIZED_LIGHT = `# Solarized Light
-foreground #657b83
-background #fdf6e3
-cursor #586e75
-color0 #073642
-color1 #dc322f
-color2 #859900
-color3 #b58900
-color4 #268bd2
-color5 #d33682
-color6 #2aa198
-color7 #eee8d5
-color8 #002b36
-color9 #cb4b16
-color10 #586e75
-color11 #657b83
-color12 #839496
-color13 #6c71c4
-color14 #93a1a1
-color15 #fdf6e3
-`
 
 function plistEntry(key: string, hex: string): string {
   const [r, g, b] = [1, 3, 5].map(i => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(6))
@@ -118,21 +70,6 @@ test('a Windows Terminal settings file reads its first scheme', () => {
   expect(r.theme.name).toBe('Dracula')
 })
 
-test('Alacritty TOML imports with both quote styles', () => {
-  const r = good(parseAlacritty(ALACRITTY_NORD, 'nord'))
-
-  expect(r.theme.name).toBe('nord')
-  expect(r.theme.mode).toBe('dark')
-  expect(r.theme.roles.success).toBe('#a3be8c')
-})
-
-test('Kitty conf imports a light scheme', () => {
-  const r = good(parseKitty(KITTY_SOLARIZED_LIGHT, 'solarized light'))
-
-  expect(r.theme.mode).toBe('light')
-  expect(r.theme.surfaces[2]).toBe(r.theme.surfaces[3])
-})
-
 test('iTerm2 plist imports, with missing ANSI slots filled in', () => {
   const r = good(parseIterm(ITERM_GRUVBOX, 'gruvbox'))
 
@@ -143,8 +80,6 @@ test('iTerm2 plist imports, with missing ANSI slots filled in', () => {
 
 test('readThemeFile picks the right reader for each format', () => {
   expect(good(readThemeFile(WT_DRACULA, 'C:\\x\\dracula.json')).theme.note).toContain('Windows Terminal')
-  expect(good(readThemeFile(ALACRITTY_NORD, '/home/me/nord.toml')).theme.note).toContain('Alacritty')
-  expect(good(readThemeFile(KITTY_SOLARIZED_LIGHT, 'sol.conf')).theme.note).toContain('Kitty')
   expect(good(readThemeFile(ITERM_GRUVBOX, 'g.itermcolors')).theme.note).toContain('iTerm2')
   expect(good(readThemeFile('base00: "1e1e2e"\nbase01: "313244"\nbase02: "45475a"\nbase03: "585b70"\nbase04: "a6adc8"\nbase05: "cdd6f4"\nbase06: "f5e0dc"\nbase07: "b4befe"\nbase08: "f38ba8"\nbase0B: "a6e3a1"\nbase0A: "f9e2af"\nbase0D: "89b4fa"\nbase0E: "cba6f7"', 'm.yaml')).theme.note).toContain('base16')
   expect(good(readThemeFile('{"colors":{"editor.background":"#101010","editor.foreground":"#eeeeee"},"type":"dark"}', 'v.json')).theme.note).toContain('VS Code')
@@ -197,16 +132,13 @@ test('JSON exports are valid JSON and name the theme', () => {
 test('text exports hold the right keys', () => {
   const t = SAMPLE[0]!
 
-  expect(exportTheme(t, 'alacritty')).toContain('[colors.primary]')
-  expect(exportTheme(t, 'alacritty')).toContain(`background = "${t.surfaces[0]}"`)
-  expect(exportTheme(t, 'kitty')).toContain(`background ${t.surfaces[0]}`)
   expect(toBase16(t)).toContain('base0D:')
   expect(toBase16(t)).toContain(`variant: "${t.mode}"`)
 })
 
 // Export then import again: the result must be a palette the app accepts, with the same mode and an accent close to the original.
 // One test per format keeps each well inside the test time limit on a slow machine.
-const FILE: Record<ExportFormat, string> = { vscode: 'a.json', base16: 'a.yaml', wt: 'a.json', alacritty: 'a.toml', kitty: 'a.conf' }
+const FILE: Record<ExportFormat, string> = { vscode: 'a.json', base16: 'a.yaml', wt: 'a.json' }
 
 for (const f of EXPORTS) {
   test(`exporting as ${f.label} and importing again keeps the mode and accent`, () => {
@@ -223,13 +155,11 @@ for (const f of EXPORTS) {
 test('formatOf understands what people type', () => {
   expect(formatOf('VS Code')).toBe('vscode')
   expect(formatOf('windows-terminal')).toBe('wt')
-  expect(formatOf('Alacritty')).toBe('alacritty')
-  expect(formatOf('kitty')).toBe('kitty')
   expect(formatOf('base24')).toBe('base16')
   expect(formatOf('word')).toBeUndefined()
 })
 
 test('export file names are safe on every system', () => {
   expect(exportFileName(SAMPLE[0]!, 'vscode')).toMatch(/^[a-z0-9-]+\.json$/)
-  expect(exportFileName(SAMPLE[0]!, 'alacritty')).toMatch(/\.toml$/)
+  expect(exportFileName(SAMPLE[0]!, 'base16')).toMatch(/.yaml$/)
 })

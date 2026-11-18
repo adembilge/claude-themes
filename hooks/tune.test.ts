@@ -229,6 +229,6 @@ test('describeTune and the dial list read in plain words', () => {
   expect(describeTune(t({ warmth: 2, sat: 1 }))).toBe('warmer, a little more saturated')
   expect(describeTune(t({ warmth: -1 }))).toBe('a little cooler')
   expect(describeTune(t({ bright: 4, contrast: -2 }))).toBe('much lighter surfaces, softer text')
-  expect(TUNE_AXES.map(a => a.key)).toEqual(['warmth', 'sat', 'bright', 'contrast', 'hue', 'tint', 'accent', 'status'])
-  expect(TUNE_AXES.map(a => a.label)).toEqual(['Warmth', 'Saturation', 'Surface brightness', 'Text contrast', 'Hue', 'Surface tint', 'Accent', 'Status colors'])
+  expect(TUNE_AXES.map(a => a.key)).toEqual(['warmth', 'sat', 'bright', 'contrast', 'tint', 'accent', 'status'])
+  expect(TUNE_AXES.map(a => a.label)).toEqual(['Warmth', 'Saturation', 'Surface brightness', 'Text contrast', 'Surface tint', 'Accent', 'Status colors'])
 })

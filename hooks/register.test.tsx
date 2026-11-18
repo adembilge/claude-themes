@@ -367,15 +367,13 @@ test('readability options change the theme that is set, are saved, and can be re
   expect(await ui.find({ key: 'read-reset' })).toBeUndefined()
   const plain = calls[calls.length - 1]
 
-  await ui.press({ key: 'read-colorblind-redgreen' })
+  await ui.press({ key: 'read-glare-2' })
   expect(calls[calls.length - 1]).not.toBe(plain)
-  expect((stored.prefs as { reading: { colorblind: string } }).reading.colorblind).toBe('redgreen')
+  expect((stored.prefs as { reading: { glare: number } }).reading.glare).toBe(2)
   expect(await ui.find({ key: 'read-reset' })).toBeDefined()
 
-  await ui.press({ key: 'read-muted-2' })
   await ui.press({ key: 'read-glare-1' })
-  await ui.press({ key: 'read-focus-2' })
-  expect((stored.prefs as { reading: unknown }).reading).toEqual({ colorblind: 'redgreen', glare: 1, night: 0, nightOnly: false, muted: 2, focus: 2 })
+  expect((stored.prefs as { reading: unknown }).reading).toEqual({ glare: 1, night: 0, nightOnly: false })
 
   // "Only at night" is offered once night comfort is on.
   expect(await ui.find({ key: 'read-night-only' })).toBeUndefined()
@@ -386,14 +384,14 @@ test('readability options change the theme that is set, are saved, and can be re
 
   await ui.press({ key: 'read-reset' })
   expect(calls[calls.length - 1]).toBe(plain)
-  expect((stored.prefs as { reading: unknown }).reading).toEqual({ colorblind: 'off', glare: 0, night: 0, nightOnly: false, muted: 0, focus: 0 })
+  expect((stored.prefs as { reading: unknown }).reading).toEqual({ glare: 0, night: 0, nightOnly: false })
   expect(await ui.find({ key: 'read-reset' })).toBeUndefined()
   await ui.unmount()
 })
 
 test('saved readability options are applied at the start, and damaged ones are ignored', async ($, on) => {
   const calls: string[] = []
-  host(on, { prefs: { reading: { colorblind: 'redgreen', muted: 2 } } }, calls)
+  host(on, { prefs: { reading: { glare: 2, night: 1 } } }, calls)
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
@@ -403,7 +401,7 @@ test('saved readability options are applied at the start, and damaged ones are i
 })
 
 test('corrupted readability settings fall back to off', async ($, on) => {
-  host(on, { prefs: { reading: { colorblind: 'rainbow', glare: 9, night: 'x', muted: null, focus: [] } } })
+  host(on, { prefs: { reading: { glare: 9, night: 'x', colorblind: 'rainbow', muted: 2, focus: 2 } } })
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
@@ -441,13 +439,13 @@ test('backdrop styles reach the theme as still grounds', async ($, on) => {
   }
   expect(await ui.find({ key: 'backdrop-style-grid' })).toBeUndefined()
 
-  // Strength and color change what is handed over.
+  // Strength changes what is handed over, and the color choice is gone.
   await ui.press({ key: 'backdrop-style-dusk' })
   const normal = calls[calls.length - 1]
   await ui.press({ key: 'backdrop-strength-bold' })
   expect(calls[calls.length - 1]).not.toBe(normal)
-  await ui.press({ key: 'backdrop-tone-pro' })
-  expect(calls[calls.length - 1]).not.toBe(normal)
+  expect(await ui.find({ key: 'backdrop-tone-pro' })).toBeUndefined()
+  expect(await ui.find({ key: 'backdrop-tone-accent' })).toBeUndefined()
 
   await ui.press({ key: 'backdrop-style-glow' })
   expect(calls[calls.length - 1]).toContain('"gradient"')
@@ -556,11 +554,10 @@ test('tuning steps shift one theme, say so, and reset', async ($, on) => {
   await ui.press({ key: 'tune-warmth-up' })
   await ui.press({ key: 'tune-warmth-up' })
   expect(calls[calls.length - 1]).not.toBe(plain)
-  expect(await ui.find({ type: 'Text', text: /warmer/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /Active: Catppuccin Mocha \(dark\), tuned/ })).toBeDefined()
 
   // More dials than warmth: each reaches the theme.
-  for (const dial of ['hue', 'tint', 'accent', 'status']) {
+  for (const dial of ['tint', 'accent', 'status']) {
     const before = calls[calls.length - 1]
 
     await ui.press({ key: `tune-${dial}-up` })

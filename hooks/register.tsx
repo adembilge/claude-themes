@@ -22,10 +22,7 @@ import {
 import type { Mode, Roles, Surfaces, Text3, Theme } from './model.js'
 import { PACKS, PACK_CODE_THEMES } from './packs.js'
 import {
-  COLORBLIND_CHOICES,
-  FOCUS_CHOICES,
   GLARE_CHOICES,
-  MUTED_CHOICES,
   NIGHT_CHOICES,
   NO_READING,
   cleanReading,
@@ -34,7 +31,7 @@ import {
 } from './readable.js'
 import type { Reading } from './readable.js'
 import { SHARE_URL, parseAny, themeToLink } from './share.js'
-import { NO_TUNE, TUNE_AXES, TUNE_MAX, cleanTunes, describeTune, isTuned, tuneTheme } from './tune.js'
+import { NO_TUNE, TUNE_AXES, TUNE_MAX, cleanTunes, isTuned, tuneTheme } from './tune.js'
 import type { Tune } from './tune.js'
 import { readThemeFile } from './terminal.js'
 
@@ -286,10 +283,6 @@ const STRENGTHS: { value: Strength; label: string; k: number }[] = [
   { value: 'normal', label: 'Normal', k: 1 },
   { value: 'bold', label: 'Bold', k: 1.7 },
 ]
-const TONES: { value: Tone; label: string }[] = [
-  { value: 'accent', label: 'Accent' },
-  { value: 'pro', label: 'Second color' },
-]
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Ground = any
@@ -490,7 +483,8 @@ function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
     reading: cleanReading(r.reading),
     backdropStyle: GROUNDS.some(x => x.value === r.backdropStyle) ? (r.backdropStyle as BackdropStyle) : 'glow',
     strength: STRENGTHS.some(x => x.value === r.strength) ? (r.strength as Strength) : 'normal',
-    tone: TONES.some(x => x.value === r.tone) ? (r.tone as Tone) : 'accent',
+    // The backdrop color choice is gone: it always uses the accent.
+    tone: 'accent',
     auto: {
       on: a.on === true,
       day: id(a.day, DEFAULT_AUTO.day),
@@ -1338,7 +1332,7 @@ export const register: Register = on => {
     await $.command.register({
       name: 'claude-themes',
       description: 'Open the theme gallery: /claude-themes, or /claude-themes <name> to switch directly (import, export, follow and reset also work)',
-      argumentHint: '[theme name | import <code, link or file> | export <vscode|base16|wt|alacritty|kitty> | follow on/off | reset look/settings/all]',
+      argumentHint: '[theme name | import <code, link or file> | export <vscode|base16|wt> | follow on/off | reset look/settings/all]',
       immediate: true,
     })
     const saved = await $.store.get(STORE_KEY)
@@ -1775,7 +1769,7 @@ export const register: Register = on => {
         'Share',
         <Box flexDirection="column" gap={1}>
           <Text dimColor>
-            Copy a link or a code for the theme you are on. To add one, paste a code, a link, a web address of a theme file or the path of a file below and press Enter. VS Code themes, base16 or base24 schemes and terminal schemes (Windows Terminal, iTerm2, Alacritty, Kitty) work too.
+            Copy a link or a code for the theme you are on. To add one, paste a code, a link, a web address of a theme file or the path of a file below and press Enter. VS Code themes, base16 or base24 schemes and terminal schemes (Windows Terminal, iTerm2) work too.
           </Text>
           <Box gap={1} flexWrap="wrap">
             <Button
@@ -1832,10 +1826,10 @@ export const register: Register = on => {
         </Box>
       )
       // A title and its one line on the left, one compact switch on the right.
-      const toggleRow = (key: string, title: string, about: string, isOn: boolean, toggle: () => Promise<void>) => (
+      const toggleRow = (key: string, title: string, about: string, isOn: boolean, toggle: () => Promise<void>, plain = false) => (
         <Box key={`row-${key}`} alignItems="center" gap={1}>
           <Box flexDirection="column" flexGrow={1}>
-            <Text weight="bold">{title}</Text>
+            {plain ? <Text>{title}</Text> : <Text weight="bold">{title}</Text>}
             <Text dimColor>{about}</Text>
           </Box>
           <Button key={key} variant={isOn ? 'primary' : 'secondary'} onPress={toggle}>
@@ -1852,9 +1846,9 @@ export const register: Register = on => {
         'appearance',
         'Backdrop',
         <Box flexDirection="column" gap={1}>
-          {toggleRow('backdrop-toggle', 'Soft color behind the chat', "Drawn in the theme's colors. Pick a style below.", now.backdrop, async () => {
+          {toggleRow('backdrop-toggle', 'Soft color behind the chat', "Drawn in the theme's colors.", now.backdrop, async () => {
             await toggleFlag($, 'backdrop')
-          })}
+          }, true)}
           {!now.backdrop ? null : (
             <Box flexDirection="column" gap={1}>
               <Text dimColor>Style</Text>
@@ -1902,27 +1896,12 @@ export const register: Register = on => {
                   </Button>
                 ))}
               </Box>
-              <Text dimColor>Color</Text>
-              <Box gap={1} flexWrap="wrap">
-                {TONES.map(x => (
-                  <Button
-                    key={`backdrop-tone-${x.value}`}
-                    variant={now.tone === x.value ? 'primary' : 'secondary'}
-                    onPress={async () => {
-                      await setBackdrop($, { tone: x.value })
-                    }}
-                  >
-                    {x.label}
-                  </Button>
-                ))}
-              </Box>
             </Box>
           )}
         </Box>,
       )
 
       const t = now.tunes[cur.id] ?? NO_TUNE
-      const limited = isTuned(t) && tuneTheme(cur, t).limited
       // A label above its box, so every box starts at the same edge.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const field = (key: string, label: string, placeholder: string, value: string, change: (v: string) => Promise<void>, submit: (v: string) => Promise<void>): any =>
@@ -2011,7 +1990,6 @@ export const register: Register = on => {
               </Button>
             </Box>
           ))}
-          <Text dimColor>{isTuned(t) ? `${describeTune(t)}${limited ? '. This theme cannot go further without losing readability.' : ''}` : 'No changes. Use − and + to shift this theme; each theme keeps its own.'}</Text>
           {!isTuned(t) ? null : (
             <Box>
               <Button
@@ -2113,16 +2091,6 @@ export const register: Register = on => {
           {toggleRow('contrast-toggle', 'High contrast', 'Stronger borders and focus rings, useful on the light themes.', now.highContrast, async () => {
             await toggleFlag($, 'highContrast')
           })}
-          {choiceRow(
-            'colorblind',
-            'Color-blind safe status colors',
-            'Moves the red, green, yellow and purple status colors apart so they can be told from each other. An approximation, not a simulation.',
-            COLORBLIND_CHOICES,
-            now.reading.colorblind,
-            async v => {
-              await setReading($, { colorblind: v })
-            },
-          )}
           {choiceRow('glare', 'Soften glare', 'Dims bright whites: the main text on dark themes, the lightest surfaces on light themes.', GLARE_CHOICES, now.reading.glare, async v => {
             await setReading($, { glare: v })
           })}
@@ -2140,19 +2108,6 @@ export const register: Register = on => {
                   await setReading($, { nightOnly: !now.reading.nightOnly })
                 },
               )}
-          {choiceRow('muted', 'Muted text', 'Makes the faintest text (hints, timestamps) easier to read.', MUTED_CHOICES, now.reading.muted, async v => {
-            await setReading($, { muted: v })
-          })}
-          {choiceRow(
-            'focus',
-            'Accent visibility',
-            'Makes the accent, used for focus rings and links, stand out more from the page. Borders are covered by High contrast above.',
-            FOCUS_CHOICES,
-            now.reading.focus,
-            async v => {
-              await setReading($, { focus: v })
-            },
-          )}
           {!isReading(now.reading) ? null : (
             <Box>
               <Button

@@ -23,25 +23,11 @@ function pack(
 }
 
 export const PACKS: Theme[] = [
-  // ---- dark ----
-  // https://github.com/catppuccin/palette/blob/main/palette.json
-  pack('Catppuccin', 'dark', 'catppuccin-frappe', 'Catppuccin Frappé', 'soft pastels on cool slate',
-    ['#292c3c', '#303446', '#414559', '#51576d'], ['#c6d0f5', '#b5bfe2', '#a5adce'], '#ca9ee6',
-    ['#e78284', '#a6d189', '#e5c890', '#babbf1']),
-  // https://github.com/catppuccin/palette/blob/main/palette.json
-  pack('Catppuccin', 'dark', 'catppuccin-macchiato', 'Catppuccin Macchiato', 'soft pastels on deep indigo',
-    ['#1e2030', '#24273a', '#363a4f', '#494d64'], ['#cad3f5', '#b8c0e0', '#a5adcb'], '#c6a0f6',
-    ['#ed8796', '#a6da95', '#eed49f', '#b7bdf8']),
   // https://github.com/rose-pine/rose-pine-palette/blob/main/palette.json
   // shifted: surface 4 derived; second text derived; muted text #908caa -> #928eac
   pack('Rosé Pine', 'dark', 'rose-pine-moon', 'Rosé Pine Moon', 'muted rose and gold, deeper dusk',
     ['#232136', '#2a273f', '#393552', '#45415c'], ['#e0def4', '#b8b5cf', '#928eac'], '#ea9a97',
     ['#eb6f92', '#9ccfd8', '#f6c177', '#c4a7e7']),
-  // https://github.com/folke/tokyonight.nvim/blob/main/lua/tokyonight/colors/storm.lua
-  // shifted: muted text #737aa2 -> #878eb6
-  pack('Tokyo Night', 'dark', 'tokyo-night-storm', 'Tokyo Night Storm', 'stormy blue-grey, electric blue',
-    ['#1f2335', '#24283b', '#292e42', '#3b4261'], ['#c0caf5', '#a9b1d6', '#878eb6'], '#7aa2f7',
-    ['#f7768e', '#9ece6a', '#e0af68', '#bb9af7']),
   // https://github.com/EdenEast/nightfox.nvim/blob/main/lua/nightfox/palette/nightfox.lua
   // shifted: muted text #71839b -> #74859d
   pack('Nightfox', 'dark', 'nightfox', 'Nightfox', 'cool navy, soft blue',
@@ -128,10 +114,6 @@ export const PACKS: Theme[] = [
   pack('Bluloco', 'light', 'bluloco-light', 'Bluloco Light', 'clean light grey, vivid blue',
     ['#e8e8e8', '#f1f1f1', '#f9f9f9', '#f9f9f9'], ['#383a42', '#676a77', '#727378'], '#0098dd',
     ['#d52753', '#23974a', '#df631c', '#823ff1']),
-  // https://github.com/johnpapa/vscode-winteriscoming/blob/main/themes/WinterIsComing-light-color-theme.json
-  pack('Winter is Coming', 'light', 'winter-is-coming-light', 'Winter is Coming Light', 'snow white, ice blue ink',
-    ['#dddddd', '#f3f3f3', '#ffffff', '#ffffff'], ['#0d3464', '#1857a4', '#236ebf'], '#2f86d2',
-    ['#de3d3b', '#08916a', '#c5a332', '#7c4dff']),
   // https://github.com/sdras/night-owl-vscode-theme (via shikijs tm-themes night-owl-light.json)
   // shifted: second text derived
   pack('Night Owl', 'light', 'night-owl-light', 'Night Owl Light', 'pale grey, indigo ink',
@@ -141,10 +123,7 @@ export const PACKS: Theme[] = [
 
 /** The code-highlighting theme to pair with a pack, by the name the app's highlighter knows (a wrong name is ignored). */
 export const PACK_CODE_THEMES: Record<string, string> = {
-  'catppuccin-frappe': 'catppuccin-frappe',
-  'catppuccin-macchiato': 'catppuccin-macchiato',
   'rose-pine-moon': 'rose-pine-moon',
-  'tokyo-night-storm': 'tokyo-night',
   'kanagawa-dragon': 'kanagawa-dragon',
   'kanagawa-lotus': 'kanagawa-lotus',
   poimandres: 'poimandres',

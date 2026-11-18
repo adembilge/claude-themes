@@ -3,14 +3,12 @@ import type { Theme } from './model.js'
 
 // Writes a Theme out as another tool's theme file. Pure: returns text, touches nothing.
 
-export type ExportFormat = 'vscode' | 'base16' | 'wt' | 'alacritty' | 'kitty'
+export type ExportFormat = 'vscode' | 'base16' | 'wt'
 
 export const EXPORTS: { id: ExportFormat; label: string; ext: string }[] = [
   { id: 'vscode', label: 'VS Code', ext: 'json' },
   { id: 'base16', label: 'base16', ext: 'yaml' },
   { id: 'wt', label: 'Windows Terminal', ext: 'json' },
-  { id: 'alacritty', label: 'Alacritty', ext: 'toml' },
-  { id: 'kitty', label: 'Kitty', ext: 'conf' },
 ]
 
 /** The file name a format would use for a theme, such as `dracula.json`. */
@@ -37,7 +35,6 @@ export function ansi16(t: Theme): string[] {
   ]
 }
 
-const ANSI_NAMES = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
 const noHash = (c: string): string => c.replace('#', '')
 
 export function toVsCode(t: Theme): string {
@@ -151,43 +148,6 @@ export function toWindowsTerminal(t: Theme): string {
   return `${JSON.stringify(scheme, null, 2)}\n`
 }
 
-export function toAlacritty(t: Theme): string {
-  const a = ansi16(t)
-  const block = (title: string, from: number): string[] => [
-    `[colors.${title}]`,
-    ...ANSI_NAMES.map((n, i) => `${n} = "${a[from + i]!}"`),
-    '',
-  ]
-
-  return [
-    `# ${t.name} (${t.mode}), from claude-themes`,
-    '[colors.primary]',
-    `background = "${t.surfaces[0]}"`,
-    `foreground = "${t.text[0]}"`,
-    '',
-    '[colors.cursor]',
-    `cursor = "${t.accent}"`,
-    `text = "${t.surfaces[0]}"`,
-    '',
-    ...block('normal', 0),
-    ...block('bright', 8),
-  ].join('\n')
-}
-
-export function toKitty(t: Theme): string {
-  const a = ansi16(t)
-
-  return [
-    `# ${t.name} (${t.mode}), from claude-themes`,
-    `foreground ${t.text[0]}`,
-    `background ${t.surfaces[0]}`,
-    `cursor ${t.accent}`,
-    `selection_background ${mix(t.surfaces[0], t.accent, 0.3)}`,
-    ...a.map((c, i) => `color${i} ${c}`),
-    '',
-  ].join('\n')
-}
-
 export function exportTheme(t: Theme, f: ExportFormat): string {
   switch (f) {
     case 'vscode':
@@ -196,10 +156,6 @@ export function exportTheme(t: Theme, f: ExportFormat): string {
       return toBase16(t)
     case 'wt':
       return toWindowsTerminal(t)
-    case 'alacritty':
-      return toAlacritty(t)
-    case 'kitty':
-      return toKitty(t)
   }
 }
 
@@ -219,9 +175,5 @@ export function formatOf(word: string): ExportFormat | undefined {
     return 'wt'
   }
 
-  if (w === 'alacritty' || w === 'toml') {
-    return 'alacritty'
-  }
-
-  return w === 'kitty' ? 'kitty' : undefined
+  return undefined
 }

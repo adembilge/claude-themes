@@ -2,6 +2,19 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.5.0] - 2026-11-19
+
+### Removed
+- Four themes: Catppuccin Macchiato, Catppuccin Frappé, Tokyo Night Storm and Winter is Coming Light (60 themes now). A saved choice of one of them falls back to the default.
+- Alacritty and Kitty import and export; the formats are VS Code, base16, Windows Terminal and iTerm2 (import only).
+- The Hue tuning dial (seven dials now). A saved Hue setting is ignored.
+- The Color choice (accent or second color) in the Backdrop card; only Strength remains, and the backdrop always uses the accent.
+- The readability options Color-blind safe status colors, Muted text and Accent visibility. Only Soften glare and Night comfort remain; saved values for the removed ones are ignored.
+- The summary line under the tuning buttons.
+
+### Changed
+- The Backdrop card's switch reads "Soft color behind the chat" in plain text, with "Drawn in the theme's colors." under it.
+
 ## [3.4.0] - 2026-11-19
 
 ### Added
@@ -71,4 +84,4 @@ The 2.x line grew the gallery from one theme to 39: tabs, search and favorites (
 
 ## [1.x]
 
-First releases: a few themes and an Auto mode. Renamed from `claude-deskmod` to `desktop-themes` in 2.1.0.
+First releases: a few themes and an Auto mode.
