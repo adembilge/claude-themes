@@ -236,6 +236,13 @@ export const register: Register = on => {
   }
 
   on('session.start', async ($, e, next) => {
+    // Registered first so a failure while restoring the theme cannot leave /themes missing.
+    await $.command.register({
+      name: 'themes',
+      description: 'Open the theme gallery: /themes, or /themes <name> [light|dark] to switch directly',
+      argumentHint: '[name] [light | dark]',
+      immediate: true,
+    })
     const savedId = await $.store.get(STORE_KEY)
     const savedMode = await $.store.get(MODE_KEY)
     const savedAuto = await $.store.get(AUTO_KEY)
@@ -263,11 +270,6 @@ export const register: Register = on => {
         }
       })
     }
-
-    await $.command.register({
-      name: 'themes',
-      description: 'Open the theme gallery: /themes, or /themes <name> [light|dark] to switch directly',
-    })
 
     return next(e)
   })
