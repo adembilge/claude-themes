@@ -4,5 +4,6 @@ node_modules/
 .env
 # private working notes (contain local paths)
 desktop-theme-plugin-plan.md
+plan-v3-features.md
 .claude/
 graphify-out/

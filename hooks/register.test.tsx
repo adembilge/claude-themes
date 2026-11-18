@@ -1,5 +1,8 @@
 import { expect, test } from 'claude-code/testing'
 
+import { parseCode } from './model.js'
+import { themeToLink } from './share.js'
+
 const PANE = {
   plugin: 'desktop-themes',
   component: 'Pane',
@@ -23,14 +26,39 @@ async function labelOf(ui: any, key: string): Promise<string | undefined> {
 }
 
 // The host's answers, as a fresh session sees them. `prefs` and `theme` are what the store holds.
-function host(on: any, saved: { prefs?: unknown; theme?: unknown; custom?: unknown; projects?: unknown } = {}, calls: string[] = []) {
+function host(
+  on: any,
+  saved: { prefs?: unknown; theme?: unknown; custom?: unknown; projects?: unknown; rules?: unknown } = {},
+  calls: string[] = [],
+  stored: Record<string, unknown> = {},
+  files: Record<string, string> = {},
+) {
   on('command.register', () => ({ value: { command: 'claude-themes' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
   on('store.get', (_: unknown, e: { key: string }) => ({
-    value: e.key === 'prefs' ? saved.prefs : e.key === 'theme' ? saved.theme : e.key === 'custom' ? saved.custom : e.key === 'projects' ? saved.projects : undefined,
+    value: e.key === 'prefs' ? saved.prefs : e.key === 'theme' ? saved.theme : e.key === 'custom' ? saved.custom : e.key === 'projects' ? saved.projects : e.key === 'rules' ? saved.rules : undefined,
   }))
-  on('store.set', () => ({ value: undefined }))
+  on('store.set', (_: unknown, e: { key: string; value: unknown }) => {
+    stored[e.key] = e.value
+
+    return { value: undefined }
+  })
+  on('ui.toast', () => ({ value: undefined }))
+  on('theme.clear', () => {
+    calls.push('clear')
+
+    return { value: undefined }
+  })
+  on('fs.read', (_: unknown, e: { path: string }) => {
+    const text = files[e.path.split('\\').join('/')]
+
+    if (text === undefined) {
+      throw new Error(`no such file ${JSON.stringify(e)}`)
+    }
+
+    return { value: text }
+  })
   on('theme.set', (_: unknown, e: unknown) => {
     calls.push(JSON.stringify(e))
 
@@ -216,8 +244,9 @@ test('a theme code can be imported, and a bad code is explained', async ($, on) 
     const ui = await $.ui.mount({ ...PANE, surface })
 
     await ui.press({ key: 'tab-maker' })
+    // Anything that is not a code or link is read as a file or address, and says when it cannot be.
     await ui.input({ key: 'share-import', text: 'hello' })
-    expect(await ui.find({ type: 'Text', text: /not a theme code/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /could not be read/ })).toBeDefined()
     await ui.input({ key: 'share-import', text: 'claude-themes:{broken' })
     expect(await ui.find({ type: 'Text', text: /damaged/ })).toBeDefined()
 
@@ -294,9 +323,9 @@ test('day and night applies the theme for the hour, and changes with the hours',
     const ui = await $.ui.mount({ ...PANE, surface })
 
     await ui.press({ key: 'tab-settings' })
-    expect(await labelOf(ui, 'auto-toggle')).toContain('Off')
-    await ui.press({ key: 'auto-toggle' })
-    expect(await labelOf(ui, 'auto-toggle')).toContain('On')
+    expect(await ui.find({ key: 'auto-day' })).toBeUndefined()
+    await ui.press({ key: 'switch-hour' })
+    expect(await ui.find({ key: 'auto-day' })).toBeDefined()
 
     // Equal start and end hours mean it is always day.
     await ui.select({ key: 'auto-day', value: 'github-light' })
@@ -311,8 +340,8 @@ test('day and night applies the theme for the hour, and changes with the hours',
     await ui.select({ key: 'auto-to', value: String((h + 2) % 24) })
     expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
 
-    await ui.press({ key: 'auto-toggle' })
-    expect(await labelOf(ui, 'auto-toggle')).toContain('Off')
+    await ui.press({ key: 'switch-off' })
+    expect(await ui.find({ key: 'auto-day' })).toBeUndefined()
     await ui.press({ key: 'tab-dark' })
     await ui.unmount()
   }
@@ -324,7 +353,7 @@ test('corrupted saved settings fall back to the defaults', async ($, on) => {
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
   await ui.press({ key: 'tab-settings' })
-  expect(await labelOf(ui, 'auto-toggle')).toContain('Off')
+  expect(await ui.find({ key: 'auto-day' })).toBeUndefined()
   expect(await labelOf(ui, 'contrast-toggle')).toContain('Off')
   expect(await labelOf(ui, 'code-toggle')).toContain('On')
   await ui.unmount()
@@ -384,5 +413,256 @@ test('a folder keeps its own theme, and the clock does not replace it', async ($
 
   await ui.press({ key: 'project-use' })
   expect(await ui.find({ type: 'Text', text: /uses Dracula/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('Try shows a theme without keeping it, Keep saves it and Back returns', async ($, on) => {
+  const calls: string[] = []
+  const stored: Record<string, unknown> = {}
+  host(on, {}, calls, stored)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  expect(await ui.find({ key: 'trial-keep' })).toBeUndefined()
+  await ui.press({ key: 'try-all-dracula' })
+  expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
+  expect(await ui.find({ key: 'trial-keep' })).toBeDefined()
+  expect(await ui.find({ key: 'trial-back' })).toBeDefined()
+  // Trying saves nothing.
+  expect(stored.theme).toBeUndefined()
+
+  await ui.press({ key: 'trial-back' })
+  expect(await ui.find({ type: 'Text', text: /Active: Catppuccin Mocha/ })).toBeDefined()
+  expect(await ui.find({ key: 'trial-keep' })).toBeUndefined()
+
+  await ui.press({ key: 'try-all-nord' })
+  await ui.press({ key: 'try-all-dracula' })
+  await ui.press({ key: 'trial-keep' })
+  expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
+  expect(await ui.find({ key: 'trial-keep' })).toBeUndefined()
+  expect(stored.theme).toBe('dracula')
+  await ui.unmount()
+})
+
+test('reset: the app look, settings and everything each work, and the last two ask twice', async ($, on) => {
+  const calls: string[] = []
+  const stored: Record<string, unknown> = {}
+  host(on, {}, calls, stored)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'contrast-toggle' })
+  expect(await labelOf(ui, 'contrast-toggle')).toContain('On')
+
+  // The first press only asks.
+  await ui.press({ key: 'reset-settings' })
+  expect(await labelOf(ui, 'reset-settings')).toContain('Press again')
+  expect(await labelOf(ui, 'contrast-toggle')).toContain('On')
+  await ui.press({ key: 'reset-settings' })
+  expect(await labelOf(ui, 'contrast-toggle')).toContain('Off')
+
+  await ui.press({ key: 'reset-look' })
+  expect(calls[calls.length - 1]).toBe('clear')
+  expect(await ui.find({ type: 'Text', text: /app's own look/ })).toBeDefined()
+
+  // Picking any theme brings a theme back.
+  await ui.press({ key: 'tab-dark' })
+  await ui.press({ key: 'pick-all-nord' })
+  expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
+
+  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'reset-all' })
+  expect(await labelOf(ui, 'reset-all')).toContain('Press again')
+  await ui.press({ key: 'reset-all' })
+  expect(await ui.find({ type: 'Text', text: /Active: Catppuccin Mocha/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('follow system builds one look with both modes and no backdrop', async ($, on) => {
+  const calls: string[] = []
+  host(on, {}, calls)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'switch-system' })
+  expect(await ui.find({ type: 'Text', text: /Following the system/ })).toBeDefined()
+  const last = calls[calls.length - 1] ?? ''
+
+  expect(last).toContain('"light"')
+  expect(last).toContain('"dark"')
+  expect(last).not.toContain('"backdrop"')
+  expect(last).not.toContain('overrideColorScheme')
+
+  // A theme picked by hand turns following off.
+  await ui.press({ key: 'tab-dark' })
+  await ui.press({ key: 'pick-all-nord' })
+  expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
+  await ui.press({ key: 'tab-settings' })
+  expect(await ui.find({ key: 'auto-day' })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('folder rules pick a theme by folder name, and an exact folder pick wins', async ($, on) => {
+  host(on, { rules: [{ by: 'name', match: 'prod', theme: 'lobster' }, { by: 'path', match: '**/clients/*', theme: 'nord' }] })
+  await $.session.start({ cwd: '/work/prod-api', surface: 'desktop', isInteractive: true })
+  let ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  expect(await ui.find({ type: 'Text', text: /Active: Lobster/ })).toBeDefined()
+  await ui.unmount()
+
+  await $.session.start({ cwd: '/Work/Clients/acme', surface: 'desktop', isInteractive: true })
+  ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
+  await ui.unmount()
+
+  await $.session.start({ cwd: '/work/other', surface: 'desktop', isInteractive: true })
+  ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await ui.find({ type: 'Text', text: /Active: Catppuccin Mocha/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('folder rules can be added, ordered and removed from Settings', async ($, on) => {
+  host(on)
+  await $.session.start({ cwd: '/work/staging-app', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-settings' })
+  expect(await ui.find({ type: 'Text', text: /No rules yet/ })).toBeDefined()
+
+  // A rule with nothing to look for is explained.
+  await ui.press({ key: 'rule-add' })
+  expect(await ui.find({ type: 'Text', text: /what the folder should have/ })).toBeDefined()
+
+  // Enter in the box adds the rule with the theme chosen so far.
+  await ui.select({ key: 'rule-theme', value: 'dracula' })
+  await ui.input({ key: 'rule-match', text: 'staging' })
+  expect(await ui.find({ type: 'Text', text: /has staging/ })).toBeDefined()
+  // It applies at once to the folder it fits.
+  expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
+
+  await ui.press({ key: 'rule-preset-prod' })
+  expect(await ui.find({ type: 'Text', text: /has prod/ })).toBeDefined()
+  await ui.press({ key: 'rule-del-0' })
+  expect(await ui.find({ type: 'Text', text: /has prod/ })).toBeUndefined()
+  await ui.press({ key: 'rule-del-0' })
+  expect(await ui.find({ type: 'Text', text: /No rules yet/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('usage glow warms the backdrop as the context fills and cools when it empties', async ($, on) => {
+  const calls: string[] = []
+  host(on, { prefs: { glow: { on: true, source: 'context', toast: false, budget: 5 } } }, calls)
+  // The engine's own answer to a measurement, beneath the mod's hook.
+  on('session.measure', () => ({ changed: ['context'] }))
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const calm = calls[calls.length - 1]
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const measure = (percent: number) => ($.session as any).measure({ context: { window: 200000, percent }, rateLimits: [], changed: ['context'] })
+
+  await measure(40)
+  expect(calls[calls.length - 1]).toBe(calm)
+  await measure(75)
+  const warm = calls[calls.length - 1]
+
+  expect(warm).not.toBe(calm)
+  await measure(95)
+  const hot = calls[calls.length - 1]
+
+  expect(hot).not.toBe(warm)
+  // Falling a little does not flicker; falling well below does cool it.
+  await measure(89)
+  expect(calls[calls.length - 1]).toBe(hot)
+  await measure(10)
+  expect(calls[calls.length - 1]).toBe(calm)
+})
+
+test('tuning steps shift one theme, say so, and reset', async ($, on) => {
+  const calls: string[] = []
+  host(on, {}, calls)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-settings' })
+  const plain = calls[calls.length - 1]
+
+  await ui.press({ key: 'tune-warmth-up' })
+  await ui.press({ key: 'tune-warmth-up' })
+  expect(calls[calls.length - 1]).not.toBe(plain)
+  expect(await ui.find({ type: 'Text', text: /warmer/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /Active: Catppuccin Mocha \(dark\), tuned/ })).toBeDefined()
+
+  await ui.press({ key: 'tune-reset' })
+  expect(calls[calls.length - 1]).toBe(plain)
+  expect(await ui.find({ key: 'tune-reset' })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('the gallery filters by family', async ($, on) => {
+  host(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  expect(await ui.find({ key: 'fam-dark-all' })).toBeDefined()
+  expect(await ui.find({ key: 'fam-dark-Catppuccin' })).toBeDefined()
+  await ui.press({ key: 'fam-dark-Catppuccin' })
+  expect(await ui.find({ type: 'Button', text: /Catppuccin Mocha/ })).toBeDefined()
+  expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeUndefined()
+  await ui.press({ key: 'fam-dark-all' })
+  expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('a share link imports like a code, and the working words are saved with a theme', async ($, on) => {
+  host(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  const parsed = parseCode(IMPORTED)
+
+  if ('error' in parsed) {
+    throw new Error('the fixture must parse')
+  }
+  await ui.press({ key: 'tab-maker' })
+  await ui.input({ key: 'share-import', text: themeToLink(parsed.theme) })
+  expect(await ui.find({ key: 'maker-del-my-imported-one' })).toBeDefined()
+  await ui.press({ key: 'maker-del-my-imported-one' })
+
+  await ui.input({ key: 'maker-name', text: 'Word Test' })
+  await ui.input({ key: 'maker-accent', text: '#3b82f6' })
+  await ui.input({ key: 'maker-words', text: 'Brewing, Steeping' })
+  await ui.press({ key: 'maker-save' })
+  expect(await ui.find({ type: 'Text', text: /working words/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('a theme file on this computer can be imported', async ($, on) => {
+  const files: Record<string, string> = {
+    'C:/themes/dracula.json': JSON.stringify({
+      name: 'Dracula Pro',
+      type: 'dark',
+      colors: {
+        'editor.background': '#282a36',
+        'sideBar.background': '#21222c',
+        'editor.foreground': '#f8f8f2',
+        focusBorder: '#6272a4',
+        'button.background': '#bd93f9',
+        errorForeground: '#ff5555',
+        'terminal.ansiGreen': '#50fa7b',
+        'terminal.ansiYellow': '#f1fa8c',
+        'terminal.ansiMagenta': '#ff79c6',
+      },
+    }),
+  }
+  host(on, {}, [], undefined, files)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-maker' })
+  await ui.input({ key: 'share-import', text: 'C:/themes/missing.json' })
+  expect(await ui.find({ type: 'Text', text: /could not be read/ })).toBeDefined()
+  await ui.input({ key: 'share-import', text: 'C:/themes/dracula.json' })
+  expect(await ui.find({ key: 'maker-del-my-dracula-pro' })).toBeDefined()
   await ui.unmount()
 })
