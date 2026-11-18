@@ -343,11 +343,11 @@ export const register: Register = on => {
                   )}
                   <Box flexDirection="column" alignItems="flex-start" flexGrow={1}>
                     <Box alignItems="center" gap={1} flexWrap="wrap">
-                      {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so it sits on a plate of that same theme: its text stays readable on a row of the other mode. */}
+                      {/* The name is plain text in the row's own colors. The desktop draws a Button in the app's current theme and ignores a Text color inside it, so the button is a small chip (default chrome, on a plate of that same theme) that stays readable on a row of the other mode. */}
+                      <Text weight="bold" color={p.text[0]}>{p.name}</Text>
                       <Box paddingX={1} backgroundColor={c2}>
-                        <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                          {isCurrent ? '✓ ' : ''}
-                          {p.name}
+                        <Button key={`pick-${p.id}`} label={isCurrent ? `Active: ${p.name}` : `Use ${p.name}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
+                          {isCurrent ? '✓ Active' : 'Use'}
                         </Button>
                       </Box>
                       {Svg === undefined ? (
