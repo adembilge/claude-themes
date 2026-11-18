@@ -319,7 +319,6 @@ function tints(p: Theme, strength: Strength, tone: Tone) {
     lift: mix(s2, base, t(0.12)),
     faint: mix(s1, base, t(0.05)),
     warm: mix(s0, p.roles.warning, t(0.2)),
-    good: mix(s0, p.roles.success, t(0.16)),
   }
 }
 
@@ -336,16 +335,6 @@ const GROUNDS: { value: string; label: string; make: Make }[] = [
   { value: 'twilight', label: 'Twilight', make: c => ({ gradient: { angle: 180, stops: [{ at: 0, color: c.s0 }, { at: 0.6, color: c.faint }, { at: 0.85, color: c.alt }, { at: 1, color: c.s0 }] } }) },
   { value: 'ember', label: 'Ember', make: c => ({ gradient: { angle: 0, stops: [{ at: 0, color: c.warm }, { at: 0.35, color: c.soft }, { at: 1, color: c.s0 }] } }) },
   { value: 'halo', label: 'Halo', make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: c.s0 }, { at: 0.5, color: c.line }, { at: 1, color: c.s0 }] } }) },
-  { value: 'corner', label: 'Corner glow', make: c => ({ gradient: { angle: 135, stops: [{ at: 0, color: c.line }, { at: 0.55, color: c.faint }, { at: 1, color: c.s0 }] } }) },
-  { value: 'split', label: 'Split tone', make: c => ({ gradient: { angle: 90, stops: [{ at: 0, color: c.line }, { at: 1, color: c.alt }] } }) },
-  { value: 'mist', label: 'Mist', make: c => ({ gradient: { angle: 180, stops: [{ at: 0, color: c.faint }, { at: 1, color: c.s1 }] } }) },
-  { value: 'prism', label: 'Prism', make: c => ({ gradient: { angle: 135, stops: [{ at: 0, color: c.line }, { at: 0.35, color: c.alt }, { at: 0.7, color: c.good }, { at: 1, color: c.s0 }] } }) },
-  { value: 'deep', label: 'Deep', make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: mix(c.s0, '#000000', 0.35) }, { at: 1, color: c.lift }] } }) },
-  {
-    value: 'cloud',
-    label: 'Cloud',
-    make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: c.lift }, { at: 0.2, color: c.faint }, { at: 0.35, color: c.alt }, { at: 0.55, color: c.faint }, { at: 0.75, color: c.soft }, { at: 1, color: c.s0 }] } }),
-  },
 ]
 
 type BackdropStyle = string

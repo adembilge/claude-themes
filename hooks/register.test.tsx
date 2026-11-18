@@ -340,7 +340,7 @@ test('backdrop styles reach the theme as still grounds', async ($, on) => {
   await ui.press({ key: 'tab-settings' })
   expect(await ui.find({ key: 'backdrop-style-glow' })).toBeDefined()
   // Every style is a smooth gradient the app draws by itself.
-  for (const style of ['glow', 'sunrise', 'spotlight', 'duotone', 'vignette', 'dusk', 'twilight', 'ember', 'halo', 'corner', 'split', 'mist', 'prism', 'deep', 'cloud']) {
+  for (const style of ['glow', 'sunrise', 'spotlight', 'duotone', 'vignette', 'dusk', 'twilight', 'ember', 'halo']) {
     await ui.press({ key: `backdrop-style-${style}` })
     expect(calls[calls.length - 1]).toContain('"gradient"')
     expect(calls[calls.length - 1]).not.toContain('"vector"')
