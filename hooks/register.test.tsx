@@ -330,7 +330,7 @@ test('corrupted saved settings fall back to the defaults', async ($, on) => {
   await ui.unmount()
 })
 
-test('backdrop styles and panel blur reach the theme, and the scene is drawn', async ($, on) => {
+test('backdrop styles reach the theme as still grounds', async ($, on) => {
   const calls: string[] = []
   host(on, {}, calls)
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
@@ -339,21 +339,12 @@ test('backdrop styles and panel blur reach the theme, and the scene is drawn', a
 
   await ui.press({ key: 'tab-settings' })
   expect(await ui.find({ key: 'backdrop-style-glow' })).toBeDefined()
-  // The glow is a plain gradient and has no blur to set.
-  expect(await ui.find({ key: 'glass-blur-24' })).toBeUndefined()
-
-  await ui.press({ key: 'backdrop-style-waves' })
-  expect(calls[calls.length - 1]).toContain('"scene":"style-waves"')
-  expect(calls[calls.length - 1]).toContain('"blur":0')
-  expect(calls[calls.length - 1]).toContain('"opacity":0.4')
-  expect(await ui.find({ key: 'glass-blur-24' })).toBeDefined()
-
-  await ui.press({ key: 'glass-blur-24' })
-  expect(calls[calls.length - 1]).toContain('"blur":24')
-
-  await ui.press({ key: 'glass-opacity-60' })
-  expect(calls[calls.length - 1]).toContain('"opacity":0.6')
-  // Every style is offered, the sixth being the stars.
+  // Every style but the glow is a still vector ground, which the app draws with no hook.
+  for (const style of ['grid', 'dots', 'waves', 'stars', 'aurora']) {
+    await ui.press({ key: `backdrop-style-${style}` })
+    expect(calls[calls.length - 1]).toContain('"vector"')
+    expect(calls[calls.length - 1]).not.toContain('"scene"')
+  }
   expect(await ui.find({ key: 'backdrop-style-stars' })).toBeDefined()
 
   await ui.press({ key: 'backdrop-style-glow' })
@@ -365,20 +356,6 @@ test('backdrop styles and panel blur reach the theme, and the scene is drawn', a
   expect(calls[calls.length - 1]).not.toContain('"backdrop"')
   expect(await ui.find({ key: 'backdrop-style-glow' })).toBeUndefined()
   await ui.unmount()
-
-  // The scene itself is an Svg in the current theme's colors, for each style.
-  for (const style of ['grid', 'dots', 'waves', 'stars', 'aurora']) {
-    const scene = await $.ui.mount({
-      plugin: 'desktop-themes',
-      component: 'Backdrop',
-      requestId: 'backdrop',
-      surface: 'desktop',
-      props: { scene: `style-${style}`, plugin: 'desktop-themes', glass: { blur: 16, opacity: 0.6 } },
-    } as never)
-
-    expect(await scene.find({ type: 'Svg' })).toBeDefined()
-    await scene.unmount()
-  }
 })
 
 test('a folder keeps its own theme, and the clock does not replace it', async ($, on) => {

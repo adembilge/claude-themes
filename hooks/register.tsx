@@ -535,6 +535,57 @@ function backdropFor(p: Theme): ThemeSetArgs['backdrop'] {
 }
 
 /**
+ * The same styles as still vector grounds, which the app draws by itself with no render hook (a live
+ * scene was never drawn on some desktops). Tiled lines, dots and waves in a tint of the accent.
+ */
+function groundFor(p: Theme, style: Exclude<BackdropStyle, 'glow'>): ThemeSetArgs['backdrop'] {
+  const [s0] = p.surfaces
+  const line = mix(s0, p.accent, 0.22)
+  const soft = mix(s0, p.accent, 0.14)
+  const pro = mix(s0, p.roles.pro, 0.16)
+
+  if (style === 'grid') {
+    return { vector: { viewBox: [56, 56], size: [56, 56], repeat: true, paths: [{ d: 'M0 0H56M0 0V56', strokeWidth: 1, color: line }] } }
+  }
+
+  if (style === 'dots') {
+    return { vector: { viewBox: [28, 28], size: [28, 28], repeat: true, paths: [{ d: 'M14 11.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5Z', color: line }] } }
+  }
+
+  if (style === 'waves') {
+    return { vector: { viewBox: [96, 24], size: [96, 24], repeat: true, paths: [{ d: 'M0 12Q24 0 48 12T96 12', strokeWidth: 1.5, color: line }] } }
+  }
+
+  if (style === 'stars') {
+    return {
+      vector: {
+        viewBox: [160, 120],
+        size: [160, 120],
+        repeat: true,
+        paths: [
+          { d: 'M20 18a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 1 0 0-3.2Z', color: line },
+          { d: 'M96 52a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4Z', color: soft },
+          { d: 'M138 14a1.4 1.4 0 1 0 0 2.8a1.4 1.4 0 1 0 0-2.8Z', color: line },
+          { d: 'M52 92a1.8 1.8 0 1 0 0 3.6a1.8 1.8 0 1 0 0-3.6Z', color: soft },
+          { d: 'M128 100a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4Z', color: line },
+        ],
+      },
+    }
+  }
+
+  // aurora: broad bands, stretched over the whole page
+  return {
+    vector: {
+      viewBox: [100, 60],
+      paths: [
+        { d: 'M0 14Q25 2 50 14T100 10V30Q75 40 50 30T0 34Z', color: soft },
+        { d: 'M0 34Q30 24 60 36T100 30V46Q70 56 40 46T0 50Z', color: pro },
+      ],
+    },
+  }
+}
+
+/**
  * A small drawing of the app in one theme: sidebar, a message, a code line, the input and Send.
  * `live` adds a slow pulse on Send; it only runs where the surface draws the Svg interactively.
  */
@@ -846,7 +897,7 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
         ? undefined
         : before.backdropStyle === 'glow'
           ? backdropFor(p)
-          : { scene: `style-${before.backdropStyle}`, glass: { blur: before.glassBlur, opacity: before.glassOpacity } }
+          : groundFor(p, before.backdropStyle)
 
       const result = await $.theme.set(backdrop === undefined ? chosen : ({ ...chosen, backdrop } as ThemeSetArgs))
 
@@ -1558,7 +1609,7 @@ export const register: Register = on => {
                   )
                 })}
               </Box>
-              {now.backdropStyle === 'glow' ? null : (
+              {true ? null : (
                 <Box flexDirection="column" gap={1}>
                   <Text dimColor>Panel opacity: lower shows more of the scene</Text>
                   <Box gap={1} flexWrap="wrap">
