@@ -167,6 +167,11 @@ test('the maker saves a theme of your own, refuses bad input and deletes it', as
 
     await ui.press({ key: 'tab-maker' })
     expect(await ui.find({ key: 'maker-save' })).toBeDefined()
+    // No name yet: nothing is said until Save is pressed.
+    expect(await ui.find({ type: 'Text', text: /Give it a name/ })).toBeUndefined()
+    await ui.input({ key: 'maker-name', text: '' })
+    await ui.press({ key: 'maker-save' })
+    expect(await ui.find({ type: 'Text', text: /Give it a name/ })).toBeDefined()
 
     // A bad accent is explained and nothing is saved.
     await ui.input({ key: 'maker-name', text: 'Test Blue' })

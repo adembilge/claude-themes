@@ -758,7 +758,7 @@ export const register: Register = on => {
 
       return { text: `Theme: ${found.name} (${found.mode})` }
     }
-    await $.ui.open({ id: PANE, title: 'Themes' })
+    await $.ui.open({ id: PANE, title: 'Claude Themes' })
 
     return { text: '' }
   })
@@ -915,11 +915,15 @@ export const register: Register = on => {
     }
 
     const makerTab = () => {
-      const built = validateDraft(now.draft)
+      // Until a name is typed the preview uses a stand-in; the missing name is only pointed out when saving.
+      const built = validateDraft({ ...now.draft, name: now.draft.name.trim() === '' ? 'My theme' : now.draft.name })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const field = (key: string, label: string, placeholder: string, value: string, change: (v: string) => Promise<void>, submit: (v: string) => Promise<void>): any =>
         Input === undefined ? null : (
-          <Input key={key} label={label} placeholder={placeholder} value={value} onInput={change} onSubmit={submit} />
+          <Box key={`field-${key}`} flexDirection="column" alignItems="stretch">
+            <Text dimColor>{label}</Text>
+            <Input key={key} placeholder={placeholder} value={value} onInput={change} onSubmit={submit} />
+          </Box>
         )
       const setName = async (v: string) => {
         await setDraft($, { name: v.slice(0, 24) })
@@ -1051,8 +1055,8 @@ export const register: Register = on => {
         {Svg === undefined ? null : (
           <Svg source={bannerSvg(cur)} alt="Animated band in the current theme's colors" width={264} height={30} />
         )}
-        <Box flexDirection="column">
-          <Text weight="bold" size="heading">Themes</Text>
+        <Box flexDirection="column" alignItems="center">
+          <Text weight="bold" size="title">Claude Themes</Text>
           <Text dimColor>{all.length} themes. Each one sets the app to its own dark or light look.</Text>
         </Box>
 
