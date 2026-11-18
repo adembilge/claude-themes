@@ -2,6 +2,7 @@ import { expect, test } from 'claude-code/testing'
 
 import type { Imported } from './import.js'
 import { EXPORTS, ansi16, exportFileName, exportTheme, formatOf, toBase16 } from './export.js'
+import type { ExportFormat } from './export.js'
 import { contrast, validateTheme } from './model.js'
 import type { Theme } from './model.js'
 import { PACKS } from './packs.js'
@@ -203,26 +204,21 @@ test('text exports hold the right keys', () => {
   expect(toBase16(t)).toContain(`variant: "${t.mode}"`)
 })
 
-// Export then import again: the result must be a palette the app accepts, with the same mode and accent family.
-test('exporting and importing again keeps the mode, accent and status colors', () => {
-  for (const t of PACKS) {
-    const back: Record<string, Imported | { error: string }> = {
-      vscode: readThemeFile(exportTheme(t, 'vscode'), 'a.json'),
-      base16: readThemeFile(exportTheme(t, 'base16'), 'a.yaml'),
-      wt: readThemeFile(exportTheme(t, 'wt'), 'a.json'),
-      alacritty: readThemeFile(exportTheme(t, 'alacritty'), 'a.toml'),
-      kitty: readThemeFile(exportTheme(t, 'kitty'), 'a.conf'),
-    }
+// Export then import again: the result must be a palette the app accepts, with the same mode and an accent close to the original.
+// One test per format keeps each well inside the test time limit on a slow machine.
+const FILE: Record<ExportFormat, string> = { vscode: 'a.json', base16: 'a.yaml', wt: 'a.json', alacritty: 'a.toml', kitty: 'a.conf' }
 
-    for (const [fmt, r] of Object.entries(back)) {
-      const got = good(r).theme
+for (const f of EXPORTS) {
+  test(`exporting as ${f.label} and importing again keeps the mode and accent`, () => {
+    for (const t of PACKS) {
+      const got = good(readThemeFile(exportTheme(t, f.id), FILE[f.id])).theme
 
-      expect(got.mode, `${t.name} via ${fmt}`).toBe(t.mode)
+      expect(got.mode, `${t.name} via ${f.label}`).toBe(t.mode)
       // Colors only move when the app's contrast rules force it, so they stay close.
-      expect(contrast(got.accent, t.accent), `${t.name} accent via ${fmt}`).toBeLessThan(2.2)
+      expect(contrast(got.accent, t.accent), `${t.name} accent via ${f.label}`).toBeLessThan(2.2)
     }
-  }
-})
+  })
+}
 
 test('formatOf understands what people type', () => {
   expect(formatOf('VS Code')).toBe('vscode')
