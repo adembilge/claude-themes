@@ -76,6 +76,24 @@ const THEMES: Theme[] = [
   theme('dark', 'github-dark', 'GitHub Dark', 'neutral blue-black, clean',
     ['#010409', '#0d1117', '#161b22', '#21262d'], ['#e6edf3', '#c9d1d9', '#8b949e'], '#58a6ff',
     ['#f85149', '#3fb950', '#d29922', '#bc8cff']),
+  theme('dark', 'monokai', 'Monokai', 'vivid on olive charcoal',
+    ['#1e1f1c', '#272822', '#34352e', '#3e3d32'], ['#f8f8f2', '#cfcfc2', '#a59f85'], '#a6e22e',
+    ['#f92672', '#a6e22e', '#e6db74', '#ae81ff']),
+  theme('dark', 'ayu-dark', 'Ayu Dark', 'ink black with warm amber',
+    ['#06080c', '#0b0e14', '#131721', '#1c212e'], ['#bfbdb6', '#9a9892', '#8a8984'], '#e6b450',
+    ['#f07178', '#aad94c', '#ffb454', '#d2a6ff']),
+  theme('dark', 'everforest', 'Everforest', 'calm forest greens, easy on the eyes',
+    ['#232a2e', '#2d353b', '#343f44', '#3d484d'], ['#d3c6aa', '#b5ab93', '#9da9a0'], '#a7c080',
+    ['#e67e80', '#a7c080', '#dbbc7f', '#d699b6']),
+  theme('dark', 'material-ocean', 'Material Ocean', 'deep navy, soft blue',
+    ['#090b10', '#0f111a', '#1a1c25', '#292d3e'], ['#eeffff', '#b0bec5', '#8f93a2'], '#82aaff',
+    ['#f07178', '#c3e88d', '#ffcb6b', '#c792ea']),
+  theme('dark', 'kanagawa-wave', 'Kanagawa Wave', 'ink and indigo, Japanese woodblock',
+    ['#16161d', '#1f1f28', '#2a2a37', '#363646'], ['#dcd7ba', '#c8c093', '#9c9a82'], '#7e9cd8',
+    ['#e46876', '#98bb6c', '#e6c384', '#957fb8']),
+  theme('dark', 'synthwave', 'Synthwave', 'neon pink on midnight purple',
+    ['#1a1726', '#262335', '#34294f', '#3d3361'], ['#ffffff', '#d9d4ee', '#a59fc9'], '#ff7edb',
+    ['#fe4450', '#72f1b8', '#fede5d', '#b893ce']),
   // ---- light ----
   theme('light', 'catppuccin-latte', 'Catppuccin Latte', 'soft pastels on cream',
     ['#dce0e8', '#e6e9ef', '#eff1f5', '#eff1f5'], ['#4c4f69', '#5c5f77', '#6c6f85'], '#8839ef',
@@ -98,6 +116,12 @@ const THEMES: Theme[] = [
   theme('light', 'one-light', 'One Light', 'the Atom classic, bright',
     ['#e5e5e6', '#f0f0f1', '#fafafa', '#fafafa'], ['#383a42', '#4b4e57', '#696c77'], '#4078f2',
     ['#e45649', '#50a14f', '#c18401', '#a626a4']),
+  theme('light', 'ayu-light', 'Ayu Light', 'clean white with warm orange',
+    ['#e7e8ea', '#f3f4f5', '#fafafa', '#fafafa'], ['#5c6166', '#6b7077', '#787b80'], '#ff9940',
+    ['#f07171', '#86b300', '#f2ae49', '#a37acc']),
+  theme('light', 'everforest-light', 'Everforest Light', 'warm cream with moss green',
+    ['#efebd4', '#f4f0d9', '#fdf6e3', '#fdf6e3'], ['#4f5b58', '#5f6c68', '#6e7a70'], '#8da101',
+    ['#f85552', '#8da101', '#dfa000', '#df69ba']),
 ]
 
 const BY_ID = new Map(THEMES.map(t => [t.id, t]))
@@ -160,12 +184,61 @@ const idOf = (text: string): string =>
     .replace(/[̀-ͯ]/g, '')
     .replace(/[\s_]+/g, '-')
 
-type State = { id: string }
+type Tab = 'themes' | 'settings'
+
+type State = { id: string; tab: Tab; q: string; favs: string[]; recents: string[]; backdrop: boolean }
+
+type Prefs = { favs: string[]; recents: string[]; backdrop: boolean }
+
+const MAX_FAVS = 12
+const MAX_RECENTS = 3
+const PREFS_KEY = 'prefs'
 
 // Change the tag if the value's shape changes: it declines what an earlier version stored.
-const current = atom({ plugin: 'desktop-themes', key: 'current' } as const, { id: DEFAULT_THEME } as State, {
-  shape: 'current-3',
-})
+const current = atom(
+  { plugin: 'desktop-themes', key: 'current' } as const,
+  { id: DEFAULT_THEME, tab: 'themes', q: '', favs: [], recents: [], backdrop: true } as State,
+  { shape: 'current-4' },
+)
+
+/** Known theme ids only, no repeats, at most `max`: anything else a saved value held is dropped. */
+function cleanIds(value: unknown, max: number): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return [...new Set(value.filter((x): x is string => typeof x === 'string' && BY_ID.has(x)))].slice(0, max)
+}
+
+function cleanPrefs(raw: unknown): Prefs {
+  const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>
+
+  return { favs: cleanIds(r.favs, MAX_FAVS), recents: cleanIds(r.recents, MAX_RECENTS), backdrop: r.backdrop !== false }
+}
+
+/** The color `t` of the way from `a` to `b`, both six-digit hex. */
+function mix(a: string, b: string, t: number): `#${string}` {
+  const ch = (h: string, i: number) => parseInt(h.slice(1 + i * 2, 3 + i * 2), 16)
+  const out = [0, 1, 2].map(i => Math.round(ch(a, i) * (1 - t) + ch(b, i) * t).toString(16).padStart(2, '0')).join('')
+
+  return `#${out}`
+}
+
+/** A soft glow of the theme's accent, centered on the page, easing out to its darkest surface. */
+function backdropFor(p: Theme): ThemeSetArgs['backdrop'] {
+  const [s0, s1, s2] = p.surfaces
+
+  return {
+    gradient: {
+      shape: 'radial',
+      stops: [
+        { at: 0, color: mix(s2, p.accent, 0.12) },
+        { at: 0.55, color: mix(s1, p.accent, 0.04) },
+        { at: 1, color: s0 as `#${string}` },
+      ],
+    },
+  }
+}
 
 /**
  * A small drawing of the app in one theme: sidebar, a message, a code line, the input and Send.
@@ -221,21 +294,63 @@ function bannerSvg(p: Theme): string {
   ].join('')
 }
 
+// The engine only follows `$` into top-level functions, so every helper that uses it is one.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function savePrefs($: any): Promise<void> {
+  const s = await read($, current)
+
+  await $.store.set(PREFS_KEY, { favs: s.favs, recents: s.recents, backdrop: s.backdrop })
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function patch($: any, change: Partial<State>): Promise<void> {
+  await update($, current, (s: State) => ({ ...s, ...change }))
+}
+
 // Applies and remembers one choice; every path (card press, command) goes through here.
-// Declared at the top of the file because the engine only follows `$` into top-level functions.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function apply($: any, id: string, save: boolean): Promise<void> {
   const chosen = lookFor(id)
+  const p = BY_ID.get(id)
+  const before = await read($, current)
 
-  if (chosen !== undefined) {
+  if (chosen !== undefined && p !== undefined) {
     // Nothing is reported if no client draws themes yet; the theme still stands for one that attaches.
-    await $.theme.set(chosen)
+    try {
+      await $.theme.set(before.backdrop ? { ...chosen, backdrop: backdropFor(p) } : chosen)
+    } catch {
+      // A surface that refuses the backdrop still gets the colors.
+      await $.theme.set(chosen)
+    }
   }
-  await update($, current, () => ({ id }))
+  await update($, current, (s: State) => ({
+    ...s,
+    id,
+    recents: save ? [id, ...s.recents.filter(r => r !== id)].slice(0, MAX_RECENTS) : s.recents,
+  }))
 
   if (save) {
     await $.store.set(STORE_KEY, id)
+    await savePrefs($)
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function toggleFavorite($: any, id: string): Promise<void> {
+  await update($, current, (s: State) => ({
+    ...s,
+    favs: s.favs.includes(id) ? s.favs.filter(f => f !== id) : [id, ...s.favs].slice(0, MAX_FAVS),
+  }))
+  await savePrefs($)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function toggleBackdrop($: any): Promise<void> {
+  const s = await read($, current)
+
+  await patch($, { backdrop: !s.backdrop })
+  await apply($, s.id, false)
+  await savePrefs($)
 }
 
 export const register: Register = on => {
@@ -250,6 +365,8 @@ export const register: Register = on => {
     const saved = await $.store.get(STORE_KEY)
     const id = typeof saved === 'string' && BY_ID.has(saved) ? saved : DEFAULT_THEME
 
+    // Favorites, recents and the backdrop switch come back before the theme is drawn.
+    await patch($, cleanPrefs(await $.store.get(PREFS_KEY)))
     await apply($, id, false)
 
     return next(e)
@@ -279,13 +396,186 @@ export const register: Register = on => {
     // The terminal has no Svg; it keeps a preview and dots built from text.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Svg = e.surface === 'terminal' ? undefined : ($.ui.resolve(e) as any).Svg
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Input = ($.ui.resolve(e) as any).Input
     const now = await read($, current)
     const cur = BY_ID.get(now.id) ?? DEFAULT
-    const [c0, c1, c2, c3] = cur.surfaces
+    const [c0, c1, c2] = cur.surfaces
+    const tab: Tab = now.tab === 'settings' ? 'settings' : 'themes'
+    const q = now.q.trim().toLowerCase()
+    const matches = (p: Theme) => q === '' || `${p.name} ${p.note} ${p.id} ${p.mode}`.toLowerCase().includes(q)
 
     const pick = (id: string) => async () => {
       await apply($, id, true)
     }
+    const goTab = (t: Tab) => async () => {
+      await patch($, { tab: t })
+    }
+    const star = (id: string) => async () => {
+      await toggleFavorite($, id)
+    }
+
+    // One section failing to draw must not take the rest of the pane with it.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const guard = (name: string, draw: () => any): any => {
+      try {
+        return draw()
+      } catch {
+        return <Text dimColor>{name} could not be drawn.</Text>
+      }
+    }
+
+    const row = (p: Theme, section: string) => {
+      const isCurrent = p.id === now.id
+      const isFav = now.favs.includes(p.id)
+      const [s0, s1, , s3] = p.surfaces
+      const dots = [p.accent, p.roles.danger, p.roles.success, p.roles.warning, p.roles.pro]
+
+      return (
+        <Box
+          key={`row-${section}-${p.id}`}
+          alignItems="center"
+          gap={1}
+          padding={1}
+          borderStyle={isCurrent ? 'bold' : 'round'}
+          borderColor={isCurrent ? p.accent : s3}
+          backgroundColor={s0}
+          hover={{ borderColor: p.accent, backgroundColor: s1 }}
+        >
+          {Svg === undefined ? null : (
+            <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={128} height={64} />
+          )}
+          <Box flexDirection="column" alignItems="center" flexGrow={1} gap={1}>
+            {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so a button on a row sits on a plate of that same theme: it stays readable on a row of the other mode. */}
+            <Box backgroundColor={c2}>
+              <Button key={`pick-${section}-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
+                {isCurrent ? '✓ ' : ''}
+                {p.name}
+              </Button>
+            </Box>
+            {Svg === undefined ? (
+              <Text>
+                {dots.map((c, i) => (
+                  <Text key={`dot${i}`} color={c}>●</Text>
+                ))}
+              </Text>
+            ) : (
+              <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={90} height={18} />
+            )}
+            <Text color={p.text[2]}>{p.note}</Text>
+          </Box>
+          <Box backgroundColor={c2}>
+            <Button key={`fav-${section}-${p.id}`} label={`${isFav ? 'Remove' : 'Add'} ${p.name} ${isFav ? 'from' : 'to'} favorites`} onPress={star(p.id)}>
+              {isFav ? '★' : '☆'}
+            </Button>
+          </Box>
+        </Box>
+      )
+    }
+
+    const hero = (
+      <Box flexDirection="column" alignItems="flex-start" gap={1} padding={1} borderStyle="bold" borderColor={cur.accent} backgroundColor={c0}>
+        {Svg === undefined ? (
+          <Box>
+            <Box flexDirection="column" width={16} paddingX={1} backgroundColor={c1}>
+              <Text color={cur.text[0]} weight="bold">Chats</Text>
+              <Text color={cur.text[0]} backgroundColor={c2}>Release notes</Text>
+              <Text color={cur.text[2]}>Trip ideas</Text>
+            </Box>
+            <Box flexDirection="column" flexGrow={1} paddingX={1}>
+              <Box backgroundColor={c2} paddingX={1}>
+                <Text color={cur.text[0]}>Here is the fix.</Text>
+              </Box>
+              <Box gap={1}>
+                <Text color={c0} backgroundColor={cur.accent}> Send </Text>
+                <Text color={cur.roles.danger}>Error</Text>
+                <Text color={cur.roles.warning}>Warning</Text>
+              </Box>
+            </Box>
+          </Box>
+        ) : (
+          <Svg source={previewSvg(cur, true)} alt={`${cur.name} preview`} width={264} height={132} />
+        )}
+        <Text weight="bold" color={cur.text[0]}>Active: {cur.name} ({cur.mode})</Text>
+      </Box>
+    )
+
+    const themesTab = () => {
+      const favs = now.favs.map(id => BY_ID.get(id)).filter((p): p is Theme => p !== undefined)
+      const recents = now.recents.map(id => BY_ID.get(id)).filter((p): p is Theme => p !== undefined)
+      const shown = THEMES.filter(matches)
+
+      return (
+        <Box flexDirection="column" gap={1}>
+          {Input === undefined ? null : (
+            <Input
+              key="search"
+              placeholder="Search themes"
+              value={now.q}
+              onInput={async (value: string) => {
+                await patch($, { q: value.slice(0, 40) })
+              }}
+              onSubmit={async (value: string) => {
+                await patch($, { q: value.slice(0, 40) })
+              }}
+            />
+          )}
+
+          {q !== '' || recents.length === 0 ? null : (
+            <Box flexDirection="column" gap={1}>
+              <Text weight="bold">Recent</Text>
+              <Box gap={1} flexWrap="wrap">
+                {recents.map(p => (
+                  <Button key={`recent-${p.id}`} variant={p.id === now.id ? 'primary' : 'secondary'} onPress={pick(p.id)}>
+                    {p.name}
+                  </Button>
+                ))}
+              </Box>
+            </Box>
+          )}
+
+          {q !== '' || favs.length === 0 ? null : (
+            <Box flexDirection="column" gap={1}>
+              <Text weight="bold">★ Favorites</Text>
+              {favs.map(p => guard(p.name, () => row(p, 'fav')))}
+            </Box>
+          )}
+
+          {shown.length === 0 ? (
+            <Text dimColor>No theme matches "{now.q.trim()}".</Text>
+          ) : (
+            GROUPS.map(g => {
+              const inGroup = shown.filter(p => p.mode === g.mode)
+
+              return inGroup.length === 0 ? null : (
+                <Box key={`group-${g.mode}`} flexDirection="column" gap={1}>
+                  <Text weight="bold">{g.title}</Text>
+                  {inGroup.map(p => guard(p.name, () => row(p, 'all')))}
+                </Box>
+              )
+            })
+          )}
+        </Box>
+      )
+    }
+
+    const settingsTab = () => (
+      <Box flexDirection="column" gap={1}>
+        <Text weight="bold">Backdrop</Text>
+        <Text dimColor>A soft glow of the theme's accent behind the conversation. Off keeps the app's plain background.</Text>
+        <Box>
+          <Button
+            key="backdrop-toggle"
+            variant={now.backdrop ? 'primary' : 'secondary'}
+            onPress={async () => {
+              await toggleBackdrop($)
+            }}
+          >
+            {now.backdrop ? 'Backdrop: on' : 'Backdrop: off'}
+          </Button>
+        </Box>
+      </Box>
+    )
 
     return (
       <Box flexDirection="column" gap={1} paddingX={1}>
@@ -297,77 +587,18 @@ export const register: Register = on => {
           <Text dimColor>{THEMES.length} themes. Each one sets the app to its own dark or light look.</Text>
         </Box>
 
-        <Box flexDirection="column" alignItems="flex-start" gap={1} padding={1} borderStyle="bold" borderColor={cur.accent} backgroundColor={c0}>
-          {Svg === undefined ? (
-            <Box>
-              <Box flexDirection="column" width={16} paddingX={1} backgroundColor={c1}>
-                <Text color={cur.text[0]} weight="bold">Chats</Text>
-                <Text color={cur.text[0]} backgroundColor={c2}>Release notes</Text>
-                <Text color={cur.text[2]}>Trip ideas</Text>
-              </Box>
-              <Box flexDirection="column" flexGrow={1} paddingX={1}>
-                <Box backgroundColor={c2} paddingX={1}>
-                  <Text color={cur.text[0]}>Here is the fix.</Text>
-                </Box>
-                <Box gap={1}>
-                  <Text color={c0} backgroundColor={cur.accent}> Send </Text>
-                  <Text color={cur.roles.danger}>Error</Text>
-                  <Text color={cur.roles.warning}>Warning</Text>
-                </Box>
-              </Box>
-            </Box>
-          ) : (
-            <Svg source={previewSvg(cur, true)} alt={`${cur.name} preview`} width={264} height={132} />
-          )}
-          <Text weight="bold" color={cur.text[0]}>Active: {cur.name} ({cur.mode})</Text>
+        {guard('The current theme', () => hero)}
+
+        <Box gap={1}>
+          <Button key="tab-themes" variant={tab === 'themes' ? 'primary' : 'secondary'} onPress={goTab('themes')}>
+            Themes
+          </Button>
+          <Button key="tab-settings" variant={tab === 'settings' ? 'primary' : 'secondary'} onPress={goTab('settings')}>
+            Settings
+          </Button>
         </Box>
 
-        {GROUPS.map(g => (
-          <Box key={`group-${g.mode}`} flexDirection="column" gap={1}>
-            <Text weight="bold">{g.title}</Text>
-            {THEMES.filter(p => p.mode === g.mode).map(p => {
-              const isCurrent = p.id === now.id
-              const [s0, s1, , s3] = p.surfaces
-              const dots = [p.accent, p.roles.danger, p.roles.success, p.roles.warning, p.roles.pro]
-
-              return (
-                <Box
-                  key={`row-${p.id}`}
-                  alignItems="center"
-                  gap={1}
-                  padding={1}
-                  borderStyle={isCurrent ? 'bold' : 'round'}
-                  borderColor={isCurrent ? p.accent : s3}
-                  backgroundColor={s0}
-                  hover={{ borderColor: p.accent, backgroundColor: s1 }}
-                >
-                  {Svg === undefined ? null : (
-                    <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={128} height={64} />
-                  )}
-                  <Box flexDirection="column" alignItems="center" flexGrow={1} gap={1}>
-                    {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so the name button sits on a plate of that same theme: it stays readable on a row of the other mode. */}
-                    <Box backgroundColor={c2}>
-                      <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                        {isCurrent ? '✓ ' : ''}
-                        {p.name}
-                      </Button>
-                    </Box>
-                    {Svg === undefined ? (
-                      <Text>
-                        {dots.map((c, i) => (
-                          <Text key={`dot${i}`} color={c}>●</Text>
-                        ))}
-                      </Text>
-                    ) : (
-                      <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={90} height={18} />
-                    )}
-                    <Text color={p.text[2]}>{p.note}</Text>
-                  </Box>
-                </Box>
-              )
-            })}
-          </Box>
-        ))}
+        {guard(tab === 'themes' ? 'The theme list' : 'Settings', tab === 'themes' ? themesTab : settingsTab)}
 
         <Text dimColor>
           Documents and source code: <Link href={REPO_URL}>{REPO_URL}</Link>

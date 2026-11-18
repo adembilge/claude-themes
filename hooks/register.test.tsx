@@ -14,23 +14,34 @@ const PANE = {
   },
 } as const
 
-test('the gallery draws a card for every theme, on every surface', async ($, on) => {
+const SURFACES = ['terminal', 'desktop', 'vscode', 'mobile'] as const
+
+// The host's answers, as a fresh session sees them. `prefs` and `theme` are what the store holds.
+function host(on: any, saved: { prefs?: unknown; theme?: unknown } = {}) {
   on('command.register', () => ({ value: { command: 'claude-themes' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
-  on('session.start', (_, e) => ({ cwd: e.cwd }))
-  on('store.get', () => ({ value: undefined }))
+  on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
+  on('store.get', (_: unknown, e: { key: string }) => ({
+    value: e.key === 'prefs' ? saved.prefs : e.key === 'theme' ? saved.theme : undefined,
+  }))
   on('store.set', () => ({ value: undefined }))
   on('theme.set', () => ({ value: undefined }))
+}
 
+test('the gallery draws a card for every theme, on every surface', async ($, on) => {
+  host(on)
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
 
-  for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
+  for (const surface of SURFACES) {
     const ui = await $.ui.mount({ ...PANE, surface })
     // A dark and a light theme are both listed, and each is one press.
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
     expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /Espresso/ })).toBeDefined()
 
-    // The dock ends with a link to the docs and source.
+    // Both tabs are offered, and the dock ends with a link to the docs and source.
+    expect(await ui.find({ key: 'tab-themes' })).toBeDefined()
+    expect(await ui.find({ key: 'tab-settings' })).toBeDefined()
     expect(await ui.find({ type: 'Link', text: /github\.com\/adembilge\/claude-themes/ })).toBeDefined()
 
     // The terminal has no Svg and keeps a preview built from boxes.
@@ -39,6 +50,80 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
     } else {
       expect(await ui.find({ type: 'Svg' })).toBeDefined()
     }
+    await ui.unmount()
+  }
+})
+
+test('favorites and recents appear when used', async ($, on) => {
+  host(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  for (const surface of SURFACES) {
+    const ui = await $.ui.mount({ ...PANE, surface })
+
+    await ui.press({ key: 'fav-all-dracula' })
+    expect(await ui.find({ type: 'Text', text: /Favorites/ })).toBeDefined()
+    expect(await ui.find({ key: 'pick-fav-dracula' })).toBeDefined()
+
+    await ui.press({ key: 'pick-all-nord' })
+    expect(await ui.find({ key: 'recent-nord' })).toBeDefined()
+
+    // Pressing the star again takes it out.
+    await ui.press({ key: 'fav-fav-dracula' })
+    expect(await ui.find({ type: 'Text', text: /Favorites/ })).toBeUndefined()
+    await ui.unmount()
+  }
+})
+
+test('search filters the list and says when nothing matches', async ($, on) => {
+  host(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  for (const surface of SURFACES) {
+    const ui = await $.ui.mount({ ...PANE, surface })
+
+    await ui.input({ key: 'search', text: 'zzzz' })
+    expect(await ui.find({ type: 'Text', text: /No theme matches/ })).toBeDefined()
+
+    await ui.input({ key: 'search', text: 'drac' })
+    expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /Nord/ })).toBeUndefined()
+    await ui.unmount()
+  }
+})
+
+test('the settings tab switches the backdrop and the list comes back', async ($, on) => {
+  host(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  for (const surface of SURFACES) {
+    const ui = await $.ui.mount({ ...PANE, surface })
+
+    await ui.press({ key: 'tab-settings' })
+    expect(await ui.find({ type: 'Button', text: /Backdrop: on/ })).toBeDefined()
+    await ui.press({ key: 'backdrop-toggle' })
+    expect(await ui.find({ type: 'Button', text: /Backdrop: off/ })).toBeDefined()
+    await ui.press({ key: 'backdrop-toggle' })
+
+    await ui.press({ key: 'tab-themes' })
+    expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
+    await ui.unmount()
+  }
+})
+
+test('a corrupted saved value cannot break the gallery', async ($, on) => {
+  host(on, {
+    theme: 42,
+    prefs: { favs: 'nope', recents: [1, 2, 'not-a-theme', 'nord', 'nord'], backdrop: 'yes' },
+  })
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  for (const surface of SURFACES) {
+    const ui = await $.ui.mount({ ...PANE, surface })
+
+    expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
+    // The one valid recent survives; the rest were dropped.
+    expect(await ui.find({ key: 'recent-nord' })).toBeDefined()
     await ui.unmount()
   }
 })

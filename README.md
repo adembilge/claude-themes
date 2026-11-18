@@ -1,13 +1,15 @@
 # claude-themes
 
-A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 17 UI themes, 10 dark and 7 light, and a gallery pane where you see each one before you pick it.
+A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 25 UI themes, 16 dark and 9 light, and a gallery pane where you see each one before you pick it.
 
-## What you get (v2.4.1)
+## What you get (v2.5.0)
 
 - **`/claude-themes` opens a gallery pane.** The top shows the current theme as a drawn app preview under a slow animated band in its colors. Below it, themes are grouped into dark and light; each row has a small preview, the name, round color dots and a short note.
 - **A theme sets its own mode.** Pick a dark theme and the app goes dark; pick a light theme and it goes light. There are no separate Dark, Light or Auto buttons.
 - **`/claude-themes <name>`** switches directly, for example `/claude-themes dracula`.
-- Your choice is saved.
+- **Tabs, search, favorites.** The gallery has Themes and Settings tabs. Search filters by name or note, ☆ stars a theme into a Favorites section, and your last three themes sit under Recent.
+- **Backdrop.** Each theme paints a soft glow of its accent behind the conversation. Settings has a switch to turn it off.
+- Your choice, favorites, recents and backdrop switch are saved.
 
 | Dark | Light |
 |---|---|
@@ -18,9 +20,15 @@ A mod for the Claude desktop app that recolors the whole window, not just the ch
 | Tokyo Night | Gruvbox Light |
 | Gruvbox Dark | Tokyo Night Day |
 | One Dark | One Light |
-| Rosé Pine | |
-| Solarized Dark | |
+| Rosé Pine | Ayu Light |
+| Solarized Dark | Everforest Light |
 | GitHub Dark | |
+| Monokai | |
+| Ayu Dark | |
+| Everforest | |
+| Material Ocean | |
+| Kanagawa Wave | |
+| Synthwave | |
 
 The colors are the published palettes of each theme, with a few small shifts to the lightest surface and the muted text so the desktop app accepts them (it refuses a theme whose text is too faint).
 
