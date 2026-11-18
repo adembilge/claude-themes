@@ -9,7 +9,7 @@
     {
       "name": "deskmod",
       "source": "./",
-      "description": "Recolor the whole Claude desktop app with click-to-switch brown themes: a small floating Themes window that opens with the session, plus /themes."
+      "description": "Recolor the whole Claude desktop app with click-to-switch brown themes: a row of buttons above the prompt and a /themes pane."
     }
   ]
 }
