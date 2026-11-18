@@ -5,187 +5,132 @@ import { makeColors } from './make-colors.js'
 
 const PANE = 'deskmod'
 const STORE_KEY = 'theme'
-const MODE_KEY = 'mode'
-const AUTO_KEY = 'auto'
-const DEFAULT_THEME = 'espresso'
-const DEFAULT_MODE: Mode = 'dark'
-
-// Auto mode: dark from 19:00 until 07:00, light in between.
-const NIGHT_FROM = 19
-const NIGHT_TO = 7
-const CHECK_EVERY_MS = 60_000
+const DEFAULT_THEME = 'catppuccin-mocha'
 
 type Mode = 'dark' | 'light'
 
 type Surfaces = [string, string, string, string]
 type Text3 = [string, string, string]
 
-type Palette = {
+type Roles = { danger: string; success: string; warning: string; pro: string }
+
+/**
+ * One well-known UI theme. A theme is either dark or light; picking it sets the app's mode too.
+ * Surfaces run page -> card -> panel -> menu. Dark ones get lighter along the list; light ones
+ * get lighter too, and the last two are one color (make-colors requires it).
+ */
+type Theme = {
   id: string
   name: string
   note: string
-  dark: { surfaces: Surfaces; text: Text3 }
-  light: { surfaces: Surfaces; text: Text3 }
-  accent: { dark: string; light: string }
-  roles: { danger: string; success: string; warning: string; pro: string }
+  mode: Mode
+  surfaces: Surfaces
+  text: Text3
+  accent: string
+  roles: Roles
 }
 
-// ---- colour helpers: the light variants and the new themes are derived from a hue ----
-
-function hsl(h: number, s: number, l: number): string {
-  const a = (s / 100) * Math.min(l / 100, 1 - l / 100)
-  const f = (n: number): string => {
-    const k = (n + h / 30) % 12
-    const c = l / 100 - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))
-
-    return Math.round(c * 255)
-      .toString(16)
-      .padStart(2, '0')
-  }
-
-  return `#${f(0)}${f(8)}${f(4)}`
-}
-
-function darken(hex: string, by: number): string {
-  const r = parseInt(hex.slice(1, 3), 16) / 255
-  const g = parseInt(hex.slice(3, 5), 16) / 255
-  const b = parseInt(hex.slice(5, 7), 16) / 255
-  const max = Math.max(r, g, b)
-  const min = Math.min(r, g, b)
-  const l = (max + min) / 2
-  const d = max - min
-  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1))
-  let h = 0
-
-  if (d !== 0) {
-    if (max === r) {
-      h = ((g - b) / d) % 6
-    } else if (max === g) {
-      h = (b - r) / d + 2
-    } else {
-      h = (r - g) / d + 4
-    }
-  }
-
-  return hsl((h * 60 + 360) % 360, s * 100, Math.max(0, l * 100 - by))
-}
-
-const ROLES = { danger: '#d1495b', success: '#5fa36a', warning: '#d4a02e', pro: '#9b7bc4' }
-
-/**
- * Light surfaces and text tinted by one hue. In light mode the design system runs
- * page (darkest) -> surface-1 -> surface-2 = surface-3 (lightest, one color), and
- * make-colors rejects anything else.
- */
-function lightOf(hue: number, sat: number): Palette['light'] {
-  const card = hsl(hue, sat, 99)
-
-  return {
-    surfaces: [hsl(hue, sat, 93), hsl(hue, sat, 96), card, card],
-    text: [hsl(hue, sat + 10, 13), hsl(hue, sat, 30), hsl(hue, sat - 5, 42)],
-  }
-}
-
-/** A theme made from a hue and an accent, dark and light. */
-function fromHue(id: string, name: string, note: string, hue: number, sat: number, accent: string): Palette {
-  return {
-    id,
-    name,
-    note,
-    dark: {
-      surfaces: [hsl(hue, sat, 7), hsl(hue, sat, 10), hsl(hue, sat, 14), hsl(hue, sat, 17)],
-      text: [hsl(hue, 30, 92), hsl(hue, 22, 77), hsl(hue, 14, 62)],
-    },
-    light: lightOf(hue, sat),
-    accent: { dark: accent, light: darken(accent, 14) },
-    roles: ROLES,
-  }
-}
-
-/** One of the hand-tuned dark browns; its light variant comes from the hue. */
-function brown(
+function theme(
+  mode: Mode,
   id: string,
   name: string,
   note: string,
-  hue: number,
   surfaces: Surfaces,
   text: Text3,
   accent: string,
-  roles: Palette['roles'],
-): Palette {
-  return {
-    id,
-    name,
-    note,
-    dark: { surfaces, text },
-    light: lightOf(hue, 28),
-    accent: { dark: accent, light: darken(accent, 14) },
-    roles,
-  }
+  [danger, success, warning, pro]: [string, string, string, string],
+): Theme {
+  return { id, name, note, mode, surfaces, text, accent, roles: { danger, success, warning, pro } }
 }
 
-const PALETTES: Palette[] = [
-  brown('espresso', 'Espresso', 'near-black brown, amber', 25,
-    ['#17110d', '#1f1712', '#281e17', '#2d221a'], ['#f1e6da', '#cfbfae', '#a8978a'], '#d98a4e',
-    { danger: '#c2453a', success: '#6b9a4d', warning: '#c99a2e', pro: '#9b78b8' }),
-  brown('walnut', 'Walnut', 'medium warm brown, terracotta', 24,
-    ['#1d1612', '#261d17', '#30251d', '#352a21'], ['#f0e4d4', '#cbb9a3', '#a3917d'], '#c47a52',
-    { danger: '#bf4a3d', success: '#6f9a55', warning: '#c4952e', pro: '#977bb5' }),
-  brown('terracotta', 'Terracotta', 'warm charcoal, clay orange', 22,
-    ['#1c1816', '#252019', '#2e2822', '#36302a'], ['#f2e9e0', '#d0c4b8', '#ab9e91'], '#c4623a',
-    { danger: '#b8323a', success: '#4f8a4b', warning: '#b8860b', pro: '#7a5fa8' }),
-  brown('mocha-rose', 'Mocha rose', 'reddish brown, dusty rose', 355,
-    ['#1b1415', '#251b1c', '#2f2324', '#35282a'], ['#f3e5e0', '#d1bab5', '#a99591'], '#cf7d70',
-    { danger: '#c4403f', success: '#73986a', warning: '#c79a4a', pro: '#a07cb4' }),
-  brown('coffee-olive', 'Coffee olive', 'greenish brown, gold', 45,
-    ['#1a1710', '#231f15', '#2d281b', '#332e20'], ['#efe8d2', '#c9c1a6', '#a29a80'], '#c09a4a',
-    { danger: '#bf4a3a', success: '#7f9f4b', warning: '#cda23a', pro: '#9a7cb0' }),
-  brown('chestnut-ember', 'Chestnut ember', 'deep red brown, copper', 15,
-    ['#1a0f0c', '#231612', '#2d1d17', '#33211a'], ['#f4e4d8', '#d2bba9', '#a8917f'], '#d2703f',
-    { danger: '#c8403a', success: '#6e9650', warning: '#d09a30', pro: '#a07ab8' }),
-  fromHue('slate-blue', 'Slate blue', 'cool blue-grey, sky', 215, 22, '#6aa0e8'),
-  fromHue('forest', 'Forest', 'deep green, leaf', 140, 20, '#5fb27a'),
-  fromHue('midnight-indigo', 'Midnight indigo', 'blue-violet night, periwinkle', 245, 28, '#8a8cf0'),
-  fromHue('plum', 'Plum', 'dark purple, orchid', 305, 22, '#c27ad6'),
-  fromHue('teal-sea', 'Teal sea', 'deep teal, aqua', 180, 24, '#3fb8b0'),
-  fromHue('graphite', 'Graphite', 'neutral grey, steel', 220, 5, '#9aa4b2'),
-  fromHue('sage', 'Sage', 'muted grey-green, moss', 100, 14, '#9db577'),
-  fromHue('rose-quartz', 'Rose quartz', 'soft pink-grey, rose', 340, 18, '#e58fae'),
-  fromHue('lavender-dusk', 'Lavender dusk', 'dusty violet, lilac', 270, 20, '#a98be0'),
-  fromHue('crimson-night', 'Crimson night', 'dark wine, crimson', 350, 30, '#e0505f'),
+const THEMES: Theme[] = [
+  // ---- dark ----
+  theme('dark', 'catppuccin-mocha', 'Catppuccin Mocha', 'soft pastels on warm charcoal',
+    ['#181825', '#1e1e2e', '#313244', '#3d3f51'], ['#cdd6f4', '#bac2de', '#a6adc8'], '#cba6f7',
+    ['#f38ba8', '#a6e3a1', '#f9e2af', '#b4befe']),
+  theme('dark', 'dracula', 'Dracula', 'purple and pink on charcoal',
+    ['#21222c', '#282a36', '#343746', '#3c3f50'], ['#f8f8f2', '#d6d8e4', '#9aa3d0'], '#bd93f9',
+    ['#ff5555', '#50fa7b', '#ffb86c', '#ff79c6']),
+  theme('dark', 'nord', 'Nord', 'arctic blue-grey, frost',
+    ['#242933', '#2e3440', '#383f4e', '#383f4e'], ['#eceff4', '#d8dee9', '#9aa5b8'], '#88c0d0',
+    ['#bf616a', '#a3be8c', '#ebcb8b', '#b48ead']),
+  theme('dark', 'tokyo-night', 'Tokyo Night', 'deep navy, electric blue',
+    ['#16161e', '#1a1b26', '#24283b', '#292e42'], ['#c0caf5', '#a9b1d6', '#7f89b8'], '#7aa2f7',
+    ['#f7768e', '#9ece6a', '#e0af68', '#bb9af7']),
+  theme('dark', 'gruvbox-dark', 'Gruvbox Dark', 'retro warm, earthy',
+    ['#1d2021', '#282828', '#3c3836', '#423d3b'], ['#ebdbb2', '#d5c4a1', '#b0a089'], '#fe8019',
+    ['#fb4934', '#b8bb26', '#fabd2f', '#d3869b']),
+  theme('dark', 'one-dark', 'One Dark', 'the Atom classic',
+    ['#21252b', '#282c34', '#2c313a', '#3a3f4b'], ['#d7dae0', '#abb2bf', '#9ba2b0'], '#61afef',
+    ['#e06c75', '#98c379', '#e5c07b', '#c678dd']),
+  theme('dark', 'rose-pine', 'Rosé Pine', 'muted rose and gold, quiet',
+    ['#191724', '#1f1d2e', '#26233a', '#3d3a50'], ['#e0def4', '#b9b5d3', '#9e9ab8'], '#ebbcba',
+    ['#eb6f92', '#9ccfd8', '#f6c177', '#c4a7e7']),
+  theme('dark', 'solarized-dark', 'Solarized Dark', 'teal-black, calibrated contrast',
+    ['#00212b', '#002b36', '#073642', '#0d4350'], ['#eee8d5', '#93a1a1', '#93a1a1'], '#2aa198',
+    ['#dc322f', '#859900', '#b58900', '#6c71c4']),
+  theme('dark', 'github-dark', 'GitHub Dark', 'neutral blue-black, clean',
+    ['#010409', '#0d1117', '#161b22', '#21262d'], ['#e6edf3', '#c9d1d9', '#8b949e'], '#58a6ff',
+    ['#f85149', '#3fb950', '#d29922', '#bc8cff']),
+  // ---- light ----
+  theme('light', 'catppuccin-latte', 'Catppuccin Latte', 'soft pastels on cream',
+    ['#dce0e8', '#e6e9ef', '#eff1f5', '#eff1f5'], ['#4c4f69', '#5c5f77', '#6c6f85'], '#8839ef',
+    ['#d20f39', '#40a02b', '#df8e1d', '#1e66f5']),
+  theme('light', 'github-light', 'GitHub Light', 'crisp white, familiar blue',
+    ['#eaeef2', '#f6f8fa', '#ffffff', '#ffffff'], ['#1f2328', '#424a53', '#656d76'], '#0969da',
+    ['#cf222e', '#1a7f37', '#9a6700', '#8250df']),
+  theme('light', 'solarized-light', 'Solarized Light', 'warm cream, calibrated contrast',
+    ['#eee8d5', '#f5efdc', '#fdf6e3', '#fdf6e3'], ['#073642', '#586e75', '#6b7f86'], '#268bd2',
+    ['#dc322f', '#7a8a00', '#b58900', '#6c71c4']),
+  theme('light', 'rose-pine-dawn', 'Rosé Pine Dawn', 'morning rose on warm paper',
+    ['#f2e9e1', '#faf4ed', '#fffaf3', '#fffaf3'], ['#575279', '#6e6a86', '#797593'], '#b4637a',
+    ['#b4637a', '#56949f', '#ea9d34', '#907aa9']),
+  theme('light', 'gruvbox-light', 'Gruvbox Light', 'retro warm, sepia paper',
+    ['#ebdbb2', '#f2e5bc', '#fbf1c7', '#fbf1c7'], ['#3c3836', '#504945', '#7c6f64'], '#d65d0e',
+    ['#cc241d', '#79740e', '#d79921', '#b16286']),
+  theme('light', 'tokyo-night-day', 'Tokyo Night Day', 'cool lavender-white, blue',
+    ['#d0d5e3', '#e1e2e7', '#eef0f6', '#eef0f6'], ['#343b58', '#4c5576', '#6a6f8e'], '#2e7de9',
+    ['#f52a65', '#587539', '#8c6c3e', '#9854f1']),
+  theme('light', 'one-light', 'One Light', 'the Atom classic, bright',
+    ['#e5e5e6', '#f0f0f1', '#fafafa', '#fafafa'], ['#383a42', '#4b4e57', '#696c77'], '#4078f2',
+    ['#e45649', '#50a14f', '#c18401', '#a626a4']),
 ]
 
-const BY_ID = new Map(PALETTES.map(p => [p.id, p]))
+const BY_ID = new Map(THEMES.map(t => [t.id, t]))
+const DEFAULT = BY_ID.get(DEFAULT_THEME) ?? THEMES[0]
 
-function look(p: Palette, mode: Mode): ThemeSetArgs {
-  const v = p[mode]
-  const { theme } = makeColors({
+const GROUPS: { mode: Mode; title: string }[] = [
+  { mode: 'dark', title: '☾ Dark themes' },
+  { mode: 'light', title: '☀ Light themes' },
+]
+
+function look(p: Theme): ThemeSetArgs {
+  const { theme: colors } = makeColors({
     label: p.name,
-    only: mode,
-    roles: { accent: p.accent[mode], ...p.roles },
-    [mode]: {
+    only: p.mode,
+    roles: { accent: p.accent, ...p.roles },
+    [p.mode]: {
       gray: {
         anchors: {
-          'surface-0': v.surfaces[0],
-          'surface-1': v.surfaces[1],
-          'surface-2': v.surfaces[2],
-          'surface-3': v.surfaces[3],
-          'text-primary': v.text[0],
-          'text-secondary': v.text[1],
-          'text-muted': v.text[2],
+          'surface-0': p.surfaces[0],
+          'surface-1': p.surfaces[1],
+          'surface-2': p.surfaces[2],
+          'surface-3': p.surfaces[3],
+          'text-primary': p.text[0],
+          'text-secondary': p.text[1],
+          'text-muted': p.text[2],
         },
       },
     },
   })
 
-  return { colors: theme }
+  return { colors }
 }
 
 const LOOKS = new Map<string, ThemeSetArgs>()
 
-function lookFor(id: string, mode: Mode): ThemeSetArgs | undefined {
-  const key = `${id}:${mode}`
-  const hit = LOOKS.get(key)
+function lookFor(id: string): ThemeSetArgs | undefined {
+  const hit = LOOKS.get(id)
 
   if (hit !== undefined) {
     return hit
@@ -195,36 +140,37 @@ function lookFor(id: string, mode: Mode): ThemeSetArgs | undefined {
   if (p === undefined) {
     return undefined
   }
-  const made = look(p, mode)
+  const made = look(p)
 
-  LOOKS.set(key, made)
+  LOOKS.set(id, made)
 
   return made
 }
 
-// "Mocha rose", "mocha_rose" and "mocha-rose" all name the same theme.
-const idOf = (text: string): string => text.trim().toLowerCase().replace(/[\s_]+/g, '-')
+// "Rosé Pine", "rose_pine" and "rose-pine" all name the same theme.
+const idOf = (text: string): string =>
+  text
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\s_]+/g, '-')
 
-type State = { id: string; mode: Mode; auto: boolean }
+type State = { id: string }
 
 // Change the tag if the value's shape changes: it declines what an earlier version stored.
-const current = atom(
-  { plugin: 'deskmod', key: 'current' } as const,
-  { id: DEFAULT_THEME, mode: DEFAULT_MODE, auto: false } as State,
-  { shape: 'current-2' },
-)
-
-const modeAt = (hour: number): Mode => (hour >= NIGHT_FROM || hour < NIGHT_TO ? 'dark' : 'light')
+const current = atom({ plugin: 'deskmod', key: 'current' } as const, { id: DEFAULT_THEME } as State, {
+  shape: 'current-3',
+})
 
 /**
  * A small drawing of the app in one theme: sidebar, a message, a code line, the input and Send.
  * `live` adds a slow pulse on Send; it only runs where the surface draws the Svg interactively.
  */
-function previewSvg(p: Palette, mode: Mode, live: boolean): string {
-  const v = p[mode]
-  const [s0, s1, s2, s3] = v.surfaces
-  const [t0, t1, t2] = v.text
-  const accent = p.accent[mode]
+function previewSvg(p: Theme, live: boolean): string {
+  const [s0, s1, s2, s3] = p.surfaces
+  const [t0, t1, t2] = p.text
+  const accent = p.accent
   const pulse = live ? '<animate attributeName="opacity" values="1;0.6;1" dur="2.6s" repeatCount="indefinite"/>' : ''
 
   return [
@@ -248,83 +194,76 @@ function previewSvg(p: Palette, mode: Mode, live: boolean): string {
   ].join('')
 }
 
-// Applies and remembers one choice; every path (buttons, command, timer) goes through here.
+/** The theme's five swatches as round dots, the accent ringed. */
+function dotsSvg(p: Theme): string {
+  const colors = [p.accent, p.roles.danger, p.roles.success, p.roles.warning, p.roles.pro]
+  const circles = colors
+    .map((c, i) => `<circle cx="${9 + i * 18}" cy="9" r="7" fill="${c}" stroke="${p.text[2]}" stroke-opacity="${i === 0 ? 0.9 : 0.25}" stroke-width="1"/>`)
+    .join('')
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="90" height="18" viewBox="0 0 90 18">${circles}</svg>`
+}
+
+/** A slow gradient band in the theme's own colors, for the top of the pane. */
+function bannerSvg(p: Theme): string {
+  return [
+    '<svg xmlns="http://www.w3.org/2000/svg" width="264" height="30" viewBox="0 0 264 30">',
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="0">',
+    `<stop offset="0" stop-color="${p.accent}"><animate attributeName="stop-color" values="${p.accent};${p.roles.pro};${p.accent}" dur="9s" repeatCount="indefinite"/></stop>`,
+    `<stop offset="1" stop-color="${p.surfaces[2]}"><animate attributeName="stop-color" values="${p.surfaces[2]};${p.surfaces[3]};${p.surfaces[2]}" dur="9s" repeatCount="indefinite"/></stop>`,
+    '</linearGradient></defs>',
+    '<rect width="264" height="30" rx="10" fill="url(#g)"/>',
+    '</svg>',
+  ].join('')
+}
+
+// Applies and remembers one choice; every path (card press, command) goes through here.
 // Declared at the top of the file because the engine only follows `$` into top-level functions.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function apply($: any, next: State, save: boolean): Promise<void> {
-  const chosen = lookFor(next.id, next.mode)
+async function apply($: any, id: string, save: boolean): Promise<void> {
+  const chosen = lookFor(id)
 
   if (chosen !== undefined) {
     // Nothing is reported if no client draws themes yet; the theme still stands for one that attaches.
     await $.theme.set(chosen)
   }
-  await update($, current, () => next)
+  await update($, current, () => ({ id }))
 
   if (save) {
-    await $.store.set(STORE_KEY, next.id)
-    await $.store.set(MODE_KEY, next.mode)
-    await $.store.set(AUTO_KEY, next.auto)
+    await $.store.set(STORE_KEY, id)
   }
 }
 
 export const register: Register = on => {
-
   on('session.start', async ($, e, next) => {
     // Registered first so a failure while restoring the theme cannot leave /claude-deskmod missing.
     await $.command.register({
       name: 'claude-deskmod',
-      description: 'Open the theme gallery: /claude-deskmod, or /claude-deskmod <name> [light|dark] to switch directly',
-      argumentHint: '[name] [light | dark]',
+      description: 'Open the theme gallery: /claude-deskmod, or /claude-deskmod <name> to switch directly',
+      argumentHint: '[theme name]',
       immediate: true,
     })
-    const savedId = await $.store.get(STORE_KEY)
-    const savedMode = await $.store.get(MODE_KEY)
-    const savedAuto = await $.store.get(AUTO_KEY)
-    const id = typeof savedId === 'string' && BY_ID.has(savedId) ? savedId : DEFAULT_THEME
-    const auto = savedAuto === true
-    let mode: Mode = savedMode === 'light' ? 'light' : DEFAULT_MODE
+    const saved = await $.store.get(STORE_KEY)
+    const id = typeof saved === 'string' && BY_ID.has(saved) ? saved : DEFAULT_THEME
 
-    if (auto) {
-      mode = modeAt(new Date(await $.clock.now()).getHours())
-    }
-    await apply($, { id, mode, auto }, false)
-
-    if (auto) {
-      // Re-check each minute; a manual pick turns auto off, which ends the work here.
-      $.clock.every(CHECK_EVERY_MS, async () => {
-        const now = await read($, current)
-
-        if (!now.auto) {
-          return
-        }
-        const wanted = modeAt(new Date(await $.clock.now()).getHours())
-
-        if (wanted !== now.mode) {
-          await apply($, { ...now, mode: wanted }, false)
-        }
-      })
-    }
+    await apply($, id, false)
 
     return next(e)
   })
 
   // The command is the person's own ask, so the pane is placed at any width.
   on('command.run', { command: 'claude-deskmod' }, async ($, e) => {
-    const words = e.args.trim().split(/\s+/).filter(w => w !== '')
-    const last = words[words.length - 1]?.toLowerCase()
-    const asMode: Mode | undefined = last === 'light' || last === 'dark' ? last : undefined
-    const want = idOf((asMode === undefined ? words : words.slice(0, -1)).join(' '))
-    const now = await read($, current)
+    const want = idOf(e.args)
 
-    if (want !== '' || asMode !== undefined) {
-      const id = want === '' ? now.id : want
+    if (want !== '') {
+      const found = BY_ID.get(want)
 
-      if (!BY_ID.has(id)) {
-        return { text: `No theme called "${want}". Try: ${PALETTES.map(p => p.id).join(', ')}` }
+      if (found === undefined) {
+        return { text: `No theme called "${e.args.trim()}". Try: ${THEMES.map(p => p.id).join(', ')}` }
       }
-      await apply($, { id, mode: asMode ?? now.mode, auto: false }, true)
+      await apply($, found.id, true)
 
-      return { text: `Theme: ${id} (${asMode ?? now.mode})` }
+      return { text: `Theme: ${found.name} (${found.mode})` }
     }
     await $.ui.open({ id: PANE, title: 'Themes' })
 
@@ -333,111 +272,97 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text, Button } = $.ui.resolve(e)
-    // The terminal has no Svg; it keeps a preview built from boxes.
+    // The terminal has no Svg; it keeps a preview and dots built from text.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Svg = e.surface === 'terminal' ? undefined : ($.ui.resolve(e) as any).Svg
     const now = await read($, current)
+    const cur = BY_ID.get(now.id) ?? DEFAULT
+    const [c0, c1, c2, c3] = cur.surfaces
 
     const pick = (id: string) => async () => {
-      await apply($, { ...now, id, auto: false }, true)
-    }
-    const setMode = (mode: Mode) => async () => {
-      await apply($, { ...now, mode, auto: false }, true)
-    }
-    const toggleAuto = async () => {
-      const auto = !now.auto
-      const mode = auto ? modeAt(new Date(await $.clock.now()).getHours()) : now.mode
-
-      await apply($, { ...now, mode, auto }, true)
+      await apply($, id, true)
     }
 
     return (
       <Box flexDirection="column" gap={1} paddingX={1}>
+        {Svg === undefined ? null : (
+          <Svg source={bannerSvg(cur)} alt="Animated band in the current theme's colors" width={264} height={30} isInteractive />
+        )}
         <Box flexDirection="column">
           <Text weight="bold" size="heading">Themes</Text>
-          <Text dimColor>{PALETTES.length} themes, dark and light. Pick one to recolor the whole app.</Text>
+          <Text dimColor>{THEMES.length} themes. Each one sets the app to its own dark or light look.</Text>
         </Box>
-        <Box flexDirection="column" gap={1}>
-          <Box gap={1} flexWrap="wrap">
-            <Button key="mode-dark" variant={!now.auto && now.mode === 'dark' ? 'primary' : 'secondary'} onPress={setMode('dark')}>
-              ☾ Dark
-            </Button>
-            <Button key="mode-light" variant={!now.auto && now.mode === 'light' ? 'primary' : 'secondary'} onPress={setMode('light')}>
-              ☀ Light
-            </Button>
-            <Button key="mode-auto" variant={now.auto ? 'primary' : 'secondary'} onPress={toggleAuto}>
-              ◔ Auto
-            </Button>
-          </Box>
-          <Text dimColor>
-            {now.auto ? `Auto is on: dark ${NIGHT_FROM}:00 to ${NIGHT_TO}:00, light otherwise.` : 'Auto switches by the time of day.'}
-          </Text>
-        </Box>
-        <Box flexDirection="column" gap={2}>
-          {PALETTES.map(p => {
-            const v = p[now.mode]
-            const [s0, s1, s2, s3] = v.surfaces
-            const accent = p.accent[now.mode]
-            const isCurrent = p.id === now.id
-            const dots = [accent, p.roles.danger, p.roles.success, p.roles.warning, p.roles.pro]
 
-            return (
-              <Box
-                key={`card-${p.id}`}
-                flexDirection="column"
-                alignItems="flex-start"
-                gap={1}
-                padding={1}
-                borderStyle="round"
-                borderColor={isCurrent ? accent : s3}
-                backgroundColor={s0}
-                hover={{ borderColor: accent, backgroundColor: s1 }}
-              >
-                {Svg === undefined ? (
-                  <Box flexDirection="column" gap={0}>
-                    <Box>
-                      <Box flexDirection="column" width={16} paddingX={1} backgroundColor={s1}>
-                        <Text color={v.text[0]} weight="bold">Chats</Text>
-                        <Text color={v.text[0]} backgroundColor={s2}>Release notes</Text>
-                        <Text color={v.text[2]}>Trip ideas</Text>
-                      </Box>
-                      <Box flexDirection="column" flexGrow={1} paddingX={1}>
-                        <Box backgroundColor={s2} paddingX={1}>
-                          <Text color={v.text[0]}>Here is the fix.</Text>
-                        </Box>
-                        <Box gap={1}>
-                          <Text color={s0} backgroundColor={accent}> Send </Text>
-                          <Text color={p.roles.danger}>Error</Text>
-                          <Text color={p.roles.warning}>Warning</Text>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Box>
-                ) : (
-                  <Svg
-                    source={previewSvg(p, now.mode, isCurrent)}
-                    alt={`${p.name} preview`}
-                    width={264}
-                    height={132}
-                    isInteractive={isCurrent}
-                  />
-                )}
-                {/* One press target per card: the name row. The dots sit outside it, because a Button does not keep a Text's color. */}
-                <Box alignItems="center" gap={1} flexWrap="wrap">
-                  <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                    {isCurrent ? '✓ ' : ''}
-                    {p.name} · {p.note}
-                  </Button>
-                  <Text>
-                    {dots.map((c, i) => (
-                      <Text key={`dot${i}`} color={c}>●</Text>
-                    ))}
-                  </Text>
+        <Box flexDirection="column" alignItems="flex-start" gap={1} padding={1} borderStyle="bold" borderColor={cur.accent} backgroundColor={c0}>
+          {Svg === undefined ? (
+            <Box>
+              <Box flexDirection="column" width={16} paddingX={1} backgroundColor={c1}>
+                <Text color={cur.text[0]} weight="bold">Chats</Text>
+                <Text color={cur.text[0]} backgroundColor={c2}>Release notes</Text>
+                <Text color={cur.text[2]}>Trip ideas</Text>
+              </Box>
+              <Box flexDirection="column" flexGrow={1} paddingX={1}>
+                <Box backgroundColor={c2} paddingX={1}>
+                  <Text color={cur.text[0]}>Here is the fix.</Text>
+                </Box>
+                <Box gap={1}>
+                  <Text color={c0} backgroundColor={cur.accent}> Send </Text>
+                  <Text color={cur.roles.danger}>Error</Text>
+                  <Text color={cur.roles.warning}>Warning</Text>
                 </Box>
               </Box>
-            )
-          })}
+            </Box>
+          ) : (
+            <Svg source={previewSvg(cur, true)} alt={`${cur.name} preview`} width={264} height={132} isInteractive />
+          )}
+          <Text weight="bold" color={cur.text[0]}>Now: {cur.name} ({cur.mode})</Text>
         </Box>
+
+        {GROUPS.map(g => (
+          <Box key={`group-${g.mode}`} flexDirection="column" gap={1}>
+            <Text weight="bold">{g.title}</Text>
+            {THEMES.filter(p => p.mode === g.mode).map(p => {
+              const isCurrent = p.id === now.id
+              const [s0, s1, , s3] = p.surfaces
+              const dots = [p.accent, p.roles.danger, p.roles.success, p.roles.warning, p.roles.pro]
+
+              return (
+                <Box
+                  key={`row-${p.id}`}
+                  alignItems="center"
+                  gap={1}
+                  padding={1}
+                  borderStyle={isCurrent ? 'bold' : 'round'}
+                  borderColor={isCurrent ? p.accent : s3}
+                  backgroundColor={s0}
+                  hover={{ borderColor: p.accent, backgroundColor: s1 }}
+                >
+                  {Svg === undefined ? null : (
+                    <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={96} height={48} />
+                  )}
+                  <Box flexDirection="column" alignItems="flex-start" flexGrow={1}>
+                    <Box alignItems="center" gap={1} flexWrap="wrap">
+                      <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
+                        {isCurrent ? '✓ ' : ''}
+                        {p.name}
+                      </Button>
+                      {Svg === undefined ? (
+                        <Text>
+                          {dots.map((c, i) => (
+                            <Text key={`dot${i}`} color={c}>●</Text>
+                          ))}
+                        </Text>
+                      ) : (
+                        <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={90} height={18} />
+                      )}
+                    </Box>
+                    <Text color={p.text[2]}>{p.note}</Text>
+                  </Box>
+                </Box>
+              )
+            })}
+          </Box>
+        ))}
       </Box>
     )
   })

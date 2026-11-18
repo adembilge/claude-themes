@@ -26,9 +26,9 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
 
   for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
     const ui = await $.ui.mount({ ...PANE, surface })
-    const dark = await ui.find({ type: 'Button', text: /Dark/ })
-
-    expect(dark).toBeDefined()
+    // A dark and a light theme are both listed, and each is one press.
+    expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeDefined()
 
     // The terminal has no Svg and keeps a preview built from boxes.
     if (surface === 'terminal') {
