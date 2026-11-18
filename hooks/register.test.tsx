@@ -17,7 +17,7 @@ const PANE = {
 const SURFACES = ['terminal', 'desktop', 'vscode', 'mobile'] as const
 
 // The host's answers, as a fresh session sees them. `prefs` and `theme` are what the store holds.
-function host(on: any, saved: { prefs?: unknown; theme?: unknown; custom?: unknown } = {}) {
+function host(on: any, saved: { prefs?: unknown; theme?: unknown; custom?: unknown } = {}, calls: string[] = []) {
   on('command.register', () => ({ value: { command: 'claude-themes' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
@@ -25,7 +25,11 @@ function host(on: any, saved: { prefs?: unknown; theme?: unknown; custom?: unkno
     value: e.key === 'prefs' ? saved.prefs : e.key === 'theme' ? saved.theme : e.key === 'custom' ? saved.custom : undefined,
   }))
   on('store.set', () => ({ value: undefined }))
-  on('theme.set', () => ({ value: undefined }))
+  on('theme.set', (_: unknown, e: unknown) => {
+    calls.push(JSON.stringify(e))
+
+    return { value: undefined }
+  })
 }
 
 test('the gallery draws a card for every theme, on every surface', async ($, on) => {
@@ -245,5 +249,77 @@ test('corrupted saved themes are dropped on load', async ($, on) => {
   expect(await ui.find({ key: 'maker-del-my-ok-one' })).toBeDefined()
   expect(await ui.find({ key: 'maker-del-my-broken' })).toBeUndefined()
   expect(await ui.find({ key: 'maker-del-my-faint' })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('high contrast and code colors reach the theme that is set', async ($, on) => {
+  const calls: string[] = []
+  host(on, {}, calls)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-settings' })
+  expect(await ui.find({ type: 'Button', text: /Code colors: on/ })).toBeDefined()
+  expect(await ui.find({ type: 'Button', text: /High contrast: off/ })).toBeDefined()
+
+  await ui.press({ key: 'contrast-toggle' })
+  expect(await ui.find({ type: 'Button', text: /High contrast: on/ })).toBeDefined()
+  expect(calls[calls.length - 1]).toContain('"contrast":"more"')
+
+  // A theme with a matching code theme sends it for its own mode.
+  await ui.press({ key: 'tab-dark' })
+  await ui.press({ key: 'pick-all-dracula' })
+  expect(calls[calls.length - 1]).toContain('"codeTheme":{"dark":"dracula"}')
+
+  // Switched off, the app keeps its own.
+  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'code-toggle' })
+  expect(await ui.find({ type: 'Button', text: /Code colors: off/ })).toBeDefined()
+  expect(calls[calls.length - 1]).not.toContain('codeTheme')
+  await ui.unmount()
+})
+
+test('day and night applies the theme for the hour, and changes with the hours', async ($, on) => {
+  host(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  for (const surface of SURFACES) {
+    const ui = await $.ui.mount({ ...PANE, surface })
+
+    await ui.press({ key: 'tab-settings' })
+    expect(await ui.find({ type: 'Button', text: /Day and night: off/ })).toBeDefined()
+    await ui.press({ key: 'auto-toggle' })
+    expect(await ui.find({ type: 'Button', text: /Day and night: on/ })).toBeDefined()
+
+    // Equal start and end hours mean it is always day.
+    await ui.select({ key: 'auto-day', value: 'github-light' })
+    await ui.select({ key: 'auto-from', value: '0' })
+    await ui.select({ key: 'auto-to', value: '0' })
+    expect(await ui.find({ type: 'Text', text: /Active: GitHub Light/ })).toBeDefined()
+
+    // Hours that start next hour make it night now.
+    const h = new Date().getHours()
+    await ui.select({ key: 'auto-night', value: 'dracula' })
+    await ui.select({ key: 'auto-from', value: String((h + 1) % 24) })
+    await ui.select({ key: 'auto-to', value: String((h + 2) % 24) })
+    expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
+
+    await ui.press({ key: 'auto-toggle' })
+    expect(await ui.find({ type: 'Button', text: /Day and night: off/ })).toBeDefined()
+    await ui.press({ key: 'tab-dark' })
+    await ui.unmount()
+  }
+})
+
+test('corrupted saved settings fall back to the defaults', async ($, on) => {
+  host(on, { prefs: { auto: { on: 'x', day: 'nope', night: 5, from: 99, to: -1 }, highContrast: 'yes', codePair: 3 } })
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-settings' })
+  expect(await ui.find({ type: 'Button', text: /Day and night: off/ })).toBeDefined()
+  expect(await ui.find({ type: 'Button', text: /High contrast: off/ })).toBeDefined()
+  expect(await ui.find({ type: 'Button', text: /Code colors: on/ })).toBeDefined()
   await ui.unmount()
 })

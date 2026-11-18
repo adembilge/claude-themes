@@ -2,7 +2,7 @@
 
 A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 39 UI themes, 28 dark and 11 light, and a gallery pane where you see each one before you pick it.
 
-## What you get (v2.7.1)
+## What you get (v2.8.0)
 
 - **`/claude-themes` opens a gallery pane.** The top shows the current theme as a drawn app preview under a slow animated band in its colors. Below it, themes are grouped into dark and light; each row has a small preview, the name, round color dots and a short note.
 - **A theme sets its own mode.** Pick a dark theme and the app goes dark; pick a light theme and it goes light. There are no separate Dark, Light or Auto buttons.
@@ -11,7 +11,10 @@ A mod for the Claude desktop app that recolors the whole window, not just the ch
 - **Maker.** Type a name and an accent color, pick a dark or light base, and see the palette built from it before you save. Your themes join the Dark or Light tab and can be deleted from the Maker tab. Colors the app would refuse (text too faint) are explained, not saved.
 - **Share.** "Copy current theme code" puts the palette of the theme you are on in the clipboard as one line starting with `claude-themes:`. Paste such a code into Import and press Enter to add it.
 - **Backdrop.** Each theme paints a soft glow of its accent behind the conversation. Settings has a switch to turn it off.
-- Your choice, favorites, your own themes and the backdrop switch are saved.
+- **Day and night.** Settings can switch themes by the hour: pick a day theme, a night theme and when each starts. It is checked when a session starts and when you send a prompt, and a theme you pick yourself stays until the next switch.
+- **Code colors.** Pairs the code highlighting in replies with the theme where the app has a matching one (on by default; the app keeps its own for a name it does not offer).
+- **High contrast.** A switch for stronger borders and focus rings.
+- Your choice, favorites, your own themes and all the settings are saved.
 
 | Dark | Light |
 |---|---|

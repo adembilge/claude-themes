@@ -17,6 +17,10 @@ export type ThemeState = {
   q: string
   favs: ThemeId[]
   backdrop: boolean
+  highContrast: boolean
+  codePair: boolean
+  auto: { on: boolean; day: ThemeId; night: ThemeId; from: number; to: number }
+  autoPeriod: string
   custom: CustomTheme[]
   draft: { name: string; accent: string; mode: 'dark' | 'light' }
   msg: string

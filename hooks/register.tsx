@@ -230,6 +230,52 @@ const idOf = (text: string): string =>
     .replace(/[̀-ͯ]/g, '')
     .replace(/[\s_]+/g, '-')
 
+/**
+ * The code-highlighting theme to pair with a theme, by the name the app's highlighter knows. A name it
+ * does not offer is ignored by the app, which keeps its own, so a wrong guess costs nothing.
+ */
+const CODE_THEMES: Record<string, string> = {
+  'catppuccin-mocha': 'catppuccin-mocha',
+  'catppuccin-latte': 'catppuccin-latte',
+  dracula: 'dracula',
+  nord: 'nord',
+  'tokyo-night': 'tokyo-night',
+  'gruvbox-dark': 'gruvbox-dark-medium',
+  'gruvbox-light': 'gruvbox-light-medium',
+  'one-dark': 'one-dark-pro',
+  'one-light': 'one-light',
+  'rose-pine': 'rose-pine',
+  'rose-pine-dawn': 'rose-pine-dawn',
+  'solarized-dark': 'solarized-dark',
+  'solarized-light': 'solarized-light',
+  'github-dark': 'github-dark',
+  'github-light': 'github-light',
+  monokai: 'monokai',
+  'ayu-dark': 'ayu-dark',
+  'ayu-light': 'ayu-light',
+  everforest: 'everforest-dark',
+  'everforest-light': 'everforest-light',
+  'material-ocean': 'material-theme-ocean',
+  'kanagawa-wave': 'kanagawa-wave',
+  synthwave: 'synthwave-84',
+  'night-owl': 'night-owl',
+  'vscode-plus': 'dark-plus',
+  xcode: 'light-plus',
+}
+
+type AutoCfg = { on: boolean; day: string; night: string; from: number; to: number }
+
+const DEFAULT_AUTO: AutoCfg = { on: false, day: 'github-light', night: DEFAULT_THEME, from: 7, to: 19 }
+
+/** Day between `from` and `to` o'clock (it may wrap past midnight); equal hours mean always day. */
+function periodOf(cfg: AutoCfg, hour: number): 'day' | 'night' {
+  if (cfg.from === cfg.to) {
+    return 'day'
+  }
+
+  return (cfg.from < cfg.to ? hour >= cfg.from && hour < cfg.to : hour >= cfg.from || hour < cfg.to) ? 'day' : 'night'
+}
+
 type Tab = 'dark' | 'light' | 'favorites' | 'maker' | 'settings'
 
 type Draft = { name: string; accent: string; mode: Mode }
@@ -240,13 +286,17 @@ type State = {
   q: string
   favs: string[]
   backdrop: boolean
+  highContrast: boolean
+  codePair: boolean
+  auto: AutoCfg
+  autoPeriod: string
   custom: Theme[]
   draft: Draft
   msg: string
   importText: string
 }
 
-type Prefs = { favs: string[]; backdrop: boolean }
+type Prefs = { favs: string[]; backdrop: boolean; highContrast: boolean; codePair: boolean; auto: AutoCfg }
 
 const MAX_FAVS = 12
 const PREFS_KEY = 'prefs'
@@ -260,12 +310,16 @@ const current = atom(
     q: '',
     favs: [],
     backdrop: true,
+    highContrast: false,
+    codePair: true,
+    auto: DEFAULT_AUTO,
+    autoPeriod: '',
     custom: [],
     draft: { name: '', accent: '#d98a4e', mode: 'dark' },
     msg: '',
     importText: '',
   } as State,
-  { shape: 'current-5' },
+  { shape: 'current-6' },
 )
 
 /** Known theme ids only, no repeats, at most `max`: anything else a saved value held is dropped. */
@@ -280,7 +334,23 @@ function cleanIds(value: unknown, max: number, known: Set<string>): string[] {
 function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
   const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>
 
-  return { favs: cleanIds(r.favs, MAX_FAVS, known), backdrop: r.backdrop !== false }
+  const a = (typeof r.auto === 'object' && r.auto !== null ? r.auto : {}) as Record<string, unknown>
+  const hour = (v: unknown, d: number) => (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 23 ? v : d)
+  const id = (v: unknown, d: string) => (typeof v === 'string' && known.has(v) ? v : d)
+
+  return {
+    favs: cleanIds(r.favs, MAX_FAVS, known),
+    backdrop: r.backdrop !== false,
+    highContrast: r.highContrast === true,
+    codePair: r.codePair !== false,
+    auto: {
+      on: a.on === true,
+      day: id(a.day, DEFAULT_AUTO.day),
+      night: id(a.night, DEFAULT_AUTO.night),
+      from: hour(a.from, DEFAULT_AUTO.from),
+      to: hour(a.to, DEFAULT_AUTO.to),
+    },
+  }
 }
 
 /** The color `t` of the way from `a` to `b`, both six-digit hex. */
@@ -583,7 +653,7 @@ function parseCode(text: string): { theme: Theme } | { error: string } {
 async function savePrefs($: any): Promise<void> {
   const s = await read($, current)
 
-  await $.store.set(PREFS_KEY, { favs: s.favs, backdrop: s.backdrop })
+  await $.store.set(PREFS_KEY, { favs: s.favs, backdrop: s.backdrop, highContrast: s.highContrast, codePair: s.codePair, auto: s.auto })
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -602,7 +672,16 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
   }
 
   try {
-    const chosen = lookFor(p)
+    const base = lookFor(p)
+    const code = before.codePair ? CODE_THEMES[p.id] : undefined
+    const chosen = {
+      ...base,
+      colors: {
+        ...base.colors,
+        ...(code === undefined ? {} : { codeTheme: { [p.mode]: code } }),
+        ...(before.highContrast ? { contrast: 'more' } : {}),
+      },
+    } as ThemeSetArgs
 
     // Nothing is reported if no client draws themes yet; the theme still stands for one that attaches.
     try {
@@ -632,13 +711,43 @@ async function toggleFavorite($: any, id: string): Promise<void> {
   await savePrefs($)
 }
 
+type Flag = 'backdrop' | 'codePair' | 'highContrast'
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function toggleBackdrop($: any): Promise<void> {
+async function toggleFlag($: any, key: Flag): Promise<void> {
   const s = await read($, current)
 
-  await patch($, { backdrop: !s.backdrop })
+  await patch($, { [key]: !s[key] } as Partial<State>)
   await apply($, s.id, false)
   await savePrefs($)
+}
+
+/** Applies the day or night theme when the period has changed since it was last applied (or when `force`). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function runAuto($: any, force: boolean): Promise<void> {
+  const s = await read($, current)
+
+  if (!s.auto.on) {
+    return
+  }
+  const period = periodOf(s.auto, new Date().getHours())
+
+  if (!force && s.autoPeriod === period) {
+    return
+  }
+  await patch($, { autoPeriod: period })
+  const id = period === 'day' ? s.auto.day : s.auto.night
+
+  if (themeById(id, s.custom) !== undefined && id !== s.id) {
+    await apply($, id, false)
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function setAuto($: any, change: Partial<AutoCfg>): Promise<void> {
+  await update($, current, (s: State) => ({ ...s, auto: { ...s.auto, ...change } }))
+  await savePrefs($)
+  await runAuto($, true)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -693,6 +802,11 @@ async function removeCustom($: any, id: string): Promise<void> {
     ...st,
     custom: st.custom.filter(c => c.id !== id),
     favs: st.favs.filter(f => f !== id),
+    auto: {
+      ...st.auto,
+      day: st.auto.day === id ? DEFAULT_AUTO.day : st.auto.day,
+      night: st.auto.night === id ? DEFAULT_AUTO.night : st.auto.night,
+    },
   }))
   await saveCustom($)
   await savePrefs($)
@@ -739,6 +853,18 @@ export const register: Register = on => {
     // Your own themes, favorites and the backdrop switch come back before the theme is drawn.
     await patch($, { ...cleanPrefs(await $.store.get(PREFS_KEY), known), custom })
     await apply($, id, false)
+    await runAuto($, true)
+
+    return next(e)
+  })
+
+  // The day and night switch is checked as each prompt is sent; a failure here never holds a prompt back.
+  on('prompt.submit', async ($, e, next) => {
+    try {
+      await runAuto($, false)
+    } catch {
+      // the next prompt tries again
+    }
 
     return next(e)
   })
@@ -770,6 +896,8 @@ export const register: Register = on => {
     const Svg = e.surface === 'terminal' ? undefined : ($.ui.resolve(e) as any).Svg
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Input = ($.ui.resolve(e) as any).Input
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Select = ($.ui.resolve(e) as any).Select
     const now = await read($, current)
     const all = [...THEMES, ...now.custom]
     const byId = (id: string) => themeById(id, now.custom)
@@ -1028,27 +1156,76 @@ export const register: Register = on => {
       )
     }
 
-    const settingsTab = () => (
-      <Box flexDirection="column" gap={1}>
-        <Text weight="bold">Backdrop</Text>
-        <Text dimColor>A soft glow of the theme's accent behind the conversation. Off keeps the app's plain background.</Text>
-        <Box>
-          <Button
-            key="backdrop-toggle"
-            variant={now.backdrop ? 'primary' : 'secondary'}
-            onPress={async () => {
-              await toggleBackdrop($)
-            }}
-          >
-            {now.backdrop ? 'Backdrop: on' : 'Backdrop: off'}
-          </Button>
+    const settingsTab = () => {
+      const flag = (key: string, name: Flag, title: string, about: string, isOn: boolean) => (
+        <Box key={`flag-${key}`} flexDirection="column" gap={1}>
+          <Text weight="bold">{title}</Text>
+          <Text dimColor>{about}</Text>
+          <Box>
+            <Button
+              key={key}
+              variant={isOn ? 'primary' : 'secondary'}
+              onPress={async () => {
+                await toggleFlag($, name)
+              }}
+            >
+              {`${title}: ${isOn ? 'on' : 'off'}`}
+            </Button>
+          </Box>
         </Box>
+      )
+      const themeOptions = all.map(p => ({ value: p.id, label: p.name }))
+      const hourOptions = Array.from({ length: 24 }, (_, h) => ({ value: String(h), label: `${String(h).padStart(2, '0')}:00` }))
+      const picker = (key: string, label: string, options: { value: string; label: string }[], value: string, set: (v: string) => Promise<void>) => (
+        <Select key={key} label={label} options={options} value={value} onSelect={set} />
+      )
 
-        <Text dimColor>
-          Documents and source code: <Link href={REPO_URL}>{REPO_URL}</Link>
-        </Text>
-      </Box>
-    )
+      return (
+        <Box flexDirection="column" gap={1}>
+          {flag('backdrop-toggle', 'backdrop', 'Backdrop', "A soft glow of the theme's accent behind the conversation. Off keeps the app's plain background.", now.backdrop)}
+          {flag('code-toggle', 'codePair', 'Code colors', 'Pairs the code highlighting in replies with the theme where the app has a matching one.', now.codePair)}
+          {flag('contrast-toggle', 'highContrast', 'High contrast', 'Stronger borders and focus rings, useful on the light themes.', now.highContrast)}
+
+          <Box flexDirection="column" gap={1}>
+            <Text weight="bold">Day and night</Text>
+            <Text dimColor>Switch themes by the time of day. It is checked when a session starts and when you send a prompt; a theme you pick yourself stays until the next switch.</Text>
+            <Box>
+              <Button
+                key="auto-toggle"
+                variant={now.auto.on ? 'primary' : 'secondary'}
+                onPress={async () => {
+                  await setAuto($, { on: !now.auto.on })
+                }}
+              >
+                {`Day and night: ${now.auto.on ? 'on' : 'off'}`}
+              </Button>
+            </Box>
+            {!now.auto.on ? null : Select === undefined ? (
+              <Text dimColor>Pickers are not available here.</Text>
+            ) : (
+              <Box flexDirection="column" gap={1}>
+                {picker('auto-day', 'Day theme', themeOptions, now.auto.day, async v => {
+                  await setAuto($, { day: v })
+                })}
+                {picker('auto-night', 'Night theme', themeOptions, now.auto.night, async v => {
+                  await setAuto($, { night: v })
+                })}
+                {picker('auto-from', 'Day starts', hourOptions, String(now.auto.from), async v => {
+                  await setAuto($, { from: Number(v) })
+                })}
+                {picker('auto-to', 'Night starts', hourOptions, String(now.auto.to), async v => {
+                  await setAuto($, { to: Number(v) })
+                })}
+              </Box>
+            )}
+          </Box>
+
+          <Text dimColor>
+            Documents and source code: <Link href={REPO_URL}>{REPO_URL}</Link>
+          </Text>
+        </Box>
+      )
+    }
 
     return (
       <Box flexDirection="column" gap={1} paddingX={1}>
