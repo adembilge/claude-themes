@@ -2,10 +2,10 @@
 
 A mod for the Claude desktop app that recolors the whole window, not just the chat area. This first version ships six dark brown themes and lets you switch between them with a click.
 
-## What you get (v0.1.0)
+## What you get (v0.2.0)
 
-- **A row of theme buttons above the prompt.** Click one and the whole app changes color. Your choice is saved.
-- **A `/themes` pane.** Type `/themes` to open a list of themes with short descriptions.
+- **A Themes panel that opens by itself** when a session starts. Click a theme and the whole app changes color. Your choice is saved. If the app shrinks the panel to a small widget, it shows one colored dot per theme.
+- **`/themes`** reopens the panel if you closed it.
 - **`/themes <name>`** switches directly, for example `/themes walnut`.
 
 | Theme | Feel |
@@ -26,7 +26,7 @@ In Claude Code:
 /plugin install deskmod@claude-deskmod
 ```
 
-Then restart the session. The theme row appears above the prompt box.
+Then start a new session. The Themes panel opens beside the chat.
 
 ## Status
 

@@ -1,7 +1,7 @@
 {
   "name": "deskmod",
-  "version": "0.1.0",
-  "description": "Recolor the Claude desktop app with click-to-switch brown themes: a row of buttons above the prompt and a /themes pane.",
+  "version": "0.2.0",
+  "description": "Recolor the Claude desktop app with click-to-switch brown themes: a Themes panel that opens with the session, plus /themes.",
   "author": { "name": "adembilge", "url": "https://github.com/adembilge" },
   "homepage": "https://github.com/adembilge/claude-deskmod",
   "repository": "https://github.com/adembilge/claude-deskmod",

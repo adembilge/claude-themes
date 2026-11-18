@@ -118,8 +118,16 @@ export const register: Register = on => {
 
     await $.command.register({
       name: 'themes',
-      description: 'Pick a brown theme: /themes opens buttons, /themes <name> switches directly',
+      description: 'Pick a brown theme: /themes opens the panel, /themes <name> switches directly',
     })
+
+    // Open the switcher panel on its own. If the window is too narrow to draw it,
+    // say how to get it later.
+    const opened = await $.ui.open({ id: PANE, title: 'Themes', rows: 14, columns: 34 })
+
+    if (!opened.isPlaced) {
+      $.ui.status('Themes panel not drawn here. Type /themes to open it.')
+    }
 
     return next(e)
   })
@@ -149,64 +157,43 @@ export const register: Register = on => {
     }
   })
 
-  // The band above the prompt: one row of theme buttons, always on screen.
-  // It stacks with other mods' rows (the person can collapse it with [-]).
-  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey) {
-      return next(e)
-    }
-    const { Box, Text, Button } = $.ui.resolve(e)
-    const id = await read($, current)
-
-    return (
-      <Box gap={1}>
-        <Text dimColor>Theme</Text>
-        {PALETTES.map(p => (
-          <Button
-            key={p.id}
-            variant={p.id === id ? 'primary' : 'secondary'}
-            onPress={async () => {
-              const picked = LOOKS.get(p.id)
-
-              if (picked === undefined) {
-                return
-              }
-              await $.theme.set(picked)
-              await update($, current, () => p.id)
-              await $.store.set(STORE_KEY, p.id)
-            }}
-          >
-            {p.name}
-          </Button>
-        ))}
-      </Box>
-    )
-  })
-
+  // The switcher lives in a panel (no row above the prompt). Full form when it is
+  // docked or open, a compact row of dots when the app shrinks it to a widget.
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text, Button } = $.ui.resolve(e)
     const id = await read($, current)
+    const isWidget = e.props.placement === 'widget'
+
+    const choose = async (themeId: string) => {
+      const picked = LOOKS.get(themeId)
+
+      if (picked === undefined) {
+        return
+      }
+      await $.theme.set(picked)
+      await update($, current, () => themeId)
+      await $.store.set(STORE_KEY, themeId)
+    }
+
+    if (isWidget) {
+      return (
+        <Box gap={1}>
+          {PALETTES.map(p => (
+            <Button key={p.id} variant={p.id === id ? 'primary' : 'secondary'} onPress={() => choose(p.id)}>
+              <Text color={p.roles.accent}>●</Text>
+            </Button>
+          ))}
+        </Box>
+      )
+    }
 
     return (
       <Box flexDirection="column" gap={1}>
-        <Text dimColor>Pick a dark brown theme.</Text>
+        <Text dimColor>Pick a dark brown theme. Your choice is saved.</Text>
         {PALETTES.map(p => (
-          <Button
-            key={p.id}
-            variant={p.id === id ? 'primary' : 'secondary'}
-            onPress={async () => {
-              const next = LOOKS.get(p.id)
-
-              if (next === undefined) {
-                return
-              }
-              await $.theme.set(next)
-              await update($, current, () => p.id)
-              await $.store.set(STORE_KEY, p.id)
-            }}
-          >
-            {p.id === id ? '● ' : ''}
-            {p.name} <Text dimColor>{p.note}</Text>
+          <Button key={p.id} variant={p.id === id ? 'primary' : 'secondary'} onPress={() => choose(p.id)}>
+            <Text color={p.roles.accent}>●</Text> {p.name}
+            {p.id === id ? ' (current)' : ''} <Text dimColor>{p.note}</Text>
           </Button>
         ))}
       </Box>
