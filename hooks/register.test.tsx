@@ -17,12 +17,12 @@ const PANE = {
 const SURFACES = ['terminal', 'desktop', 'vscode', 'mobile'] as const
 
 // The host's answers, as a fresh session sees them. `prefs` and `theme` are what the store holds.
-function host(on: any, saved: { prefs?: unknown; theme?: unknown } = {}) {
+function host(on: any, saved: { prefs?: unknown; theme?: unknown; custom?: unknown } = {}) {
   on('command.register', () => ({ value: { command: 'claude-themes' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
   on('store.get', (_: unknown, e: { key: string }) => ({
-    value: e.key === 'prefs' ? saved.prefs : e.key === 'theme' ? saved.theme : undefined,
+    value: e.key === 'prefs' ? saved.prefs : e.key === 'theme' ? saved.theme : e.key === 'custom' ? saved.custom : undefined,
   }))
   on('store.set', () => ({ value: undefined }))
   on('theme.set', () => ({ value: undefined }))
@@ -147,4 +147,98 @@ test('a corrupted saved value cannot break the gallery', async ($, on) => {
     await ui.press({ key: 'tab-dark' })
     await ui.unmount()
   }
+})
+
+const IMPORTED = `claude-themes:${JSON.stringify({
+  name: 'Imported One',
+  mode: 'dark',
+  surfaces: ['#21222c', '#282a36', '#343746', '#3c3f50'],
+  text: ['#f8f8f2', '#d6deeb', '#9aa3d0'],
+  accent: '#bd93f9',
+  roles: { danger: '#ff5555', success: '#50fa7b', warning: '#ffb86c', pro: '#ff79c6' },
+})}`
+
+test('the maker saves a theme of your own, refuses bad input and deletes it', async ($, on) => {
+  host(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  for (const surface of SURFACES) {
+    const ui = await $.ui.mount({ ...PANE, surface })
+
+    await ui.press({ key: 'tab-maker' })
+    expect(await ui.find({ key: 'maker-save' })).toBeDefined()
+
+    // A bad accent is explained and nothing is saved.
+    await ui.input({ key: 'maker-name', text: 'Test Blue' })
+    await ui.input({ key: 'maker-accent', text: 'nope' })
+    await ui.press({ key: 'maker-save' })
+    expect(await ui.find({ type: 'Text', text: /six-digit hex/ })).toBeDefined()
+    expect(await ui.find({ key: 'maker-del-my-test-blue' })).toBeUndefined()
+
+    // A good one is saved, applied, listed under My themes and in the Dark tab.
+    await ui.input({ key: 'maker-accent', text: '#3b82f6' })
+    await ui.press({ key: 'maker-save' })
+    expect(await ui.find({ type: 'Text', text: /Saved "Test Blue"/ })).toBeDefined()
+    expect(await ui.find({ key: 'maker-del-my-test-blue' })).toBeDefined()
+    await ui.press({ key: 'tab-dark' })
+    expect(await ui.find({ type: 'Button', text: /Test Blue/ })).toBeDefined()
+
+    // Deleting takes it out of both places.
+    await ui.press({ key: 'tab-maker' })
+    await ui.press({ key: 'maker-del-my-test-blue' })
+    expect(await ui.find({ key: 'maker-del-my-test-blue' })).toBeUndefined()
+    await ui.press({ key: 'tab-dark' })
+    expect(await ui.find({ type: 'Button', text: /Test Blue/ })).toBeUndefined()
+    await ui.unmount()
+  }
+})
+
+test('a theme code can be imported, and a bad code is explained', async ($, on) => {
+  host(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  for (const surface of SURFACES) {
+    const ui = await $.ui.mount({ ...PANE, surface })
+
+    await ui.press({ key: 'tab-maker' })
+    await ui.input({ key: 'share-import', text: 'hello' })
+    expect(await ui.find({ type: 'Text', text: /not a theme code/ })).toBeDefined()
+    await ui.input({ key: 'share-import', text: 'claude-themes:{broken' })
+    expect(await ui.find({ type: 'Text', text: /damaged/ })).toBeDefined()
+
+    // Text too faint to read is refused rather than applied.
+    const faint = IMPORTED.replace('"#f8f8f2"', '"#2a2a35"')
+    await ui.input({ key: 'share-import', text: faint })
+    expect(await ui.find({ type: 'Text', text: /refuse/ })).toBeDefined()
+
+    await ui.input({ key: 'share-import', text: IMPORTED })
+    expect(await ui.find({ key: 'maker-del-my-imported-one' })).toBeDefined()
+    await ui.press({ key: 'maker-del-my-imported-one' })
+
+    // The copy button answers either way, and never breaks the pane.
+    await ui.press({ key: 'share-copy' })
+    expect(await ui.find({ key: 'share-copy' })).toBeDefined()
+    await ui.press({ key: 'tab-dark' })
+    await ui.unmount()
+  }
+})
+
+test('corrupted saved themes are dropped on load', async ($, on) => {
+  host(on, {
+    custom: [
+      { name: 'Ok One', mode: 'dark', surfaces: ['#21222c', '#282a36', '#343746', '#3c3f50'], text: ['#f8f8f2', '#d6deeb', '#9aa3d0'], accent: '#bd93f9', roles: { danger: '#ff5555', success: '#50fa7b', warning: '#ffb86c', pro: '#ff79c6' } },
+      { name: 'Broken', mode: 'dark', surfaces: 'nope' },
+      42,
+      null,
+      { name: 'Faint', mode: 'dark', surfaces: ['#21222c', '#282a36', '#343746', '#3c3f50'], text: ['#30303a', '#30303a', '#30303a'], accent: '#bd93f9', roles: { danger: '#ff5555', success: '#50fa7b', warning: '#ffb86c', pro: '#ff79c6' } },
+    ],
+  })
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-maker' })
+  expect(await ui.find({ key: 'maker-del-my-ok-one' })).toBeDefined()
+  expect(await ui.find({ key: 'maker-del-my-broken' })).toBeUndefined()
+  expect(await ui.find({ key: 'maker-del-my-faint' })).toBeUndefined()
+  await ui.unmount()
 })

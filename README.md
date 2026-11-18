@@ -2,14 +2,16 @@
 
 A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 39 UI themes, 28 dark and 11 light, and a gallery pane where you see each one before you pick it.
 
-## What you get (v2.6.0)
+## What you get (v2.7.0)
 
 - **`/claude-themes` opens a gallery pane.** The top shows the current theme as a drawn app preview under a slow animated band in its colors. Below it, themes are grouped into dark and light; each row has a small preview, the name, round color dots and a short note.
 - **A theme sets its own mode.** Pick a dark theme and the app goes dark; pick a light theme and it goes light. There are no separate Dark, Light or Auto buttons.
 - **`/claude-themes <name>`** switches directly, for example `/claude-themes dracula`.
-- **Tabs, search, favorites.** The gallery has Dark, Light, Favorites and Settings tabs. Search filters by name or note, ☆ stars a theme into the Favorites tab.
+- **Tabs, search, favorites.** The gallery has Dark, Light, Favorites, Maker and Settings tabs. Search filters by name or note, ☆ stars a theme into the Favorites tab.
+- **Maker.** Type a name and an accent color, pick a dark or light base, and see the palette built from it before you save. Your themes join the Dark or Light tab and can be deleted from the Maker tab. Colors the app would refuse (text too faint) are explained, not saved.
+- **Share.** "Copy current theme code" puts the palette of the theme you are on in the clipboard as one line starting with `claude-themes:`. Paste such a code into Import and press Enter to add it.
 - **Backdrop.** Each theme paints a soft glow of its accent behind the conversation. Settings has a switch to turn it off.
-- Your choice, favorites and backdrop switch are saved.
+- Your choice, favorites, your own themes and the backdrop switch are saved.
 
 | Dark | Light |
 |---|---|

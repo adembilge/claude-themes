@@ -199,22 +199,26 @@ function look(p: Theme): ThemeSetArgs {
 
 const LOOKS = new Map<string, ThemeSetArgs>()
 
-function lookFor(id: string): ThemeSetArgs | undefined {
-  const hit = LOOKS.get(id)
+/** The colors of one theme. Built-ins are made once and kept; a custom theme is made fresh, since its id can be saved over. */
+function lookFor(p: Theme): ThemeSetArgs {
+  if (BY_ID.get(p.id) !== p) {
+    return look(p)
+  }
+  const hit = LOOKS.get(p.id)
 
   if (hit !== undefined) {
     return hit
   }
-  const p = BY_ID.get(id)
-
-  if (p === undefined) {
-    return undefined
-  }
   const made = look(p)
 
-  LOOKS.set(id, made)
+  LOOKS.set(p.id, made)
 
   return made
+}
+
+/** A theme by id: the built-ins first, then the person's own. */
+function themeById(id: string, custom: Theme[]): Theme | undefined {
+  return BY_ID.get(id) ?? custom.find(t => t.id === id)
 }
 
 // "Rosé Pine", "rose_pine" and "rose-pine" all name the same theme.
@@ -226,9 +230,21 @@ const idOf = (text: string): string =>
     .replace(/[̀-ͯ]/g, '')
     .replace(/[\s_]+/g, '-')
 
-type Tab = 'dark' | 'light' | 'favorites' | 'settings'
+type Tab = 'dark' | 'light' | 'favorites' | 'maker' | 'settings'
 
-type State = { id: string; tab: Tab; q: string; favs: string[]; backdrop: boolean }
+type Draft = { name: string; accent: string; mode: Mode }
+
+type State = {
+  id: string
+  tab: Tab
+  q: string
+  favs: string[]
+  backdrop: boolean
+  custom: Theme[]
+  draft: Draft
+  msg: string
+  importText: string
+}
 
 type Prefs = { favs: string[]; backdrop: boolean }
 
@@ -238,23 +254,33 @@ const PREFS_KEY = 'prefs'
 // Change the tag if the value's shape changes: it declines what an earlier version stored.
 const current = atom(
   { plugin: 'desktop-themes', key: 'current' } as const,
-  { id: DEFAULT_THEME, tab: 'dark', q: '', favs: [], backdrop: true } as State,
-  { shape: 'current-4' },
+  {
+    id: DEFAULT_THEME,
+    tab: 'dark',
+    q: '',
+    favs: [],
+    backdrop: true,
+    custom: [],
+    draft: { name: '', accent: '#d98a4e', mode: 'dark' },
+    msg: '',
+    importText: '',
+  } as State,
+  { shape: 'current-5' },
 )
 
 /** Known theme ids only, no repeats, at most `max`: anything else a saved value held is dropped. */
-function cleanIds(value: unknown, max: number): string[] {
+function cleanIds(value: unknown, max: number, known: Set<string>): string[] {
   if (!Array.isArray(value)) {
     return []
   }
 
-  return [...new Set(value.filter((x): x is string => typeof x === 'string' && BY_ID.has(x)))].slice(0, max)
+  return [...new Set(value.filter((x): x is string => typeof x === 'string' && known.has(x)))].slice(0, max)
 }
 
-function cleanPrefs(raw: unknown): Prefs {
+function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
   const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>
 
-  return { favs: cleanIds(r.favs, MAX_FAVS), backdrop: r.backdrop !== false }
+  return { favs: cleanIds(r.favs, MAX_FAVS, known), backdrop: r.backdrop !== false }
 }
 
 /** The color `t` of the way from `a` to `b`, both six-digit hex. */
@@ -335,6 +361,223 @@ function bannerSvg(p: Theme): string {
   ].join('')
 }
 
+// ---- your own themes: built from an accent, saved, shared as a code ----
+
+const HEX = /^#[0-9a-f]{6}$/i
+const isHex = (v: unknown): v is string => typeof v === 'string' && HEX.test(v)
+const CODE_PREFIX = 'claude-themes:'
+
+const rgbOf = (h: string): [number, number, number] =>
+  [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) as [number, number, number]
+
+function lum(h: string): number {
+  const [r, g, b] = rgbOf(h).map(v => {
+    const c = v / 255
+
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  }) as [number, number, number]
+
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+/** WCAG contrast ratio of two six-digit hex colors. */
+function contrast(a: string, b: string): number {
+  const x = lum(a)
+  const y = lum(b)
+
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)
+}
+
+function hslHex(h: number, s: number, l: number): string {
+  const sat = s / 100
+  const lig = l / 100
+  const k = (n: number) => (n + h / 30) % 12
+  const a = sat * Math.min(lig, 1 - lig)
+  const f = (n: number) => lig - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))
+
+  return `#${[f(0), f(8), f(4)].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`
+}
+
+function hueOf(hex: string): number {
+  const [r, g, b] = rgbOf(hex).map(v => v / 255) as [number, number, number]
+  const max = Math.max(r, g, b)
+  const d = max - Math.min(r, g, b)
+
+  if (d === 0) {
+    return 0
+  }
+  const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4
+
+  return (h * 60 + 360) % 360
+}
+
+const slug = (name: string): string =>
+  name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24) || 'theme'
+
+const cleanName = (name: string): string => name.replace(/[^\p{L}\p{N} _.&'-]/gu, '').trim().slice(0, 24)
+
+/** A whole palette from one accent: surfaces and text tinted by its hue, standard status colors. */
+function buildCustom(name: string, accent: string, mode: Mode): Theme {
+  const hue = hueOf(accent)
+  const dark = mode === 'dark'
+  const surfaces: Surfaces = dark
+    ? [hslHex(hue, 22, 7), hslHex(hue, 22, 10), hslHex(hue, 22, 14), hslHex(hue, 22, 17)]
+    : [hslHex(hue, 28, 93), hslHex(hue, 28, 96), hslHex(hue, 28, 99), hslHex(hue, 28, 99)]
+  const text: Text3 = dark
+    ? [hslHex(hue, 30, 92), hslHex(hue, 22, 77), hslHex(hue, 14, 62)]
+    : [hslHex(hue, 38, 13), hslHex(hue, 28, 30), hslHex(hue, 23, 42)]
+  let a = accent.toLowerCase()
+
+  // The accent has to stand out from the page it sits on.
+  for (let i = 0; i < 5 && contrast(a, surfaces[0]) < 3; i++) {
+    a = mix(a, dark ? '#ffffff' : '#000000', 0.18)
+  }
+
+  return {
+    id: `my-${slug(name)}`,
+    name,
+    note: `your ${mode} theme`,
+    mode,
+    surfaces,
+    text,
+    accent: a,
+    roles: dark
+      ? { danger: '#d1495b', success: '#5fa36a', warning: '#d4a02e', pro: '#9b7bc4' }
+      : { danger: '#c0392b', success: '#2f7d4f', warning: '#9a6b00', pro: '#7a55a8' },
+  }
+}
+
+/** Why a palette would be refused, or null when it is fine. */
+function validateTheme(t: Theme): string | null {
+  if (![...t.surfaces, ...t.text, t.accent, ...Object.values(t.roles)].every(isHex)) {
+    return 'Every color must be a six-digit hex such as #d98a4e.'
+  }
+
+  if (t.surfaces.some(s => contrast(t.text[0], s) < 4.5) || t.surfaces.some(s => contrast(t.text[2], s) < 3)) {
+    return 'The text would be too faint on that background. Try another accent or the other base.'
+  }
+
+  try {
+    look(t)
+  } catch {
+    return 'The app would refuse this palette: surfaces must run from the page to the menu, each one lighter.'
+  }
+
+  return null
+}
+
+function validateDraft(d: Draft): { theme: Theme } | { error: string } {
+  const name = cleanName(d.name)
+
+  if (name === '') {
+    return { error: 'Give it a name.' }
+  }
+  const raw = d.accent.trim()
+  const accent = /^[0-9a-f]{6}$/i.test(raw) ? `#${raw}` : raw
+
+  if (!isHex(accent)) {
+    return { error: 'The accent must be a six-digit hex color such as #d98a4e.' }
+  }
+  const theme = buildCustom(name, accent, d.mode === 'light' ? 'light' : 'dark')
+  const error = validateTheme(theme)
+
+  return error === null ? { theme } : { error }
+}
+
+/** A theme from anything that holds one: a saved value or a pasted code. Null when it is not a safe palette. */
+function sanitizeTheme(o: unknown): Theme | null {
+  if (typeof o !== 'object' || o === null) {
+    return null
+  }
+  const r = o as Record<string, unknown>
+  const name = typeof r.name === 'string' ? cleanName(r.name) : ''
+  const roles = (typeof r.roles === 'object' && r.roles !== null ? r.roles : {}) as Record<string, unknown>
+  const { danger, success, warning, pro } = roles
+  const mode = r.mode
+
+  if (name === '' || (mode !== 'dark' && mode !== 'light')) {
+    return null
+  }
+
+  if (!Array.isArray(r.surfaces) || r.surfaces.length !== 4 || !r.surfaces.every(isHex)) {
+    return null
+  }
+
+  if (!Array.isArray(r.text) || r.text.length !== 3 || !r.text.every(isHex)) {
+    return null
+  }
+
+  if (!isHex(r.accent) || !isHex(danger) || !isHex(success) || !isHex(warning) || !isHex(pro)) {
+    return null
+  }
+  const low = (v: string) => v.toLowerCase()
+  const t: Theme = {
+    id: `my-${slug(name)}`,
+    name,
+    note: `your ${mode} theme`,
+    mode,
+    surfaces: r.surfaces.map(low) as Surfaces,
+    text: r.text.map(low) as Text3,
+    accent: low(r.accent),
+    roles: { danger: low(danger), success: low(success), warning: low(warning), pro: low(pro) },
+  }
+
+  return validateTheme(t) === null ? t : null
+}
+
+const MAX_CUSTOM = 24
+const CUSTOM_KEY = 'custom'
+
+function cleanCustom(raw: unknown): Theme[] {
+  if (!Array.isArray(raw)) {
+    return []
+  }
+  const seen = new Set<string>()
+  const out: Theme[] = []
+
+  for (const item of raw) {
+    const t = sanitizeTheme(item)
+
+    if (t !== null && !seen.has(t.id)) {
+      seen.add(t.id)
+      out.push(t)
+    }
+  }
+
+  return out.slice(0, MAX_CUSTOM)
+}
+
+/** The shareable text of a theme: a prefix and its palette as JSON. */
+function themeToCode(t: Theme): string {
+  return `${CODE_PREFIX}${JSON.stringify({ name: t.name, mode: t.mode, surfaces: t.surfaces, text: t.text, accent: t.accent, roles: t.roles })}`
+}
+
+function parseCode(text: string): { theme: Theme } | { error: string } {
+  const code = text.trim()
+
+  if (!code.startsWith(CODE_PREFIX)) {
+    return { error: `That is not a theme code. It starts with "${CODE_PREFIX}".` }
+  }
+  let data: unknown
+
+  try {
+    data = JSON.parse(code.slice(CODE_PREFIX.length))
+  } catch {
+    return { error: 'The code is damaged: it could not be read.' }
+  }
+  const theme = sanitizeTheme(data)
+
+  return theme === null
+    ? { error: 'The code holds a palette the app would refuse. Check its colors and the text contrast.' }
+    : { theme }
+}
+
 // The engine only follows `$` into top-level functions, so every helper that uses it is one.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function savePrefs($: any): Promise<void> {
@@ -351,11 +594,16 @@ async function patch($: any, change: Partial<State>): Promise<void> {
 // Applies and remembers one choice; every path (card press, command) goes through here.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function apply($: any, id: string, save: boolean): Promise<void> {
-  const chosen = lookFor(id)
-  const p = BY_ID.get(id)
   const before = await read($, current)
+  const p = themeById(id, before.custom)
 
-  if (chosen !== undefined && p !== undefined) {
+  if (p === undefined) {
+    return
+  }
+
+  try {
+    const chosen = lookFor(p)
+
     // Nothing is reported if no client draws themes yet; the theme still stands for one that attaches.
     try {
       await $.theme.set(before.backdrop ? { ...chosen, backdrop: backdropFor(p) } : chosen)
@@ -363,11 +611,11 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
       // A surface that refuses the backdrop still gets the colors.
       await $.theme.set(chosen)
     }
+  } catch {
+    // A palette that cannot be built is skipped; the current look stays.
+    return
   }
-  await update($, current, (s: State) => ({
-    ...s,
-    id,
-  }))
+  await update($, current, (s: State) => ({ ...s, id }))
 
   if (save) {
     await $.store.set(STORE_KEY, id)
@@ -393,6 +641,87 @@ async function toggleBackdrop($: any): Promise<void> {
   await savePrefs($)
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function saveCustom($: any): Promise<void> {
+  const s = await read($, current)
+
+  await $.store.set(CUSTOM_KEY, s.custom)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function addCustom($: any, t: Theme): Promise<void> {
+  await update($, current, (s: State) => ({
+    ...s,
+    custom: [t, ...s.custom.filter(c => c.id !== t.id)].slice(0, MAX_CUSTOM),
+  }))
+  await saveCustom($)
+  await apply($, t.id, true)
+  await patch($, { msg: `Saved "${t.name}" and applied it.` })
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function saveDraft($: any): Promise<void> {
+  const s = await read($, current)
+  const made = validateDraft(s.draft)
+
+  if ('error' in made) {
+    await patch($, { msg: made.error })
+
+    return
+  }
+  await addCustom($, made.theme)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function importCode($: any, text: string): Promise<void> {
+  const made = parseCode(text)
+
+  if ('error' in made) {
+    await patch($, { msg: made.error })
+
+    return
+  }
+  await addCustom($, made.theme)
+  await patch($, { importText: '' })
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function removeCustom($: any, id: string): Promise<void> {
+  const s = await read($, current)
+
+  await update($, current, (st: State) => ({
+    ...st,
+    custom: st.custom.filter(c => c.id !== id),
+    favs: st.favs.filter(f => f !== id),
+  }))
+  await saveCustom($)
+  await savePrefs($)
+
+  if (s.id === id) {
+    await apply($, DEFAULT_THEME, true)
+  }
+  await patch($, { msg: 'Deleted.' })
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function setDraft($: any, change: Partial<Draft>): Promise<void> {
+  await update($, current, (s: State) => ({ ...s, draft: { ...s.draft, ...change }, msg: '' }))
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function copyCode($: any, surface: string): Promise<void> {
+  const s = await read($, current)
+  const t = themeById(s.id, s.custom) ?? DEFAULT
+
+  try {
+    const result = await $.ui.copy({ text: themeToCode(t), surface })
+
+    await patch($, { msg: result?.isCopied === false ? 'Could not copy here.' : `Copied the code for ${t.name}.` })
+  } catch {
+    await patch($, { msg: 'Could not copy here.' })
+  }
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     // Registered first so a failure while restoring the theme cannot leave /claude-themes missing.
@@ -403,10 +732,12 @@ export const register: Register = on => {
       immediate: true,
     })
     const saved = await $.store.get(STORE_KEY)
-    const id = typeof saved === 'string' && BY_ID.has(saved) ? saved : DEFAULT_THEME
+    const custom = cleanCustom(await $.store.get(CUSTOM_KEY))
+    const known = new Set([...BY_ID.keys(), ...custom.map(t => t.id)])
+    const id = typeof saved === 'string' && known.has(saved) ? saved : DEFAULT_THEME
 
-    // Favorites and the backdrop switch come back before the theme is drawn.
-    await patch($, cleanPrefs(await $.store.get(PREFS_KEY)))
+    // Your own themes, favorites and the backdrop switch come back before the theme is drawn.
+    await patch($, { ...cleanPrefs(await $.store.get(PREFS_KEY), known), custom })
     await apply($, id, false)
 
     return next(e)
@@ -417,10 +748,11 @@ export const register: Register = on => {
     const want = idOf(e.args)
 
     if (want !== '') {
-      const found = BY_ID.get(want)
+      const mine = (await read($, current)).custom
+      const found = themeById(want, mine)
 
       if (found === undefined) {
-        return { text: `No theme called "${e.args.trim()}". Try: ${THEMES.map(p => p.id).join(', ')}` }
+        return { text: `No theme called "${e.args.trim()}". Try: ${[...THEMES, ...mine].map(p => p.id).join(', ')}` }
       }
       await apply($, found.id, true)
 
@@ -439,9 +771,11 @@ export const register: Register = on => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Input = ($.ui.resolve(e) as any).Input
     const now = await read($, current)
-    const cur = BY_ID.get(now.id) ?? DEFAULT
+    const all = [...THEMES, ...now.custom]
+    const byId = (id: string) => themeById(id, now.custom)
+    const cur = byId(now.id) ?? DEFAULT
     const [c0, c1, c2] = cur.surfaces
-    const tab: Tab = now.tab === 'light' || now.tab === 'settings' || now.tab === 'favorites' ? now.tab : 'dark'
+    const tab: Tab = now.tab === 'light' || now.tab === 'settings' || now.tab === 'favorites' || now.tab === 'maker' ? now.tab : 'dark'
     const q = now.q.trim().toLowerCase()
     const matches = (p: Theme) => q === '' || `${p.name} ${p.note} ${p.id} ${p.mode}`.toLowerCase().includes(q)
 
@@ -541,7 +875,7 @@ export const register: Register = on => {
     )
 
     const modeTab = (mode: Mode) => () => {
-      const shown = THEMES.filter(p => p.mode === mode && matches(p))
+      const shown = all.filter(p => p.mode === mode && matches(p))
 
       return (
         <Box flexDirection="column" gap={1}>
@@ -569,13 +903,123 @@ export const register: Register = on => {
     }
 
     const favoritesTab = () => {
-      const favs = now.favs.map(id => BY_ID.get(id)).filter((p): p is Theme => p !== undefined)
+      const favs = now.favs.map(id => byId(id)).filter((p): p is Theme => p !== undefined)
 
       return favs.length === 0 ? (
         <Text dimColor>No favorites yet. Press ☆ on a theme to keep it here.</Text>
       ) : (
         <Box flexDirection="column" gap={1}>
           {favs.map(p => guard(p.name, () => row(p, 'fav')))}
+        </Box>
+      )
+    }
+
+    const makerTab = () => {
+      const built = validateDraft(now.draft)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const field = (key: string, label: string, placeholder: string, value: string, change: (v: string) => Promise<void>, submit: (v: string) => Promise<void>): any =>
+        Input === undefined ? null : (
+          <Input key={key} label={label} placeholder={placeholder} value={value} onInput={change} onSubmit={submit} />
+        )
+      const setName = async (v: string) => {
+        await setDraft($, { name: v.slice(0, 24) })
+      }
+      const setAccent = async (v: string) => {
+        await setDraft($, { accent: v.slice(0, 9) })
+      }
+      const setImport = async (v: string) => {
+        await patch($, { importText: v.slice(0, 2000) })
+      }
+      const runImport = async (v: string) => {
+        await importCode($, v)
+      }
+
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text weight="bold">Make your own theme</Text>
+          <Text dimColor>Pick a name, an accent color and a base. The rest of the palette is built from your accent.</Text>
+          {field('maker-name', 'Name', 'My theme', now.draft.name, setName, setName)}
+          {field('maker-accent', 'Accent', '#d98a4e', now.draft.accent, setAccent, setAccent)}
+          <Box gap={1} flexWrap="wrap">
+            <Button
+              key="maker-dark"
+              variant={now.draft.mode === 'dark' ? 'primary' : 'secondary'}
+              onPress={async () => {
+                await setDraft($, { mode: 'dark' })
+              }}
+            >
+              ☾ Dark base
+            </Button>
+            <Button
+              key="maker-light"
+              variant={now.draft.mode === 'light' ? 'primary' : 'secondary'}
+              onPress={async () => {
+                await setDraft($, { mode: 'light' })
+              }}
+            >
+              ☀ Light base
+            </Button>
+          </Box>
+
+          {'error' in built ? (
+            <Text dimColor>{built.error}</Text>
+          ) : Svg === undefined ? (
+            <Text>
+              {[built.theme.accent, built.theme.roles.danger, built.theme.roles.success, built.theme.roles.warning, built.theme.roles.pro].map((c, i) => (
+                <Text key={`mk${i}`} color={c}>●</Text>
+              ))}
+            </Text>
+          ) : (
+            <Svg source={previewSvg(built.theme, false)} alt={`${built.theme.name} preview`} width={200} height={100} />
+          )}
+
+          <Box>
+            <Button
+              key="maker-save"
+              variant="primary"
+              onPress={async () => {
+                await saveDraft($)
+              }}
+            >
+              Save and apply
+            </Button>
+          </Box>
+          {now.msg === '' ? null : <Text>{now.msg}</Text>}
+
+          <Text weight="bold">Share</Text>
+          <Text dimColor>Copy the code of the current theme to share it, or paste a code below and press Enter to add one.</Text>
+          <Box>
+            <Button
+              key="share-copy"
+              onPress={async (press: { surface: string }) => {
+                await copyCode($, press.surface)
+              }}
+            >
+              Copy current theme code
+            </Button>
+          </Box>
+          {field('share-import', 'Import', 'Paste a code, press Enter', now.importText, setImport, runImport)}
+
+          {now.custom.length === 0 ? null : (
+            <Box flexDirection="column" gap={1}>
+              <Text weight="bold">My themes</Text>
+              {now.custom.map(t => (
+                <Box key={`mine-${t.id}`} gap={1} alignItems="center" flexWrap="wrap">
+                  <Button key={`maker-use-${t.id}`} variant={t.id === now.id ? 'primary' : 'secondary'} onPress={pick(t.id)}>
+                    {t.name}
+                  </Button>
+                  <Button
+                    key={`maker-del-${t.id}`}
+                    onPress={async () => {
+                      await removeCustom($, t.id)
+                    }}
+                  >
+                    ✕ Delete
+                  </Button>
+                </Box>
+              ))}
+            </Box>
+          )}
         </Box>
       )
     }
@@ -609,7 +1053,7 @@ export const register: Register = on => {
         )}
         <Box flexDirection="column">
           <Text weight="bold" size="heading">Themes</Text>
-          <Text dimColor>{THEMES.length} themes. Each one sets the app to its own dark or light look.</Text>
+          <Text dimColor>{all.length} themes. Each one sets the app to its own dark or light look.</Text>
         </Box>
 
         {guard('The current theme', () => hero)}
@@ -624,14 +1068,17 @@ export const register: Register = on => {
           <Button key="tab-favorites" variant={tab === 'favorites' ? 'primary' : 'secondary'} onPress={goTab('favorites')}>
             ★ Favorites
           </Button>
+          <Button key="tab-maker" variant={tab === 'maker' ? 'primary' : 'secondary'} onPress={goTab('maker')}>
+            ✎ Maker
+          </Button>
           <Button key="tab-settings" variant={tab === 'settings' ? 'primary' : 'secondary'} onPress={goTab('settings')}>
             Settings
           </Button>
         </Box>
 
         {guard(
-          tab === 'dark' ? 'Dark themes' : tab === 'light' ? 'Light themes' : tab === 'favorites' ? 'Favorites' : 'Settings',
-          tab === 'dark' ? modeTab('dark') : tab === 'light' ? modeTab('light') : tab === 'favorites' ? favoritesTab : settingsTab,
+          tab === 'dark' ? 'Dark themes' : tab === 'light' ? 'Light themes' : tab === 'favorites' ? 'Favorites' : tab === 'maker' ? 'The maker' : 'Settings',
+          tab === 'dark' ? modeTab('dark') : tab === 'light' ? modeTab('light') : tab === 'favorites' ? favoritesTab : tab === 'maker' ? makerTab : settingsTab,
         )}
       </Box>
     )
