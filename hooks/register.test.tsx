@@ -51,7 +51,9 @@ function host(
     return { value: undefined }
   })
   on('fs.read', (_: unknown, e: { path: string }) => {
-    const text = files[e.path.split('\\').join('/')]
+    // On Mac and Linux the engine resolves "C:/x" against the working folder (/work/C:/x), so a key also matches the end of the path.
+    const path = e.path.split('\\').join('/')
+    const text = files[path] ?? Object.entries(files).find(([k]) => path.endsWith(`/${k}`))?.[1]
 
     if (text === undefined) {
       throw new Error(`no such file ${JSON.stringify(e)}`)
@@ -525,9 +527,12 @@ test('a share link imports like a code', async ($, on) => {
   await ui.unmount()
 })
 
+// The same stub paths on every system (see the fs.read stub).
+const THEME_DIR = 'C:/themes'
+
 test('a theme file on this computer can be imported', async ($, on) => {
   const files: Record<string, string> = {
-    'C:/themes/dracula.json': JSON.stringify({
+    [`${THEME_DIR}/dracula.json`]: JSON.stringify({
       name: 'Dracula Pro',
       type: 'dark',
       colors: {
@@ -548,9 +553,9 @@ test('a theme file on this computer can be imported', async ($, on) => {
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
   await ui.press({ key: 'tab-maker' })
-  await ui.input({ key: 'share-import', text: 'C:/themes/missing.json' })
+  await ui.input({ key: 'share-import', text: `${THEME_DIR}/missing.json` })
   expect(await ui.find({ type: 'Text', text: /could not be read/ })).toBeDefined()
-  await ui.input({ key: 'share-import', text: 'C:/themes/dracula.json' })
+  await ui.input({ key: 'share-import', text: `${THEME_DIR}/dracula.json` })
   expect(await ui.find({ key: 'maker-del-my-dracula-pro' })).toBeDefined()
   await ui.unmount()
 })

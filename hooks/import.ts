@@ -7,7 +7,7 @@ export type Imported = { theme: Theme; notes: string[] }
 type Failed = { error: string }
 
 const NOT_A_THEME =
-  'That is not a theme file I know. Use a VS Code colour theme (.json) or a base16 or base24 scheme (.yaml or .json).'
+  'That is not a theme file I know. Use a VS Code theme (.json), a base16 or base24 scheme (.yaml or .json), or a terminal scheme: Windows Terminal (.json), iTerm2 (.itermcolors), Alacritty (.toml) or Kitty (.conf).'
 
 // ---- reading text ----
 
@@ -81,7 +81,7 @@ function dropTrailingCommas(src: string): string {
   return out
 }
 
-function readJson(text: string): unknown {
+export function readJson(text: string): unknown {
   try {
     return JSON.parse(stripJsonc(text))
   } catch {
@@ -89,7 +89,7 @@ function readJson(text: string): unknown {
   }
 }
 
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+export const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
 // ---- colours ----
 
@@ -125,7 +125,7 @@ function nudge(mode: Mode, from: string, fg: string, t: number): string {
  * from the darkest up to the lightest, which is used twice (the app wants the last two equal there).
  * Backgrounds that are the same colour count once; missing steps are made by mixing.
  */
-function arrangeSurfaces(mode: Mode, candidates: string[], fg: string): Surfaces {
+export function arrangeSurfaces(mode: Mode, candidates: string[], fg: string): Surfaces {
   const sorted = [...new Set(candidates.map(c => c.toLowerCase()))].sort((a, b) => lum(a) - lum(b))
   const apart: string[] = []
 
@@ -152,13 +152,13 @@ function arrangeSurfaces(mode: Mode, candidates: string[], fg: string): Surfaces
   return [s0, s1, top, top]
 }
 
-const FALLBACK = {
+export const FALLBACK = {
   dark: { fg: '#d4d4d4', bg: '#1e1e1e', accent: '#61afef', roles: ['#f87171', '#4ade80', '#fbbf24', '#c084fc'] },
   light: { fg: '#333333', bg: '#ffffff', accent: '#0066cc', roles: ['#c62828', '#2e7d32', '#b26a00', '#7b1fa2'] },
 } as const
 
 /** Runs the shared last steps: name, fix, check. */
-function finish(
+export function finish(
   name: string,
   note: string,
   mode: Mode,
@@ -425,10 +425,10 @@ export function parseBase16(text: string): Imported | Failed {
 
 // ---- any file ----
 
-function stemOf(fileName: string | undefined): string {
+export function stemOf(fileName: string | undefined): string {
   const leaf = (fileName ?? '').split(/[\\/]/).pop() ?? ''
 
-  return leaf.replace(/\.(jsonc?|ya?ml)$/i, '').replace(/[-_.]+/g, ' ').trim()
+  return leaf.replace(/\.(jsonc?|ya?ml|toml|conf|itermcolors)$/i, '').replace(/[-_.]+/g, ' ').trim()
 }
 
 export function parseThemeFile(text: string, fileName?: string): Imported | Failed {

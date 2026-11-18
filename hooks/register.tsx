@@ -1,7 +1,9 @@
 import { atom, read, update } from 'claude-code'
 import type { Register, ThemeSetArgs } from 'claude-code'
 
-import { listVsCodeThemes, parseThemeFile, parseVsCode, vsCodeExtensionRoots } from './import.js'
+import { EXPORTS, exportFileName, exportTheme, formatOf } from './export.js'
+import type { ExportFormat } from './export.js'
+import { listVsCodeThemes, parseVsCode, vsCodeExtensionRoots } from './import.js'
 import {
   cleanName,
   contrast,
@@ -22,6 +24,7 @@ import { PACKS, PACK_CODE_THEMES } from './packs.js'
 import { SHARE_URL, parseAny, themeToLink } from './share.js'
 import { NO_TUNE, TUNE_AXES, TUNE_MAX, cleanTunes, describeTune, isTuned, tuneTheme } from './tune.js'
 import type { Tune } from './tune.js'
+import { readThemeFile } from './terminal.js'
 
 const PANE = 'desktop-themes'
 const REPO_URL = 'https://github.com/adembilge/claude-themes'
@@ -1020,10 +1023,31 @@ async function saveDraft($: any): Promise<void> {
   await addCustom($, made.theme, made.notes ?? [])
 }
 
+/** The person's home folder (USERPROFILE on Windows, HOME on Mac and Linux), or '' when it cannot be read. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function homeDir($: any): Promise<string> {
+  try {
+    return String((await $.env.get('USERPROFILE')) ?? (await $.env.get('HOME')) ?? '')
+  } catch {
+    return ''
+  }
+}
+
+/** `~/themes/x.json` becomes the full path; anything else is returned as it is. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function expandHome($: any, path: string): Promise<string> {
+  if (!/^~[\\/]/.test(path)) {
+    return path
+  }
+  const home = (await homeDir($)).replace(/[\\/]+$/, '')
+
+  return home === '' ? path : `${home}/${path.slice(2)}`
+}
+
 /** One box for everything: a code, a share link, a web address of a theme file, or a file on this computer. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function importAny($: any, input: string): Promise<void> {
-  const text = input.trim().replace(/^"(.*)"$/, '$1')
+  const text = await expandHome($, input.trim().replace(/^"(.*)"$/, '$1'))
 
   if (text === '') {
     return
@@ -1036,9 +1060,9 @@ async function importAny($: any, input: string): Promise<void> {
     } else if (/^https?:\/\//i.test(text)) {
       const res = await $.http.fetch(text)
 
-      made = res.ok === true ? parseThemeFile(String(res.text), text) : { error: `That address answered ${String(res.status)}.` }
+      made = res.ok === true ? readThemeFile(String(res.text), text) : { error: `That address answered ${String(res.status)}.` }
     } else {
-      made = parseThemeFile(String(await $.fs.read(text)), text)
+      made = readThemeFile(String(await $.fs.read(text)), text)
     }
   } catch {
     made = { error: 'That could not be read here. Check the path or address, or paste a theme code or link.' }
@@ -1120,13 +1144,7 @@ const MAX_FOUND = 400
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function scanVsCode($: any): Promise<void> {
-  let home = ''
-
-  try {
-    home = (await $.env.get('USERPROFILE')) ?? (await $.env.get('HOME')) ?? ''
-  } catch {
-    // no environment here
-  }
+  const home = await homeDir($)
 
   if (home === '') {
     await patch($, { scanMsg: 'Could not find your home folder here. Type a theme file path instead.' })
@@ -1234,6 +1252,16 @@ function themeOptions(list: Theme[], selected: string, favs: string[], prefer?: 
   return list.filter(p => chosen.has(p.id)).map(p => ({ value: p.id, label: p.name }))
 }
 
+/** Copies the current theme (with its tuning) as another tool's theme file. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function copyExport($: any, surface: string, format: ExportFormat): Promise<void> {
+  const s = await read($, current)
+  const t = tunedOf(themeById(s.id, s.custom) ?? DEFAULT, s.tunes)
+  const label = EXPORTS.find(f => f.id === format)?.label ?? format
+
+  await copyText($, surface, exportTheme(t, format), `Copied ${t.name} as a ${label} theme. Paste it into a file named ${exportFileName(t, format)}.`)
+}
+
 /** Nine stops on a line with a dot at the current one: `──●──`. */
 const tuneBar = (v: number): string => Array.from({ length: 2 * TUNE_MAX + 1 }, (_, i) => (i === v + TUNE_MAX ? '●' : '─')).join('')
 
@@ -1242,8 +1270,8 @@ export const register: Register = on => {
     // Registered first so a failure while restoring the theme cannot leave /claude-themes missing.
     await $.command.register({
       name: 'claude-themes',
-      description: 'Open the theme gallery: /claude-themes, or /claude-themes <name> to switch directly (import, follow and reset also work)',
-      argumentHint: '[theme name | import <code, link or file> | follow on/off | reset look/settings/all]',
+      description: 'Open the theme gallery: /claude-themes, or /claude-themes <name> to switch directly (import, export, follow and reset also work)',
+      argumentHint: '[theme name | import <code, link or file> | export <vscode|base16|wt|alacritty|kitty> | follow on/off | reset look/settings/all]',
       immediate: true,
     })
     const saved = await $.store.get(STORE_KEY)
@@ -1328,6 +1356,17 @@ export const register: Register = on => {
       await importAny($, tail)
 
       return { text: (await read($, current)).msg }
+    }
+
+    if (verb === 'export') {
+      const format = formatOf(rest.join(' '))
+
+      if (format === undefined) {
+        return { text: `Export as what? /claude-themes export ${EXPORTS.map(f => f.id).join(' | ')}` }
+      }
+      const t = tunedOf(themeById(state.id, state.custom) ?? DEFAULT, state.tunes)
+
+      return { text: `${t.name} as ${exportFileName(t, format)}:\n\n${exportTheme(t, format)}` }
     }
 
     if (verb === 'follow') {
@@ -1668,7 +1707,7 @@ export const register: Register = on => {
         'Share',
         <Box flexDirection="column" gap={1}>
           <Text dimColor>
-            Copy a link or a code for the theme you are on. To add one, paste a code, a link, a web address of a theme file or the path of a file below and press Enter. VS Code themes and base16 or base24 schemes work too.
+            Copy a link or a code for the theme you are on. To add one, paste a code, a link, a web address of a theme file or the path of a file below and press Enter. VS Code themes, base16 or base24 schemes and terminal schemes (Windows Terminal, iTerm2, Alacritty, Kitty) work too.
           </Text>
           <Box gap={1} flexWrap="wrap">
             <Button
@@ -1687,6 +1726,19 @@ export const register: Register = on => {
             >
               Copy code
             </Button>
+          </Box>
+          <Text dimColor>Export the theme you are on as a file for another tool; it is copied to the clipboard.</Text>
+          <Box gap={1} flexWrap="wrap">
+            {EXPORTS.map(f => (
+              <Button
+                key={`export-${f.id}`}
+                onPress={async (press: { surface: string }) => {
+                  await copyExport($, press.surface, f.id)
+                }}
+              >
+                {f.label}
+              </Button>
+            ))}
           </Box>
           {field('share-import', 'Import', 'Code, link, web address or file path', now.importText, setImport, runImport)}
         </Box>,

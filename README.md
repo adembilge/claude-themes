@@ -1,55 +1,8 @@
 # claude-themes
 
-A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 39 UI themes, 28 dark and 11 light, and a gallery pane where you see each one before you pick it.
+Recolor the whole Claude desktop app, not just the chat area. 64 themes, a gallery where you preview each one before you pick it, a theme maker, eight tuning dials, and import and export for the tools you already use.
 
-## What you get (v2.12.1)
-
-- **`/claude-themes` opens a gallery pane.** The top shows the current theme as a drawn app preview under a slow animated band in its colors. Below it, themes are grouped into dark and light; each row has a small preview, the name, round color dots and a short note.
-- **A theme sets its own mode.** Pick a dark theme and the app goes dark; pick a light theme and it goes light. There are no separate Dark, Light or Auto buttons.
-- **`/claude-themes <name>`** switches directly, for example `/claude-themes dracula`.
-- **Tabs, search, favorites.** The gallery has Dark, Light, Favorites, Maker and Settings tabs. Search filters by name or note, ☆ stars a theme into the Favorites tab.
-- **Maker.** Type a name and an accent color, pick a dark or light base, and see the palette built from it before you save. Your themes join the Dark or Light tab and can be deleted from the Maker tab. Colors the app would refuse (text too faint) are explained, not saved.
-- **Share.** "Copy current theme code" puts the palette of the theme you are on in the clipboard as one line starting with `claude-themes:`. Paste such a code into Import and press Enter to add it.
-- **Backdrop.** Settings picks one of 9 smooth color fields, each shown as a small picture: Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember and Halo. They are drawn in the theme's own colors, with a Strength switch (Subtle, Normal, Bold) and a Color switch (accent or second color). A switch turns it off.
-- **Per project.** Settings can tie the current theme to the folder you are in; a session started there uses it, ahead of the saved theme and the day and night clock.
-- **Notices.** When day and night switches your theme on its own, or a folder applies its theme, a short line says so.
-- **Day and night.** Settings can switch themes by the hour: pick a day theme, a night theme and when each starts. It is checked when a session starts and when you send a prompt, and a theme you pick yourself stays until the next switch.
-- **Code colors.** Pairs the code highlighting in replies with the theme where the app has a matching one (on by default; the app keeps its own for a name it does not offer).
-- **High contrast.** A switch for stronger borders and focus rings.
-- Your choice, favorites, your own themes, folder picks and all the settings are saved.
-
-| Dark | Light |
-|---|---|
-| Catppuccin Mocha (default) | Catppuccin Latte |
-| Espresso | GitHub Light |
-| Dracula | Solarized Light |
-| Nord | Rosé Pine Dawn |
-| Tokyo Night | Gruvbox Light |
-| Gruvbox Dark | Tokyo Night Day |
-| One Dark | One Light |
-| Rosé Pine | Ayu Light |
-| Solarized Dark | Everforest Light |
-| GitHub Dark | Notion |
-| Monokai | Xcode |
-| Ayu Dark |  |
-| Everforest |  |
-| Material Ocean |  |
-| Kanagawa Wave |  |
-| Synthwave |  |
-| Absolutely |  |
-| Linear |  |
-| Lobster |  |
-| Matrix |  |
-| Night Owl |  |
-| OG |  |
-| Oscurange |  |
-| Raycast |  |
-| Sentry |  |
-| Temple |  |
-| Vercel |  |
-| VS Code Plus |  |
-
-The colors are the published palettes of each theme, with a few small shifts to the lightest surface and the muted text so the desktop app accepts them (it refuses a theme whose text is too faint).
+![version](https://img.shields.io/badge/version-3.3.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -60,15 +13,114 @@ In Claude Code:
 /plugin install desktop-themes@claude-themes
 ```
 
-Then restart the session and type `/claude-themes`.
+Restart the session, then type `/claude-themes`.
 
-## Status
+## What you get
 
-Tested on Windows only. Renamed from `claude-deskmod` in 2.1.0 (the plugin is now `desktop-themes`, the marketplace and command `claude-themes`; the saved theme resets to the default once). Upgrading from 1.x: the saved theme resets to the default once, and the time-of-day Auto mode is gone (pick a dark or light theme instead). Planned next: a backdrop for each theme and a theme maker.
+- **A gallery pane.** `/claude-themes` opens it. The top shows the current theme as a drawn preview under an animated band in its colors. Below, each theme has a small preview, a name, color dots and a short note.
+- **Themes set their own mode.** Pick a dark theme and the app goes dark; pick a light one and it goes light. There are no separate Dark, Light or Auto buttons.
+- **Tabs, search and favorites.** Dark, Light, Favorites, Maker, Appearance and Settings. Search filters by name or note; the star adds a theme to Favorites.
+- **Switch from the prompt.** `/claude-themes dracula` changes theme without opening the pane.
+
+## Themes
+
+64 themes: 39 classics and 25 more from popular families (Catppuccin, Nightfox, Kanagawa, Gruvbox and Everforest variants, Rosé Pine Moon, Tokyo Night Storm, GitHub Dark Dimmed and others). Palettes are the published ones, with small shifts to the lightest surface and the muted text where the app would otherwise refuse them (it rejects text that is too faint).
+
+| Dark | Light |
+|---|---|
+| Catppuccin Mocha (default), Frappé, Macchiato | Catppuccin Latte |
+| Espresso, Dracula, Nord, Monokai | GitHub Light, Solarized Light, Xcode, Notion |
+| Tokyo Night, Tokyo Night Storm | Tokyo Night Day, One Light |
+| Gruvbox Dark, Gruvbox Dark Hard | Gruvbox Light, Gruvbox Light Hard |
+| One Dark, Rosé Pine, Rosé Pine Moon | Rosé Pine Dawn, Ayu Light |
+| Solarized Dark, GitHub Dark, GitHub Dark Dimmed | Everforest Light, Everforest Light Hard |
+| Ayu Dark, Ayu Mirage, Everforest, Everforest Hard | Dawnfox, Dayfox, Kanagawa Lotus |
+| Material Ocean, Kanagawa Wave, Kanagawa Dragon | Oceanic Next Light, Bluloco Light |
+| Nightfox, Carbonfox, Synthwave, Matrix, Night Owl | Winter is Coming Light, Night Owl Light |
+| Cobalt2, Palenight, Poimandres, Vesper, Houston | |
+| Absolutely, Linear, Lobster, OG, Oscurange, Raycast, Sentry, Temple, Vercel, VS Code Plus | |
+
+## Make your own
+
+- **Maker.** Type a name, an accent color and a dark or light base, and see the palette before you save. Colors the app would refuse are adjusted for you, and the tab lists what it changed.
+- **Tuning.** Eight dials per theme, each moved with `-` and `+`: warmth, saturation, surface brightness, text contrast, hue, surface tint, accent and status colors. Every result still has to pass the app's checks, so a dial stops where the palette would break.
+- **Backdrop.** Nine smooth color fields drawn in the theme's own colors (Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, Halo), with a Strength switch (Subtle, Normal, Bold) and a Color switch (accent or second color).
+- **Day and night.** Pick a day theme, a night theme and the hours, or switch to **Follow system** so the app uses the night theme in dark mode and the day theme in light mode.
+- **Per folder.** Tie the current theme to the folder you are in; a session started there uses it.
+- **Readability.** A high-contrast switch for stronger borders and focus rings, and code colors in replies matched to the theme where the app has a matching one.
+
+## Import
+
+Paste into the Import box (Maker tab) or run `/claude-themes import <thing>`. The format is detected for you.
+
+| Source | What to give it |
+|---|---|
+| A share code | A line starting with `claude-themes:` |
+| A share link | The `#...` link made by Copy link |
+| VS Code | A theme `.json` file, a web address, or pick one from the list of themes installed in VS Code, Cursor, Windsurf or VS Code OSS (Settings tab) |
+| base16 / base24 | A `.yaml` or `.json` scheme |
+| Windows Terminal | A scheme `.json`, or your `settings.json` (the first scheme is read) |
+| iTerm2 | An `.itermcolors` file |
+| Alacritty | A `.toml` file with `[colors.*]` tables |
+| Kitty | A `.conf` file with `foreground`, `background` and `color0` to `color15` |
+
+Paths work on every system, and `~/` at the start means your home folder. Imports go through an automatic contrast fix, so the result is always accepted by the app; the notice says what it adjusted. Themes that color only the editor give an approximate result.
+
+## Export
+
+The Share card has one button per format and copies the theme you are on (with its tuning) to the clipboard. From the prompt, `/claude-themes export <format>` prints it.
+
+| Format | Button / argument | File |
+|---|---|---|
+| VS Code | `vscode` | `name.json` |
+| base16 YAML | `base16` | `name.yaml` |
+| Windows Terminal | `wt` | `name.json` |
+| Alacritty | `alacritty` | `name.toml` |
+| Kitty | `kitty` | `name.conf` |
+
+The terminal formats get a full set of 16 ANSI colors built from the theme's accent and status colors. Importing an export again gives back the same mode and accent.
+
+## Share
+
+**Copy link** and **Copy code** put the current theme in the clipboard as one line. Paste either into the Import box on another machine. A link opens a preview page in any browser (the page lives in `docs/t`, is static and has no tracking).
+
+## Commands
+
+| Command | Does |
+|---|---|
+| `/claude-themes` | Open the gallery |
+| `/claude-themes <name>` | Switch theme, for example `dracula` |
+| `/claude-themes import <code, link, path or address>` | Add a theme |
+| `/claude-themes export <vscode\|base16\|wt\|alacritty\|kitty>` | Print the current theme as a file for another tool |
+| `/claude-themes follow on\|off` | Follow the system's light and dark |
+| `/claude-themes reset look\|settings\|all` | Use the app's own look, restore settings, or erase everything |
+
+## Platforms
+
+Developed on Windows. CI runs the tests and plugin validation on Ubuntu, macOS and Windows for every change. The desktop app itself is released for Windows and macOS, so on macOS you can use everything; Linux can run the tests and the validator but has no app to theme.
 
 ## Develop
 
-The mod lives in `hooks/register.tsx`. `hooks/make-colors.js` is generated by the design system and is kept as copied. The type definitions in `.claude-plugin/types/` are generated by the app and not committed. Before pushing, run `claude plugin validate .` and `claude plugin test .` from the repo root.
+```
+claude plugin validate .
+claude plugin test .
+```
+
+| File | Holds |
+|---|---|
+| `hooks/register.tsx` | The mod: commands, the pane, state |
+| `hooks/model.ts` | Theme type, color maths, contrast fixing, share codes |
+| `hooks/import.ts` | VS Code and base16/24 readers |
+| `hooks/terminal.ts` | Windows Terminal, iTerm2, Alacritty and Kitty readers |
+| `hooks/export.ts` | The five exporters |
+| `hooks/tune.ts` | The eight tuning dials |
+| `hooks/share.ts` | Share links |
+| `hooks/packs.ts` | The 25 extra built-in themes |
+| `hooks/make-colors.js` | Generated by the design system; kept as copied |
+
+Everything except `register.tsx` is pure (no `$`, no files), which is what makes it testable. The type definitions in `.claude-plugin/types/` are generated by the app and not committed.
+
+To release: bump the version in `.claude-plugin/plugin.json`, add a section to `CHANGELOG.md`, push a tag such as `v3.3.0`. The release workflow checks the tag, runs the tests and publishes the notes.
 
 ## License
 
