@@ -2,7 +2,7 @@
 
 A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 17 UI themes, 10 dark and 7 light, and a gallery pane where you see each one before you pick it.
 
-## What you get (v2.3.0)
+## What you get (v2.3.1)
 
 - **`/claude-themes` opens a gallery pane.** The top shows the current theme as a drawn app preview under a slow animated band in its colors. Below it, themes are grouped into dark and light; each row has a small preview, the name, round color dots and a short note.
 - **A theme sets its own mode.** Pick a dark theme and the app goes dark; pick a light theme and it goes light. There are no separate Dark, Light or Auto buttons.

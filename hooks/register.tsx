@@ -201,10 +201,10 @@ function previewSvg(p: Theme, live: boolean): string {
 /** One theme as a finished card: its preview, name, mode, five swatches and note, drawn in its own colors. */
 function cardSvg(p: Theme, selected: boolean): string {
   const [s0, s1, , s3] = p.surfaces
-  const [t0, , t2] = p.text
+  const [, , t2] = p.text
   const preview = previewSvg(p, false).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')
   const swatches = [p.accent, p.roles.danger, p.roles.success, p.roles.warning, p.roles.pro]
-    .map((c, i) => `<circle cx="${169 + i * 19}" cy="62" r="7" fill="${c}" stroke="${t2}" stroke-opacity="${i === 0 ? 0.85 : 0.22}"/>`)
+    .map((c, i) => `<circle cx="${169 + i * 19}" cy="58" r="7" fill="${c}" stroke="${t2}" stroke-opacity="${i === 0 ? 0.85 : 0.22}"/>`)
     .join('')
   const badge = selected
     ? `<circle cx="314" cy="26" r="11" fill="${p.accent}"/><path d="M308.5 26.5l4 4 7-8" fill="none" stroke="${s0}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`
@@ -216,10 +216,9 @@ function cardSvg(p: Theme, selected: boolean): string {
     `<defs><linearGradient id="bg-${p.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${s1}"/><stop offset="1" stop-color="${s0}"/></linearGradient></defs>`,
     `<rect x="1.5" y="1.5" width="337" height="109" rx="18" fill="url(#bg-${p.id})" stroke="${selected ? p.accent : s3}" stroke-width="${selected ? 2 : 1}"/>`,
     `<g transform="translate(16 23) scale(0.5)">${preview}</g>`,
-    `<text x="164" y="30" ${font} font-size="9.5" font-weight="700" letter-spacing="1.6" fill="${p.accent}">${p.mode.toUpperCase()}</text>`,
-    `<text x="164" y="49" ${font} font-size="17" font-weight="700" fill="${t0}">${p.name}</text>`,
+    `<text x="164" y="38" ${font} font-size="9.5" font-weight="700" letter-spacing="1.6" fill="${p.accent}">${p.mode.toUpperCase()}</text>`,
     swatches,
-    `<text x="164" y="92" ${font} font-size="12" fill="${t2}">${p.note}</text>`,
+    `<text x="164" y="84" ${font} font-size="12" fill="${t2}">${p.note}</text>`,
     badge,
     '</svg>',
   ].join('')
@@ -358,13 +357,14 @@ export const register: Register = on => {
               const dots = [p.accent, p.roles.danger, p.roles.success, p.roles.warning, p.roles.pro]
 
               if (Svg !== undefined) {
-                // One drawn card, and one button under it. The button sits on the app's own background, so it is always readable.
+                // The theme name is the button, full width over its drawn card. It sits on the app's own background, so it is always readable.
                 return (
-                  <Box key={`card-${p.id}`} flexDirection="column" alignItems="center" gap={1}>
-                    <Svg source={cardSvg(p, isCurrent)} alt={`${p.name}, ${p.mode} theme: ${p.note}`} width={340} height={112} />
+                  <Box key={`card-${p.id}`} flexDirection="column" alignItems="stretch">
                     <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                      {isCurrent ? '✓ Applied' : 'Apply'}
+                      {isCurrent ? '✓ ' : ''}
+                      {p.name}
                     </Button>
+                    <Svg source={cardSvg(p, isCurrent)} alt={`${p.name}, ${p.mode} theme: ${p.note}`} width={340} height={112} />
                   </Box>
                 )
               }

@@ -27,15 +27,8 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
   for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
     const ui = await $.ui.mount({ ...PANE, surface })
     // A dark and a light theme are both listed, and each is one press.
-    // The terminal has no Svg: its rows name each theme on the button. Elsewhere a drawn card is
-    // followed by one Apply button, and the current theme reads Applied.
-    if (surface === 'terminal') {
-      expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
-      expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeDefined()
-    } else {
-      expect(await ui.find({ type: 'Button', text: /Apply/ })).toBeDefined()
-      expect(await ui.find({ type: 'Button', text: /Applied/ })).toBeDefined()
-    }
+    expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeDefined()
 
     // The dock ends with a link to the docs and source.
     expect(await ui.find({ type: 'Link', text: /github\.com\/adembilge\/claude-themes/ })).toBeDefined()
