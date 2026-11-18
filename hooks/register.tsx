@@ -385,6 +385,7 @@ export const register: Register = on => {
               <Box
                 key={`card-${p.id}`}
                 flexDirection="column"
+                alignItems="flex-start"
                 gap={1}
                 padding={1}
                 borderStyle="round"
@@ -422,15 +423,17 @@ export const register: Register = on => {
                   />
                 )}
                 {/* One press target per card: the name row. The dots sit outside it, because a Button does not keep a Text's color. */}
-                <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                  {isCurrent ? '✓ ' : ''}
-                  {p.name} <Text dimColor>{p.note}</Text>
-                </Button>
-                <Text>
-                  {dots.map((c, i) => (
-                    <Text key={`dot${i}`} color={c}>● </Text>
-                  ))}
-                </Text>
+                <Box alignItems="center" gap={1} flexWrap="wrap">
+                  <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
+                    {isCurrent ? '✓ ' : ''}
+                    {p.name} · {p.note}
+                  </Button>
+                  <Text>
+                    {dots.map((c, i) => (
+                      <Text key={`dot${i}`} color={c}>●</Text>
+                    ))}
+                  </Text>
+                </Box>
               </Box>
             )
           })}
