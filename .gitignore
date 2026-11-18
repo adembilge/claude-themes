@@ -1,0 +1,6 @@
+node_modules/
+.claude-plugin/types/
+*.log
+.env
+# private working notes (contain local paths)
+desktop-theme-plugin-plan.md

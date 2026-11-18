@@ -1,0 +1,15 @@
+{
+  "name": "claude-deskmod",
+  "description": "Mods that change how the Claude desktop app looks.",
+  "owner": {
+    "name": "adembilge",
+    "url": "https://github.com/adembilge"
+  },
+  "plugins": [
+    {
+      "name": "deskmod",
+      "source": "./",
+      "description": "Recolor the whole Claude desktop app with click-to-switch brown themes: a row of buttons above the prompt and a /themes pane."
+    }
+  ]
+}
