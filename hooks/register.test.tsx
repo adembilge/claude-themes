@@ -190,10 +190,6 @@ test('the maker saves a theme of your own, refuses bad input and deletes it', as
     expect(await ui.find({ type: 'Text', text: /six-digit hex/ })).toBeDefined()
     expect(await ui.find({ key: 'maker-del-my-test-blue' })).toBeUndefined()
 
-    // A quick accent fills the field, and its own preview is built.
-    await ui.press({ key: 'accent-sky' })
-    expect(await ui.find({ type: 'Text', text: /#38bdf8/ })).toBeDefined()
-
     // A good one is saved, applied, listed under My themes and in the Dark tab.
     await ui.input({ key: 'maker-accent', text: '#3b82f6' })
     await ui.press({ key: 'maker-save' })
@@ -349,10 +345,16 @@ test('backdrop styles and panel blur reach the theme, and the scene is drawn', a
   await ui.press({ key: 'backdrop-style-waves' })
   expect(calls[calls.length - 1]).toContain('"scene":"style-waves"')
   expect(calls[calls.length - 1]).toContain('"blur":16')
+  expect(calls[calls.length - 1]).toContain('"opacity":0.4')
   expect(await ui.find({ key: 'glass-blur-24' })).toBeDefined()
 
   await ui.press({ key: 'glass-blur-24' })
   expect(calls[calls.length - 1]).toContain('"blur":24')
+
+  await ui.press({ key: 'glass-opacity-60' })
+  expect(calls[calls.length - 1]).toContain('"opacity":0.6')
+  // Every style is offered, the sixth being the stars.
+  expect(await ui.find({ key: 'backdrop-style-stars' })).toBeDefined()
 
   await ui.press({ key: 'backdrop-style-glow' })
   expect(calls[calls.length - 1]).toContain('"gradient"')
@@ -365,7 +367,7 @@ test('backdrop styles and panel blur reach the theme, and the scene is drawn', a
   await ui.unmount()
 
   // The scene itself is an Svg in the current theme's colors, for each style.
-  for (const style of ['grid', 'dots', 'waves', 'aurora']) {
+  for (const style of ['grid', 'dots', 'waves', 'stars', 'aurora']) {
     const scene = await $.ui.mount({
       plugin: 'desktop-themes',
       component: 'Backdrop',

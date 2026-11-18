@@ -21,8 +21,10 @@ export type ThemeState = {
   codePair: boolean
   auto: { on: boolean; day: ThemeId; night: ThemeId; from: number; to: number }
   autoPeriod: string
-  backdropStyle: 'glow' | 'grid' | 'dots' | 'waves' | 'aurora'
+  backdropStyle: 'glow' | 'grid' | 'dots' | 'waves' | 'stars' | 'aurora'
   glassBlur: number
+  glassOpacity: number
+  issue: string
   cwd: string
   projects: Record<string, ThemeId>
   custom: CustomTheme[]

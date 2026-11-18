@@ -276,16 +276,19 @@ function periodOf(cfg: AutoCfg, hour: number): 'day' | 'night' {
   return (cfg.from < cfg.to ? hour >= cfg.from && hour < cfg.to : hour >= cfg.from || hour < cfg.to) ? 'day' : 'night'
 }
 
-type BackdropStyle = 'glow' | 'grid' | 'dots' | 'waves' | 'aurora'
+type BackdropStyle = 'glow' | 'grid' | 'dots' | 'waves' | 'stars' | 'aurora'
 
 const STYLES: { value: BackdropStyle; label: string }[] = [
   { value: 'glow', label: 'Glow' },
   { value: 'grid', label: 'Grid' },
   { value: 'dots', label: 'Dots' },
   { value: 'waves', label: 'Waves' },
+  { value: 'stars', label: 'Stars' },
   { value: 'aurora', label: 'Aurora' },
 ]
 const BLURS = [0, 8, 16, 24, 32]
+// How solid the frosted panels are over a scene: lower shows more of it.
+const OPACITIES = [0.2, 0.4, 0.6, 0.8]
 const MAX_PROJECTS = 50
 const PROJECTS_KEY = 'projects'
 
@@ -302,7 +305,8 @@ const folderName = (cwd: string): string => cwd.replace(/\\/g, '/').replace(/\/+
 function sceneSvg(p: Theme, style: Exclude<BackdropStyle, 'glow'>): string {
   const [s0, s1] = p.surfaces
   const head = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">'
-  const base = `<defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s1}"/><stop offset="1" stop-color="${s0}"/></linearGradient></defs><rect width="1600" height="1000" fill="url(#b)"/>`
+  // The panels are frosted over the scene, so it has to be bold enough to show through them.
+  const base = `<defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${mix(s1, p.accent, 0.12)}"/><stop offset="1" stop-color="${s0}"/></linearGradient></defs><rect width="1600" height="1000" fill="url(#b)"/>`
   let art = ''
 
   if (style === 'grid') {
@@ -315,7 +319,7 @@ function sceneSvg(p: Theme, style: Exclude<BackdropStyle, 'glow'>): string {
     for (let y = 0; y <= 1000; y += 64) {
       lines.push(`M0 ${y}H1600`)
     }
-    art = `<path d="${lines.join('')}" stroke="${p.accent}" stroke-opacity="0.17" stroke-width="1.4" fill="none"/>`
+    art = `<path d="${lines.join('')}" stroke="${p.accent}" stroke-opacity="0.35" stroke-width="2" fill="none"/>`
   } else if (style === 'dots') {
     const dots: string[] = []
 
@@ -324,7 +328,7 @@ function sceneSvg(p: Theme, style: Exclude<BackdropStyle, 'glow'>): string {
         dots.push(`M${x} ${y}h0.1`)
       }
     }
-    art = `<path d="${dots.join('')}" stroke="${p.accent}" stroke-opacity="0.4" stroke-width="5" stroke-linecap="round" fill="none"/>`
+    art = `<path d="${dots.join('')}" stroke="${p.accent}" stroke-opacity="0.6" stroke-width="7" stroke-linecap="round" fill="none"/>`
   } else if (style === 'waves') {
     // Each layer repeats every 800 and slides one period, so the loop has no seam.
     const wave = (y: number, amp: number, color: string, op: number, dur: number) => {
@@ -337,16 +341,39 @@ function sceneSvg(p: Theme, style: Exclude<BackdropStyle, 'glow'>): string {
       return `<path d="${d}V1000H-800Z" fill="${color}" fill-opacity="${op}"><animateTransform attributeName="transform" type="translate" values="0 0;-800 0" dur="${dur}s" repeatCount="indefinite"/></path>`
     }
 
-    art = wave(640, 70, p.accent, 0.1, 38) + wave(740, 55, p.roles.pro, 0.1, 52) + wave(840, 40, p.accent, 0.14, 70)
+    art = wave(560, 90, p.accent, 0.22, 38) + wave(690, 75, p.roles.pro, 0.24, 52) + wave(820, 60, p.accent, 0.3, 70)
+  } else if (style === 'stars') {
+    // A fixed scatter, so the sky is the same every time; some of the stars slowly twinkle.
+    let seed = 7
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647
+
+      return seed / 2147483647
+    }
+    const stars: string[] = []
+
+    for (let i = 0; i < 130; i++) {
+      const x = Math.round(rand() * 1600)
+      const y = Math.round(rand() * 1000)
+      const r = (0.8 + rand() * 2.2).toFixed(1)
+      const color = i % 5 === 0 ? p.accent : p.text[0]
+      const twinkle =
+        i % 3 === 0
+          ? `<animate attributeName="fill-opacity" values="0.85;0.2;0.85" dur="${(3 + rand() * 5).toFixed(1)}s" begin="${(rand() * 4).toFixed(1)}s" repeatCount="indefinite"/>`
+          : ''
+
+      stars.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" fill-opacity="0.7">${twinkle}</circle>`)
+    }
+    art = stars.join('')
   } else {
     const blob = (cx: number, cy: number, rx: number, ry: number, color: string, op: number, dx: number, dur: number) =>
       `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${color}" fill-opacity="${op}"><animate attributeName="cx" values="${cx};${cx + dx};${cx}" dur="${dur}s" repeatCount="indefinite"/></ellipse>`
 
     art =
-      '<defs><filter id="f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="90"/></filter></defs><g filter="url(#f)">' +
-      blob(420, 300, 460, 170, p.accent, 0.34, 360, 24) +
-      blob(1150, 520, 420, 190, p.roles.pro, 0.28, -380, 31) +
-      blob(800, 820, 520, 150, p.roles.success, 0.18, 300, 40) +
+      '<defs><filter id="f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="80"/></filter></defs><g filter="url(#f)">' +
+      blob(420, 300, 520, 200, p.accent, 0.6, 360, 24) +
+      blob(1150, 520, 480, 220, p.roles.pro, 0.5, -380, 31) +
+      blob(800, 820, 580, 180, p.roles.success, 0.38, 300, 40) +
       '</g>'
   }
 
@@ -398,6 +425,8 @@ type State = {
   autoPeriod: string
   backdropStyle: BackdropStyle
   glassBlur: number
+  glassOpacity: number
+  issue: string
   cwd: string
   projects: Record<string, string>
   custom: Theme[]
@@ -414,6 +443,7 @@ type Prefs = {
   auto: AutoCfg
   backdropStyle: BackdropStyle
   glassBlur: number
+  glassOpacity: number
 }
 
 const MAX_FAVS = 12
@@ -434,6 +464,8 @@ const current = atom(
     autoPeriod: '',
     backdropStyle: 'glow',
     glassBlur: 16,
+    glassOpacity: 0.4,
+    issue: '',
     cwd: '',
     projects: {},
     custom: [],
@@ -441,7 +473,7 @@ const current = atom(
     msg: '',
     importText: '',
   } as State,
-  { shape: 'current-7' },
+  { shape: 'current-8' },
 )
 
 /** Known theme ids only, no repeats, at most `max`: anything else a saved value held is dropped. */
@@ -467,6 +499,7 @@ function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
     codePair: r.codePair !== false,
     backdropStyle: STYLES.some(x => x.value === r.backdropStyle) ? (r.backdropStyle as BackdropStyle) : 'glow',
     glassBlur: BLURS.includes(r.glassBlur as number) ? (r.glassBlur as number) : 16,
+    glassOpacity: OPACITIES.includes(r.glassOpacity as number) ? (r.glassOpacity as number) : 0.4,
     auto: {
       on: a.on === true,
       day: id(a.day, DEFAULT_AUTO.day),
@@ -726,18 +759,6 @@ function sanitizeTheme(o: unknown): Theme | null {
 }
 
 const MAX_CUSTOM = 24
-
-/** Named starting points for the accent, one press each. */
-const QUICK_ACCENTS: [string, string][] = [
-  ['Coral', '#ff6f61'],
-  ['Amber', '#f5a524'],
-  ['Lime', '#84cc16'],
-  ['Teal', '#14b8a6'],
-  ['Sky', '#38bdf8'],
-  ['Indigo', '#6366f1'],
-  ['Violet', '#a855f7'],
-  ['Rose', '#f43f5e'],
-]
 const CUSTOM_KEY = 'custom'
 
 function cleanCustom(raw: unknown): Theme[] {
@@ -789,7 +810,7 @@ function parseCode(text: string): { theme: Theme } | { error: string } {
 async function savePrefs($: any): Promise<void> {
   const s = await read($, current)
 
-  await $.store.set(PREFS_KEY, { favs: s.favs, backdrop: s.backdrop, highContrast: s.highContrast, codePair: s.codePair, auto: s.auto, backdropStyle: s.backdropStyle, glassBlur: s.glassBlur })
+  await $.store.set(PREFS_KEY, { favs: s.favs, backdrop: s.backdrop, highContrast: s.highContrast, codePair: s.codePair, auto: s.auto, backdropStyle: s.backdropStyle, glassBlur: s.glassBlur, glassOpacity: s.glassOpacity })
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -825,11 +846,15 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
         ? undefined
         : before.backdropStyle === 'glow'
           ? backdropFor(p)
-          : { scene: `style-${before.backdropStyle}`, glass: { blur: before.glassBlur } }
+          : { scene: `style-${before.backdropStyle}`, glass: { blur: before.glassBlur, opacity: before.glassOpacity } }
 
-      await $.theme.set(backdrop === undefined ? chosen : ({ ...chosen, backdrop } as ThemeSetArgs))
-    } catch {
-      // A surface that refuses the backdrop still gets the colors.
+      const result = await $.theme.set(backdrop === undefined ? chosen : ({ ...chosen, backdrop } as ThemeSetArgs))
+
+      // An answer that says nothing draws it is kept, to be shown, instead of being lost.
+      await patch($, { issue: result?.isDrawn === false ? String(result.reason ?? '').slice(0, 160) : '' })
+    } catch (err) {
+      // A surface that refuses the backdrop still gets the colors, and the person gets to see why.
+      await patch($, { issue: `The backdrop was refused: ${String(err).slice(0, 140)}` })
       await $.theme.set(chosen)
     }
   } catch {
@@ -887,7 +912,7 @@ async function setProject($: any, id: string | null): Promise<void> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function setBackdrop($: any, change: Partial<Pick<State, 'backdropStyle' | 'glassBlur'>>): Promise<void> {
+async function setBackdrop($: any, change: Partial<Pick<State, 'backdropStyle' | 'glassBlur' | 'glassOpacity'>>): Promise<void> {
   const s = await read($, current)
 
   await patch($, change)
@@ -1339,7 +1364,7 @@ export const register: Register = on => {
 
       const make = card(
         'make',
-        '✎ Your theme',
+        'Your theme',
         <Box flexDirection="column" gap={1}>
           {preview}
           <Box gap={1} flexWrap="wrap">
@@ -1382,19 +1407,6 @@ export const register: Register = on => {
               ☀ Light
             </Button>
           </Box>
-          <Text dimColor>Quick accents</Text>
-          <Box gap={1} flexWrap="wrap">
-            {QUICK_ACCENTS.map(([name, hex]) => (
-              <Button
-                key={`accent-${name.toLowerCase()}`}
-                onPress={async () => {
-                  await setDraft($, { accent: hex })
-                }}
-              >
-                {name}
-              </Button>
-            ))}
-          </Box>
           <Box gap={1} alignItems="center" flexWrap="wrap">
             <Button
               key="maker-save"
@@ -1412,7 +1424,7 @@ export const register: Register = on => {
 
       const mine = card(
         'mine',
-        '★ My themes',
+        'My themes',
         now.custom.length === 0 ? (
           <Text dimColor>No themes of your own yet. Make one above, or import a code below.</Text>
         ) : (
@@ -1443,7 +1455,7 @@ export const register: Register = on => {
 
       const share = card(
         'share',
-        '⇄ Share',
+        'Share',
         <Box flexDirection="column" gap={1}>
           <Text dimColor>Copy the code of the theme you are on to share it, or paste a code below and press Enter to add one.</Text>
           <Box>
@@ -1498,11 +1510,12 @@ export const register: Register = on => {
 
       const appearance = card(
         'appearance',
-        '◈ Appearance',
+        'Appearance',
         <Box flexDirection="column" gap={1}>
           {toggleRow('backdrop-toggle', 'Backdrop', "Something soft behind the conversation, in the theme's colors.", now.backdrop, async () => {
             await toggleFlag($, 'backdrop')
           })}
+          {!now.backdrop || now.issue === '' ? null : <Text color={cur.roles.danger}>{`The app said: ${now.issue}`}</Text>}
           {!now.backdrop ? null : (
             <Box flexDirection="column" gap={1}>
               <Text dimColor>Style</Text>
@@ -1536,6 +1549,20 @@ export const register: Register = on => {
               </Box>
               {now.backdropStyle === 'glow' ? null : (
                 <Box flexDirection="column" gap={1}>
+                  <Text dimColor>Panel opacity: lower shows more of the scene</Text>
+                  <Box gap={1} flexWrap="wrap">
+                    {OPACITIES.map(o => (
+                      <Button
+                        key={`glass-opacity-${Math.round(o * 100)}`}
+                        variant={now.glassOpacity === o ? 'primary' : 'secondary'}
+                        onPress={async () => {
+                          await setBackdrop($, { glassOpacity: o })
+                        }}
+                      >
+                        {`${Math.round(o * 100)}%`}
+                      </Button>
+                    ))}
+                  </Box>
                   <Text dimColor>Panel blur</Text>
                   <Box gap={1} flexWrap="wrap">
                     {BLURS.map(b => (
@@ -1559,7 +1586,7 @@ export const register: Register = on => {
 
       const readability = card(
         'readability',
-        '◉ Readability',
+        'Readability',
         <Box flexDirection="column" gap={1}>
           {toggleRow('code-toggle', 'Code colors', 'Pairs the code highlighting in replies with the theme where the app has a matching one.', now.codePair, async () => {
             await toggleFlag($, 'codePair')
@@ -1572,7 +1599,7 @@ export const register: Register = on => {
 
       const dayNight = card(
         'daynight',
-        '☾ Day and night',
+        'Day and night',
         <Box flexDirection="column" gap={1}>
           {toggleRow('auto-toggle', 'Switch by the hour', 'Checked when a session starts and when you send a prompt. A theme you pick yourself stays until the next switch.', now.auto.on, async () => {
             await setAuto($, { on: !now.auto.on })
@@ -1609,7 +1636,7 @@ export const register: Register = on => {
           ? null
           : card(
               'project',
-              '⌂ This project',
+              'This project',
               <Box flexDirection="column" gap={1}>
                 <Text dimColor>
                   {`${folderName(now.cwd)}: ${mineHere === undefined ? 'no theme of its own.' : `uses ${mineHere.name} whenever a session starts here.`}`}
@@ -1639,7 +1666,7 @@ export const register: Register = on => {
 
       const about = card(
         'about',
-        'ℹ About',
+        'About',
         <Box flexDirection="column" gap={1}>
           <Text dimColor>
             {`Claude Themes: ${all.length} themes${now.custom.length === 0 ? '' : `, ${now.custom.length} of them yours`}.`}

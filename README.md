@@ -2,7 +2,7 @@
 
 A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 39 UI themes, 28 dark and 11 light, and a gallery pane where you see each one before you pick it.
 
-## What you get (v2.11.0)
+## What you get (v2.12.0)
 
 - **`/claude-themes` opens a gallery pane.** The top shows the current theme as a drawn app preview under a slow animated band in its colors. Below it, themes are grouped into dark and light; each row has a small preview, the name, round color dots and a short note.
 - **A theme sets its own mode.** Pick a dark theme and the app goes dark; pick a light theme and it goes light. There are no separate Dark, Light or Auto buttons.
@@ -10,7 +10,7 @@ A mod for the Claude desktop app that recolors the whole window, not just the ch
 - **Tabs, search, favorites.** The gallery has Dark, Light, Favorites, Maker and Settings tabs. Search filters by name or note, ☆ stars a theme into the Favorites tab.
 - **Maker.** Type a name and an accent color, pick a dark or light base, and see the palette built from it before you save. Your themes join the Dark or Light tab and can be deleted from the Maker tab. Colors the app would refuse (text too faint) are explained, not saved.
 - **Share.** "Copy current theme code" puts the palette of the theme you are on in the clipboard as one line starting with `claude-themes:`. Paste such a code into Import and press Enter to add it.
-- **Backdrop.** Settings picks the style: Glow (a soft gradient of the theme's accent), Grid, Dots, Waves or Aurora, all drawn in the theme's own colors, with an adjustable blur on the panels over the scenes. A switch turns it off.
+- **Backdrop.** Settings picks the style: Glow (a soft gradient of the theme's accent), Grid, Dots, Waves, Stars or Aurora, all drawn in the theme's own colors, with adjustable blur and opacity on the panels over the scenes (lower opacity shows more of the scene). A switch turns it off.
 - **Per project.** Settings can tie the current theme to the folder you are in; a session started there uses it, ahead of the saved theme and the day and night clock.
 - **Notices.** When day and night switches your theme on its own, or a folder applies its theme, a short line says so.
 - **Day and night.** Settings can switch themes by the hour: pick a day theme, a night theme and when each starts. It is checked when a session starts and when you send a prompt, and a theme you pick yourself stays until the next switch.
