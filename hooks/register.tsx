@@ -342,24 +342,22 @@ export const register: Register = on => {
                     <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={96} height={48} />
                   )}
                   <Box flexDirection="column" alignItems="flex-start" flexGrow={1}>
-                    <Box alignItems="center" gap={1} flexWrap="wrap">
-                      {/* The name is plain text in the row's own colors. The desktop draws a Button in the app's current theme and ignores a Text color inside it, so the button is a small chip (default chrome, on a plate of that same theme) that stays readable on a row of the other mode. */}
-                      <Text weight="bold" color={p.text[0]}>{p.name}</Text>
-                      <Box paddingX={1} backgroundColor={c2}>
-                        <Button key={`pick-${p.id}`} label={isCurrent ? `Active: ${p.name}` : `Use ${p.name}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                          {isCurrent ? '✓ Active' : 'Use'}
-                        </Button>
-                      </Box>
-                      {Svg === undefined ? (
-                        <Text>
-                          {dots.map((c, i) => (
-                            <Text key={`dot${i}`} color={c}>●</Text>
-                          ))}
-                        </Text>
-                      ) : (
-                        <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={90} height={18} />
-                      )}
+                    {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so the name button sits on a plate of that same theme: it stays readable on a row of the other mode. */}
+                    <Box backgroundColor={c2}>
+                      <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
+                        {isCurrent ? '✓ ' : ''}
+                        {p.name}
+                      </Button>
                     </Box>
+                    {Svg === undefined ? (
+                      <Text>
+                        {dots.map((c, i) => (
+                          <Text key={`dot${i}`} color={c}>●</Text>
+                        ))}
+                      </Text>
+                    ) : (
+                      <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={90} height={18} />
+                    )}
                     <Text color={p.text[2]}>{p.note}</Text>
                   </Box>
                 </Box>

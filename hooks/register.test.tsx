@@ -27,9 +27,8 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
   for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
     const ui = await $.ui.mount({ ...PANE, surface })
     // A dark and a light theme are both listed, and each is one press.
-    expect(await ui.find({ type: 'Text', text: /Dracula/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /GitHub Light/ })).toBeDefined()
-    expect(await ui.find({ type: 'Button', text: /Use/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeDefined()
 
     // The dock ends with a link to the docs and source.
     expect(await ui.find({ type: 'Link', text: /github\.com\/adembilge\/claude-themes/ })).toBeDefined()
