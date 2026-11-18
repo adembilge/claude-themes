@@ -319,7 +319,7 @@ function sceneSvg(p: Theme, style: Exclude<BackdropStyle, 'glow'>): string {
     for (let y = 0; y <= 1000; y += 64) {
       lines.push(`M0 ${y}H1600`)
     }
-    art = `<path d="${lines.join('')}" stroke="${p.accent}" stroke-opacity="0.35" stroke-width="2" fill="none"/>`
+    art = `<path d="${lines.join('')}" stroke="${p.accent}" stroke-opacity="0.5" stroke-width="3" fill="none"/>`
   } else if (style === 'dots') {
     const dots: string[] = []
 
@@ -463,7 +463,7 @@ const current = atom(
     auto: DEFAULT_AUTO,
     autoPeriod: '',
     backdropStyle: 'glow',
-    glassBlur: 16,
+    glassBlur: 0,
     glassOpacity: 0.4,
     issue: '',
     cwd: '',
@@ -498,7 +498,7 @@ function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
     highContrast: r.highContrast === true,
     codePair: r.codePair !== false,
     backdropStyle: STYLES.some(x => x.value === r.backdropStyle) ? (r.backdropStyle as BackdropStyle) : 'glow',
-    glassBlur: BLURS.includes(r.glassBlur as number) ? (r.glassBlur as number) : 16,
+    glassBlur: BLURS.includes(r.glassBlur as number) ? (r.glassBlur as number) : 0,
     glassOpacity: OPACITIES.includes(r.glassOpacity as number) ? (r.glassOpacity as number) : 0.4,
     auto: {
       on: a.on === true,

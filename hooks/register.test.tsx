@@ -344,7 +344,7 @@ test('backdrop styles and panel blur reach the theme, and the scene is drawn', a
 
   await ui.press({ key: 'backdrop-style-waves' })
   expect(calls[calls.length - 1]).toContain('"scene":"style-waves"')
-  expect(calls[calls.length - 1]).toContain('"blur":16')
+  expect(calls[calls.length - 1]).toContain('"blur":0')
   expect(calls[calls.length - 1]).toContain('"opacity":0.4')
   expect(await ui.find({ key: 'glass-blur-24' })).toBeDefined()
 
