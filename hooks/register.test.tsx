@@ -29,6 +29,13 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
     const dark = await ui.find({ type: 'Button', text: /Dark/ })
 
     expect(dark).toBeDefined()
+
+    // The terminal has no Svg and keeps a preview built from boxes.
+    if (surface === 'terminal') {
+      expect(await ui.find({ type: 'Text', text: /Release notes/ })).toBeDefined()
+    } else {
+      expect(await ui.find({ type: 'Svg' })).toBeDefined()
+    }
     await ui.unmount()
   }
 })

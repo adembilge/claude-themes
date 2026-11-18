@@ -216,6 +216,38 @@ const current = atom(
 
 const modeAt = (hour: number): Mode => (hour >= NIGHT_FROM || hour < NIGHT_TO ? 'dark' : 'light')
 
+/**
+ * A small drawing of the app in one theme: sidebar, a message, a code line, the input and Send.
+ * `live` adds a slow pulse on Send; it only runs where the surface draws the Svg interactively.
+ */
+function previewSvg(p: Palette, mode: Mode, live: boolean): string {
+  const v = p[mode]
+  const [s0, s1, s2, s3] = v.surfaces
+  const [t0, t1, t2] = v.text
+  const accent = p.accent[mode]
+  const pulse = live ? '<animate attributeName="opacity" values="1;0.6;1" dur="2.6s" repeatCount="indefinite"/>' : ''
+
+  return [
+    '<svg xmlns="http://www.w3.org/2000/svg" width="264" height="132" viewBox="0 0 264 132">',
+    `<rect width="264" height="132" rx="10" fill="${s0}"/>`,
+    `<rect width="64" height="132" rx="10" fill="${s1}"/><rect x="40" width="24" height="132" fill="${s1}"/>`,
+    `<rect x="10" y="14" width="30" height="5" rx="2.5" fill="${t0}"/>`,
+    `<rect x="6" y="28" width="52" height="16" rx="6" fill="${s2}"/><rect x="6" y="32" width="3" height="8" rx="1.5" fill="${accent}"/>`,
+    `<rect x="14" y="34" width="32" height="4" rx="2" fill="${t1}"/>`,
+    `<rect x="14" y="54" width="36" height="4" rx="2" fill="${t2}"/>`,
+    `<rect x="14" y="68" width="28" height="4" rx="2" fill="${t2}"/>`,
+    `<circle cx="80" cy="14" r="3" fill="${p.roles.danger}"/><circle cx="90" cy="14" r="3" fill="${p.roles.warning}"/><circle cx="100" cy="14" r="3" fill="${p.roles.success}"/>`,
+    `<rect x="76" y="26" width="176" height="36" rx="8" fill="${s2}"/>`,
+    `<rect x="86" y="35" width="96" height="5" rx="2.5" fill="${t0}"/><rect x="86" y="47" width="64" height="4" rx="2" fill="${t2}"/>`,
+    `<rect x="76" y="68" width="176" height="22" rx="6" fill="${s1}"/>`,
+    `<rect x="86" y="77" width="22" height="4" rx="2" fill="${accent}"/><rect x="112" y="77" width="30" height="4" rx="2" fill="${t0}"/><rect x="146" y="77" width="38" height="4" rx="2" fill="${p.roles.success}"/>`,
+    `<rect x="76" y="100" width="124" height="22" rx="11" fill="${s1}" stroke="${s3}"/>`,
+    `<rect x="208" y="100" width="44" height="22" rx="11" fill="${accent}">${pulse}</rect>`,
+    `<rect x="220" y="109" width="20" height="4" rx="2" fill="${s0}"/>`,
+    '</svg>',
+  ].join('')
+}
+
 // Applies and remembers one choice; every path (buttons, command, timer) goes through here.
 // Declared at the top of the file because the engine only follows `$` into top-level functions.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -301,6 +333,9 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text, Button } = $.ui.resolve(e)
+    // The terminal has no Svg; it keeps a preview built from boxes.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Svg = e.surface === 'terminal' ? undefined : ($.ui.resolve(e) as any).Svg
     const now = await read($, current)
 
     const pick = (id: string) => async () => {
@@ -317,72 +352,90 @@ export const register: Register = on => {
     }
 
     return (
-      <Box flexDirection="column" gap={1}>
-        <Box gap={1}>
-          <Text dimColor>Mode</Text>
-          <Button variant={now.mode === 'dark' ? 'primary' : 'secondary'} onPress={setMode('dark')}>
-            Dark
-          </Button>
-          <Button variant={now.mode === 'light' ? 'primary' : 'secondary'} onPress={setMode('light')}>
-            Light
-          </Button>
-          <Button variant={now.auto ? 'primary' : 'secondary'} onPress={toggleAuto}>
-            {now.auto ? 'Auto: on' : 'Auto: off'}
-          </Button>
-          <Text dimColor>dark {NIGHT_FROM}:00 to {NIGHT_TO}:00</Text>
+      <Box flexDirection="column" gap={1} paddingX={1}>
+        <Box flexDirection="column">
+          <Text weight="bold" size="heading">Themes</Text>
+          <Text dimColor>{PALETTES.length} themes, dark and light. Pick one to recolor the whole app.</Text>
         </Box>
-        <Box flexWrap="wrap" gap={1}>
+        <Box flexDirection="column" gap={1}>
+          <Box gap={1} flexWrap="wrap">
+            <Button key="mode-dark" variant={!now.auto && now.mode === 'dark' ? 'primary' : 'secondary'} onPress={setMode('dark')}>
+              ☾ Dark
+            </Button>
+            <Button key="mode-light" variant={!now.auto && now.mode === 'light' ? 'primary' : 'secondary'} onPress={setMode('light')}>
+              ☀ Light
+            </Button>
+            <Button key="mode-auto" variant={now.auto ? 'primary' : 'secondary'} onPress={toggleAuto}>
+              ◔ Auto
+            </Button>
+          </Box>
+          <Text dimColor>
+            {now.auto ? `Auto is on: dark ${NIGHT_FROM}:00 to ${NIGHT_TO}:00, light otherwise.` : 'Auto switches by the time of day.'}
+          </Text>
+        </Box>
+        <Box flexDirection="column" gap={2}>
           {PALETTES.map(p => {
             const v = p[now.mode]
             const [s0, s1, s2, s3] = v.surfaces
+            const accent = p.accent[now.mode]
             const isCurrent = p.id === now.id
-            const dots = [s0, s1, s2, s3, p.accent[now.mode], p.roles.danger, p.roles.success, p.roles.warning, p.roles.pro]
+            const dots = [accent, p.roles.danger, p.roles.success, p.roles.warning, p.roles.pro]
 
             return (
               <Box
-                key={p.id}
+                key={`card-${p.id}`}
                 flexDirection="column"
-                width="48%"
+                gap={1}
+                padding={1}
                 borderStyle="round"
-                borderColor={isCurrent ? p.accent[now.mode] : v.surfaces[3]}
+                borderColor={isCurrent ? accent : s3}
                 backgroundColor={s0}
+                hover={{ borderColor: accent, backgroundColor: s1 }}
               >
-                {/* the small preview: sidebar, a message, a code line, the three states */}
-                <Box>
-                  <Box flexDirection="column" width={16} paddingX={1} backgroundColor={s1}>
-                    <Text color={v.text[0]} weight="bold">Chats</Text>
-                    <Text color={v.text[0]} backgroundColor={s2}>Release notes</Text>
-                    <Text color={v.text[1]}>Budget plan</Text>
-                    <Text color={v.text[2]}>Trip ideas</Text>
-                  </Box>
-                  <Box flexDirection="column" flexGrow={1} paddingX={1}>
-                    <Box flexDirection="column" backgroundColor={s2} paddingX={1}>
-                      <Text color={v.text[0]} weight="bold">Here is the fix.</Text>
-                      <Text color={v.text[2]}>Updated 2 files</Text>
-                    </Box>
-                    <Box backgroundColor={s1} paddingX={1}>
-                      <Text color={p.accent[now.mode]} mono>const </Text>
-                      <Text color={v.text[0]} mono>ok = </Text>
-                      <Text color={p.roles.success} mono>"done"</Text>
-                    </Box>
-                    <Box gap={1}>
-                      <Text color={s0} backgroundColor={p.accent[now.mode]}> Send </Text>
-                      <Text color={p.roles.danger}>Error</Text>
-                      <Text color={p.roles.warning}>Warning</Text>
+                {Svg === undefined ? (
+                  <Box flexDirection="column" gap={0}>
+                    <Box>
+                      <Box flexDirection="column" width={16} paddingX={1} backgroundColor={s1}>
+                        <Text color={v.text[0]} weight="bold">Chats</Text>
+                        <Text color={v.text[0]} backgroundColor={s2}>Release notes</Text>
+                        <Text color={v.text[2]}>Trip ideas</Text>
+                      </Box>
+                      <Box flexDirection="column" flexGrow={1} paddingX={1}>
+                        <Box backgroundColor={s2} paddingX={1}>
+                          <Text color={v.text[0]}>Here is the fix.</Text>
+                        </Box>
+                        <Box gap={1}>
+                          <Text color={s0} backgroundColor={accent}> Send </Text>
+                          <Text color={p.roles.danger}>Error</Text>
+                          <Text color={p.roles.warning}>Warning</Text>
+                        </Box>
+                      </Box>
                     </Box>
                   </Box>
-                </Box>
-                <Box flexDirection="column" paddingX={1} backgroundColor={s1}>
-                  <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                    {isCurrent ? '● ' : ''}
-                    {p.name} <Text dimColor>{p.note}</Text>
-                  </Button>
-                  <Text>
-                    {dots.map((c, i) => (
-                      <Text key={`dot${i}`} color={c}>● </Text>
-                    ))}
+                ) : (
+                  <Svg
+                    source={previewSvg(p, now.mode, isCurrent)}
+                    alt={`${p.name} preview`}
+                    width={264}
+                    height={132}
+                    isInteractive={isCurrent}
+                  />
+                )}
+                <Box flexDirection="column">
+                  <Text weight="bold" color={v.text[0]}>
+                    {isCurrent ? '✓ ' : ''}
+                    {p.name}
                   </Text>
+                  <Text color={v.text[2]}>{p.note}</Text>
                 </Box>
+                <Text>
+                  {dots.map((c, i) => (
+                    <Text key={`dot${i}`} color={c}>● </Text>
+                  ))}
+                </Text>
+                <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
+                  {isCurrent ? 'Selected' : `Use ${p.name}`}
+                </Button>
               </Box>
             )
           })}
