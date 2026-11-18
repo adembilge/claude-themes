@@ -88,13 +88,13 @@ const THEMES: Theme[] = [
   theme('dark', 'material-ocean', 'Material Ocean', 'deep navy, soft blue',
     ['#090b10', '#0f111a', '#1a1c25', '#292d3e'], ['#eeffff', '#b0bec5', '#8f93a2'], '#82aaff',
     ['#f07178', '#c3e88d', '#ffcb6b', '#c792ea']),
-  theme('dark', 'kanagawa-wave', 'Kanagawa Wave', 'ink and indigo, Japanese woodblock',
+  theme('dark', 'kanagawa-wave', 'Kanagawa Wave', 'ink and indigo',
     ['#16161d', '#1f1f28', '#2a2a37', '#363646'], ['#dcd7ba', '#c8c093', '#9c9a82'], '#7e9cd8',
     ['#e46876', '#98bb6c', '#e6c384', '#957fb8']),
   theme('dark', 'synthwave', 'Synthwave', 'neon pink on midnight purple',
     ['#1a1726', '#262335', '#34294f', '#3d3361'], ['#ffffff', '#d9d4ee', '#a59fc9'], '#ff7edb',
     ['#fe4450', '#72f1b8', '#fede5d', '#b893ce']),
-  theme('dark', 'absolutely', 'Absolutely', 'true black, white text, yellow accent',
+  theme('dark', 'absolutely', 'Absolutely', 'black, white, yellow',
     ['#000000', '#0a0a0a', '#141414', '#1e1e1e'], ['#ffffff', '#e0e0e0', '#b0b0b0'], '#ffd60a',
     ['#ff453a', '#32d74b', '#ffd60a', '#bf5af2']),
   theme('dark', 'linear', 'Linear', 'near-black with indigo',
@@ -137,7 +137,7 @@ const THEMES: Theme[] = [
   theme('light', 'github-light', 'GitHub Light', 'crisp white, familiar blue',
     ['#eaeef2', '#f6f8fa', '#ffffff', '#ffffff'], ['#1f2328', '#424a53', '#656d76'], '#0969da',
     ['#cf222e', '#1a7f37', '#9a6700', '#8250df']),
-  theme('light', 'solarized-light', 'Solarized Light', 'warm cream, calibrated contrast',
+  theme('light', 'solarized-light', 'Solarized Light', 'warm cream',
     ['#eee8d5', '#f5efdc', '#fdf6e3', '#fdf6e3'], ['#073642', '#586e75', '#6b7f86'], '#268bd2',
     ['#dc322f', '#7a8a00', '#b58900', '#6c71c4']),
   theme('light', 'rose-pine-dawn', 'Rosé Pine Dawn', 'morning rose on warm paper',
@@ -851,10 +851,10 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
       const result = await $.theme.set(backdrop === undefined ? chosen : ({ ...chosen, backdrop } as ThemeSetArgs))
 
       // An answer that says nothing draws it is kept, to be shown, instead of being lost.
-      await patch($, { issue: result?.isDrawn === false ? String(result.reason ?? '').slice(0, 160) : '' })
+      await patch($, { issue: result?.isDrawn === false ? `not drawn: ${String(result.reason ?? '').slice(0, 140)}` : `drawn as ${String(result?.requestId ?? '?')}` })
     } catch (err) {
       // A surface that refuses the backdrop still gets the colors, and the person gets to see why.
-      await patch($, { issue: `The backdrop was refused: ${String(err).slice(0, 140)}` })
+      await patch($, { issue: `refused: ${String(err).slice(0, 140)}` })
       await $.theme.set(chosen)
     }
   } catch {
@@ -1072,6 +1072,11 @@ async function copyCode($: any, surface: string): Promise<void> {
   }
 }
 
+// How many times the app has asked this mod to draw a scene, and for which: shown in Settings, so a
+// backdrop that stays blank can be told apart from one the app never asked for.
+let sceneAsks = 0
+let lastAsk = ''
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     // Registered first so a failure while restoring the theme cannot leave /claude-themes missing.
@@ -1124,6 +1129,8 @@ export const register: Register = on => {
     if (e.props.plugin !== 'desktop-themes' || (e.surface !== 'desktop' && e.surface !== 'mobile')) {
       return next(e)
     }
+    sceneAsks += 1
+    lastAsk = `${e.surface} / ${String(e.props.scene)}`
     const now = await read($, current)
     const p = themeById(now.id, now.custom) ?? DEFAULT
     const style = STYLES.find(x => x.value === now.backdropStyle && x.value !== 'glow')?.value ?? 'grid'
@@ -1240,7 +1247,7 @@ export const register: Register = on => {
     }
 
     const hero = (
-      <Box flexDirection="column" alignItems="flex-start" gap={1} padding={1} borderStyle="bold" borderColor={cur.accent} backgroundColor={c0}>
+      <Box flexDirection="column" alignItems="center" gap={1} padding={1} borderStyle="bold" borderColor={cur.accent} backgroundColor={c0}>
         {Svg === undefined ? (
           <Box>
             <Box flexDirection="column" width={16} paddingX={1} backgroundColor={c1}>
@@ -1260,7 +1267,7 @@ export const register: Register = on => {
             </Box>
           </Box>
         ) : (
-          <Svg source={previewSvg(cur, true)} alt={`${cur.name} preview`} width={264} height={132} />
+          <Svg source={previewSvg(cur, true)} alt={`${cur.name} preview`} width={360} height={180} />
         )}
         <Text weight="bold" color={cur.text[0]}>Active: {cur.name} ({cur.mode})</Text>
       </Box>
@@ -1515,7 +1522,11 @@ export const register: Register = on => {
           {toggleRow('backdrop-toggle', 'Backdrop', "Something soft behind the conversation, in the theme's colors.", now.backdrop, async () => {
             await toggleFlag($, 'backdrop')
           })}
-          {!now.backdrop || now.issue === '' ? null : <Text color={cur.roles.danger}>{`The app said: ${now.issue}`}</Text>}
+          {!now.backdrop || now.issue === '' ? null : (
+            <Text color={/^(not drawn|refused)/.test(now.issue) ? cur.roles.danger : undefined} dimColor={!/^(not drawn|refused)/.test(now.issue)}>
+              {`The app said: ${now.issue}. Scene requests so far: ${sceneAsks}${lastAsk === '' ? '' : ` (last: ${lastAsk})`}.`}
+            </Text>
+          )}
           {!now.backdrop ? null : (
             <Box flexDirection="column" gap={1}>
               <Text dimColor>Style</Text>
