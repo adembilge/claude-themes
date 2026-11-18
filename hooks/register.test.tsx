@@ -63,7 +63,7 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
   }
 })
 
-test('favorites and recents appear when used', async ($, on) => {
+test('favorites are kept in their own tab', async ($, on) => {
   host(on)
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
 
@@ -80,9 +80,10 @@ test('favorites and recents appear when used', async ($, on) => {
     await ui.press({ key: 'tab-favorites' })
     expect(await ui.find({ key: 'pick-fav-dracula' })).toBeDefined()
 
+    // There is no Recent bar any more.
     await ui.press({ key: 'tab-dark' })
     await ui.press({ key: 'pick-all-nord' })
-    expect(await ui.find({ key: 'recent-nord' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /Recent/ })).toBeUndefined()
 
     // Pressing the star again takes it out.
     await ui.press({ key: 'tab-favorites' })
@@ -131,7 +132,7 @@ test('the settings tab switches the backdrop and the list comes back', async ($,
 test('a corrupted saved value cannot break the gallery', async ($, on) => {
   host(on, {
     theme: 42,
-    prefs: { favs: 'nope', recents: [1, 2, 'not-a-theme', 'nord', 'nord'], backdrop: 'yes' },
+    prefs: { favs: [1, 2, 'not-a-theme', 'nord', 'nord'], backdrop: 'yes' },
   })
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
 
@@ -139,8 +140,11 @@ test('a corrupted saved value cannot break the gallery', async ($, on) => {
     const ui = await $.ui.mount({ ...PANE, surface })
 
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
-    // The one valid recent survives; the rest were dropped.
-    expect(await ui.find({ key: 'recent-nord' })).toBeDefined()
+    // The one valid favorite survives; the rest were dropped.
+    await ui.press({ key: 'tab-favorites' })
+    expect(await ui.find({ key: 'pick-fav-nord' })).toBeDefined()
+    // The tab is session state, so the next surface starts from the Dark tab again.
+    await ui.press({ key: 'tab-dark' })
     await ui.unmount()
   }
 })

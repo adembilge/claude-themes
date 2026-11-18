@@ -94,6 +94,42 @@ const THEMES: Theme[] = [
   theme('dark', 'synthwave', 'Synthwave', 'neon pink on midnight purple',
     ['#1a1726', '#262335', '#34294f', '#3d3361'], ['#ffffff', '#d9d4ee', '#a59fc9'], '#ff7edb',
     ['#fe4450', '#72f1b8', '#fede5d', '#b893ce']),
+  theme('dark', 'absolutely', 'Absolutely', 'true black, white text, yellow accent',
+    ['#000000', '#0a0a0a', '#141414', '#1e1e1e'], ['#ffffff', '#e0e0e0', '#b0b0b0'], '#ffd60a',
+    ['#ff453a', '#32d74b', '#ffd60a', '#bf5af2']),
+  theme('dark', 'linear', 'Linear', 'near-black with indigo',
+    ['#08090a', '#0f1011', '#17181a', '#1f2023'], ['#f7f8f8', '#d0d6e0', '#8a8f98'], '#5e6ad2',
+    ['#eb5757', '#4cb782', '#f2c94c', '#bb87fc']),
+  theme('dark', 'lobster', 'Lobster', 'deep maroon with coral red',
+    ['#140b0b', '#1c1010', '#271717', '#321e1e'], ['#f6e4e1', '#d8b9b4', '#ad8f8b'], '#ff5a4d',
+    ['#ff5a4d', '#6bbf7a', '#f0b04a', '#d98ad1']),
+  theme('dark', 'matrix', 'Matrix', 'black with phosphor green',
+    ['#000a03', '#03110a', '#071c10', '#0c2717'], ['#d4ffe0', '#8ff0ac', '#5fb87a'], '#00ff66',
+    ['#ff4d4d', '#00ff66', '#d9e84a', '#5de6d0']),
+  theme('dark', 'night-owl', 'Night Owl', 'deep navy for late nights',
+    ['#010e1a', '#011627', '#0b2942', '#12304f'], ['#d6deeb', '#aab6cc', '#8195b2'], '#7fdbca',
+    ['#ef5350', '#addb67', '#ffcb8b', '#c792ea']),
+  theme('dark', 'og', 'OG', 'neutral graphite, green accent',
+    ['#0d0d0d', '#161616', '#212121', '#2b2b2b'], ['#ececec', '#c4c4c4', '#9a9a9a'], '#10a37f',
+    ['#ef4444', '#10a37f', '#f59e0b', '#a78bfa']),
+  theme('dark', 'oscurange', 'Oscurange', 'dark brown-black with orange',
+    ['#0e0b09', '#171210', '#221a16', '#2d231d'], ['#f4e8de', '#d1bfb0', '#a89686'], '#ff8a3d',
+    ['#f0563e', '#8fbf5a', '#ffb347', '#c490d1']),
+  theme('dark', 'raycast', 'Raycast', 'smoky black with red',
+    ['#101010', '#1a1a1a', '#252525', '#303030'], ['#f9f9f9', '#c9c9c9', '#9a9a9a'], '#ff6363',
+    ['#ff6363', '#5fc992', '#ffbc33', '#cf2f98']),
+  theme('dark', 'sentry', 'Sentry', 'aubergine and violet',
+    ['#150d1d', '#1d1127', '#2a1b37', '#362447'], ['#ebe6ef', '#c4b9d0', '#9a8dab'], '#9b8cf0',
+    ['#fa6e6e', '#7ec26a', '#ffd466', '#c09bff']),
+  theme('dark', 'temple', 'Temple', 'old stone and gold leaf',
+    ['#13100c', '#1b1710', '#262017', '#312a1f'], ['#f0e6d2', '#cdbf9f', '#a39677'], '#d4a64a',
+    ['#c9553f', '#7ea05a', '#d4a64a', '#a98bc4']),
+  theme('dark', 'vercel', 'Vercel', 'black and white, electric blue',
+    ['#000000', '#0a0a0a', '#141414', '#1f1f1f'], ['#ededed', '#bdbdbd', '#8f8f8f'], '#52a8ff',
+    ['#ff4d4d', '#46a758', '#f5a623', '#bf7af0']),
+  theme('dark', 'vscode-plus', 'VS Code Plus', 'the editor classic, Dark+',
+    ['#181818', '#1e1e1e', '#252526', '#2d2d30'], ['#d4d4d4', '#b8b8b8', '#8c8c8c'], '#569cd6',
+    ['#f48771', '#6a9955', '#dcdcaa', '#c586c0']),
   // ---- light ----
   theme('light', 'catppuccin-latte', 'Catppuccin Latte', 'soft pastels on cream',
     ['#dce0e8', '#e6e9ef', '#eff1f5', '#eff1f5'], ['#4c4f69', '#5c5f77', '#6c6f85'], '#8839ef',
@@ -122,6 +158,12 @@ const THEMES: Theme[] = [
   theme('light', 'everforest-light', 'Everforest Light', 'warm cream with moss green',
     ['#efebd4', '#f4f0d9', '#fdf6e3', '#fdf6e3'], ['#4f5b58', '#5f6c68', '#6e7a70'], '#8da101',
     ['#f85552', '#8da101', '#dfa000', '#df69ba']),
+  theme('light', 'notion', 'Notion', 'warm white paper, ink text',
+    ['#efefed', '#f7f6f3', '#ffffff', '#ffffff'], ['#37352f', '#5a5852', '#787774'], '#2383e2',
+    ['#eb5757', '#448361', '#cb912f', '#9065b0']),
+  theme('light', 'xcode', 'Xcode', 'clean light editor, system blue',
+    ['#e8e8e8', '#f2f2f2', '#ffffff', '#ffffff'], ['#262626', '#4d4d4d', '#6e6e6e'], '#0b6bcb',
+    ['#d12f1b', '#1f8a50', '#a36b00', '#9b2393']),
 ]
 
 const BY_ID = new Map(THEMES.map(t => [t.id, t]))
@@ -186,18 +228,17 @@ const idOf = (text: string): string =>
 
 type Tab = 'dark' | 'light' | 'favorites' | 'settings'
 
-type State = { id: string; tab: Tab; q: string; favs: string[]; recents: string[]; backdrop: boolean }
+type State = { id: string; tab: Tab; q: string; favs: string[]; backdrop: boolean }
 
-type Prefs = { favs: string[]; recents: string[]; backdrop: boolean }
+type Prefs = { favs: string[]; backdrop: boolean }
 
 const MAX_FAVS = 12
-const MAX_RECENTS = 3
 const PREFS_KEY = 'prefs'
 
 // Change the tag if the value's shape changes: it declines what an earlier version stored.
 const current = atom(
   { plugin: 'desktop-themes', key: 'current' } as const,
-  { id: DEFAULT_THEME, tab: 'dark', q: '', favs: [], recents: [], backdrop: true } as State,
+  { id: DEFAULT_THEME, tab: 'dark', q: '', favs: [], backdrop: true } as State,
   { shape: 'current-4' },
 )
 
@@ -213,7 +254,7 @@ function cleanIds(value: unknown, max: number): string[] {
 function cleanPrefs(raw: unknown): Prefs {
   const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>
 
-  return { favs: cleanIds(r.favs, MAX_FAVS), recents: cleanIds(r.recents, MAX_RECENTS), backdrop: r.backdrop !== false }
+  return { favs: cleanIds(r.favs, MAX_FAVS), backdrop: r.backdrop !== false }
 }
 
 /** The color `t` of the way from `a` to `b`, both six-digit hex. */
@@ -299,7 +340,7 @@ function bannerSvg(p: Theme): string {
 async function savePrefs($: any): Promise<void> {
   const s = await read($, current)
 
-  await $.store.set(PREFS_KEY, { favs: s.favs, recents: s.recents, backdrop: s.backdrop })
+  await $.store.set(PREFS_KEY, { favs: s.favs, backdrop: s.backdrop })
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -326,7 +367,6 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
   await update($, current, (s: State) => ({
     ...s,
     id,
-    recents: save ? [id, ...s.recents.filter(r => r !== id)].slice(0, MAX_RECENTS) : s.recents,
   }))
 
   if (save) {
@@ -365,7 +405,7 @@ export const register: Register = on => {
     const saved = await $.store.get(STORE_KEY)
     const id = typeof saved === 'string' && BY_ID.has(saved) ? saved : DEFAULT_THEME
 
-    // Favorites, recents and the backdrop switch come back before the theme is drawn.
+    // Favorites and the backdrop switch come back before the theme is drawn.
     await patch($, cleanPrefs(await $.store.get(PREFS_KEY)))
     await apply($, id, false)
 
@@ -501,7 +541,6 @@ export const register: Register = on => {
     )
 
     const modeTab = (mode: Mode) => () => {
-      const recents = now.recents.map(id => BY_ID.get(id)).filter((p): p is Theme => p !== undefined)
       const shown = THEMES.filter(p => p.mode === mode && matches(p))
 
       return (
@@ -518,19 +557,6 @@ export const register: Register = on => {
                 await patch($, { q: value.slice(0, 40) })
               }}
             />
-          )}
-
-          {q !== '' || recents.length === 0 ? null : (
-            <Box flexDirection="column" gap={1}>
-              <Text weight="bold">Recent</Text>
-              <Box gap={1} flexWrap="wrap">
-                {recents.map(p => (
-                  <Button key={`recent-${p.id}`} variant={p.id === now.id ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                    {p.name}
-                  </Button>
-                ))}
-              </Box>
-            </Box>
           )}
 
           {shown.length === 0 ? (

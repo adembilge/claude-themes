@@ -9,7 +9,7 @@
     {
       "name": "desktop-themes",
       "source": "./",
-      "description": "Recolor the whole Claude desktop app with 25 themes in dark and light: a gallery pane with live previews and swatch dots, plus time-of-day auto mode."
+      "description": "Recolor the whole Claude desktop app with 39 themes in dark and light: a gallery pane with live previews and swatch dots, plus time-of-day auto mode."
     }
   ]
 }

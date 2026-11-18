@@ -5,7 +5,6 @@ export type ThemeState = {
   tab: 'dark' | 'light' | 'favorites' | 'settings'
   q: string
   favs: ThemeId[]
-  recents: ThemeId[]
   backdrop: boolean
 }
 
