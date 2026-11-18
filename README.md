@@ -1,8 +1,8 @@
 # claude-themes
 
-A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 16 well-known UI themes, 9 dark and 7 light, and a gallery pane where you see each one before you pick it.
+A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 17 UI themes, 10 dark and 7 light, and a gallery pane where you see each one before you pick it.
 
-## What you get (v2.1.15)
+## What you get (v2.2.0)
 
 - **`/claude-themes` opens a gallery pane.** The top shows the current theme as a drawn app preview under a slow animated band in its colors. Below it, themes are grouped into dark and light; each row has a small preview, the name, round color dots and a short note.
 - **A theme sets its own mode.** Pick a dark theme and the app goes dark; pick a light theme and it goes light. There are no separate Dark, Light or Auto buttons.
@@ -12,12 +12,13 @@ A mod for the Claude desktop app that recolors the whole window, not just the ch
 | Dark | Light |
 |---|---|
 | Catppuccin Mocha (default) | Catppuccin Latte |
-| Dracula | GitHub Light |
-| Nord | Solarized Light |
-| Tokyo Night | Rosé Pine Dawn |
-| Gruvbox Dark | Gruvbox Light |
-| One Dark | Tokyo Night Day |
-| Rosé Pine | One Light |
+| Espresso | GitHub Light |
+| Dracula | Solarized Light |
+| Nord | Rosé Pine Dawn |
+| Tokyo Night | Gruvbox Light |
+| Gruvbox Dark | Tokyo Night Day |
+| One Dark | One Light |
+| Rosé Pine | |
 | Solarized Dark | |
 | GitHub Dark | |
 
