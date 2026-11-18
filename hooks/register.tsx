@@ -425,7 +425,7 @@ const GROUNDS: { value: string; label: string; make: Make }[] = [
 type BackdropStyle = string
 
 const groundFor = (p: Theme, style: string, strength: Strength, tone: Tone): Ground =>
-  (GROUNDS.find(g => g.value === style) ?? GROUNDS[0]).make(tints(p, strength, tone))
+  (GROUNDS.find(g => g.value === style) ?? GROUNDS[0]!).make(tints(p, strength, tone))
 
 /** A small picture of a ground, for choosing among them: the same data the app is given, drawn as an Svg. */
 function groundThumb(p: Theme, g: Ground, w: number, h: number): string {
