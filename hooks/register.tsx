@@ -341,9 +341,9 @@ export const register: Register = on => {
                   {Svg === undefined ? null : (
                     <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={96} height={48} />
                   )}
-                  <Box flexDirection="column" alignItems="flex-start" flexGrow={1}>
+                  <Box flexDirection="column" alignItems="center" flexGrow={1}>
                     {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so the name button sits on a plate of that same theme: it stays readable on a row of the other mode. */}
-                    <Box backgroundColor={c2}>
+                    <Box backgroundColor={c2} borderStyle="round" borderColor={c2} paddingX={1}>
                       <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
                         {isCurrent ? '✓ ' : ''}
                         {p.name}
