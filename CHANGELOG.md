@@ -2,6 +2,12 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.3.1] - 2026-11-19
+
+### Changed
+- The Settings tab now holds the VS Code import, Theme for this folder, Reset and About. The Appearance tab keeps Tune, Backdrop, Readability and Day and night.
+- The Appearance card is titled Backdrop, and its switch no longer repeats the word.
+
 ## [3.3.0] - 2026-11-19
 
 ### Added

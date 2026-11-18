@@ -83,17 +83,20 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeUndefined()
     await ui.press({ key: 'tab-dark' })
 
-    // Tabs are offered; the link to the docs and source is on the Appearance tab only.
+    // Tabs are offered; the link to the docs and source is on the Settings tab only.
     expect(await ui.find({ key: 'tab-dark' })).toBeDefined()
     expect(await ui.find({ key: 'tab-light' })).toBeDefined()
     expect(await ui.find({ key: 'tab-favorites' })).toBeDefined()
     expect(await ui.find({ key: 'tab-appearance' })).toBeDefined()
     expect(await ui.find({ type: 'Link' })).toBeUndefined()
     await ui.press({ key: 'tab-appearance' })
-    expect(await ui.find({ type: 'Link', text: /github\.com\/adembilge\/claude-themes/ })).toBeDefined()
-    // The Settings tab holds only the VS Code import.
+    expect(await ui.find({ type: 'Link' })).toBeUndefined()
+    expect(await ui.find({ key: 'backdrop-toggle' })).toBeDefined()
+    // The Settings tab holds the VS Code import, Reset and About (with the link), not the backdrop.
     await ui.press({ key: 'tab-settings' })
     expect(await ui.find({ key: 'vscode-scan' })).toBeDefined()
+    expect(await ui.find({ key: 'reset-settings' })).toBeDefined()
+    expect(await ui.find({ type: 'Link', text: /github\.com\/adembilge\/claude-themes/ })).toBeDefined()
     expect(await ui.find({ key: 'backdrop-toggle' })).toBeUndefined()
     await ui.press({ key: 'tab-dark' })
 
@@ -409,7 +412,7 @@ test('a folder keeps its own theme, and the clock does not replace it', async ($
 
   // Folder keys ignore case and the trailing slash.
   expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
-  await ui.press({ key: 'tab-appearance' })
+  await ui.press({ key: 'tab-settings' })
   expect(await ui.find({ type: 'Text', text: /"App": uses Dracula/ })).toBeDefined()
   expect(await ui.find({ key: 'project-clear' })).toBeDefined()
 
@@ -433,12 +436,15 @@ test('reset: the app look, settings and everything each work, and the last two a
   await ui.press({ key: 'contrast-toggle' })
   expect(await labelOf(ui, 'contrast-toggle')).toContain('On')
 
-  // The first press only asks.
+  // Reset lives on the Settings tab. The first press only asks.
+  await ui.press({ key: 'tab-settings' })
   await ui.press({ key: 'reset-settings' })
   expect(await labelOf(ui, 'reset-settings')).toContain('Press again')
-  expect(await labelOf(ui, 'contrast-toggle')).toContain('On')
   await ui.press({ key: 'reset-settings' })
+  await ui.press({ key: 'tab-appearance' })
   expect(await labelOf(ui, 'contrast-toggle')).toContain('Off')
+
+  await ui.press({ key: 'tab-settings' })
 
   await ui.press({ key: 'reset-look' })
   expect(calls[calls.length - 1]).toBe('clear')
@@ -449,7 +455,7 @@ test('reset: the app look, settings and everything each work, and the last two a
   await ui.press({ key: 'pick-all-nord' })
   expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
 
-  await ui.press({ key: 'tab-appearance' })
+  await ui.press({ key: 'tab-settings' })
   await ui.press({ key: 'reset-all' })
   expect(await labelOf(ui, 'reset-all')).toContain('Press again')
   await ui.press({ key: 'reset-all' })

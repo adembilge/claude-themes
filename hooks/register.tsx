@@ -1753,7 +1753,7 @@ export const register: Register = on => {
       )
     }
 
-    // The Appearance tab holds the look and behaviour cards; the Settings tab holds only the VS Code import.
+    // The Appearance tab holds the look and behaviour cards; the Settings tab holds the VS Code import, the folder theme, Reset and About.
     const settingsTab = (which: 'appearance' | 'settings') => () => {
       const c3 = cur.surfaces[3]
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1782,9 +1782,9 @@ export const register: Register = on => {
 
       const appearance = card(
         'appearance',
-        'Appearance',
+        'Backdrop',
         <Box flexDirection="column" gap={1}>
-          {toggleRow('backdrop-toggle', 'Backdrop', "Something soft behind the conversation, in the theme's colors.", now.backdrop, async () => {
+          {toggleRow('backdrop-toggle', 'Soft color behind the chat', "Drawn in the theme's colors. Pick a style below.", now.backdrop, async () => {
             await toggleFlag($, 'backdrop')
           })}
           {!now.backdrop ? null : (
@@ -2123,18 +2123,22 @@ export const register: Register = on => {
       )
 
       if (which === 'settings') {
-        return <Box flexDirection="column" gap={1}>{guard('Import from VS Code', () => vscode)}</Box>
+        return (
+          <Box flexDirection="column" gap={1}>
+            {guard('Import from VS Code', () => vscode)}
+            {project === null ? null : guard('Theme for this folder', () => project)}
+            {guard('Reset', () => reset)}
+            {guard('About', () => about)}
+          </Box>
+        )
       }
 
       return (
         <Box flexDirection="column" gap={1}>
           {guard('Tune', () => tune)}
-          {guard('Appearance', () => appearance)}
+          {guard('Backdrop', () => appearance)}
           {guard('Readability', () => readability)}
           {guard('Day and night', () => dayNight)}
-          {project === null ? null : guard('Theme for this folder', () => project)}
-          {guard('Reset', () => reset)}
-          {guard('About', () => about)}
         </Box>
       )
     }

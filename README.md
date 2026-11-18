@@ -2,7 +2,7 @@
 
 Recolor the whole Claude desktop app, not just the chat area. 64 themes, a gallery where you preview each one before you pick it, a theme maker, eight tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.3.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.3.1-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -19,7 +19,7 @@ Restart the session, then type `/claude-themes`.
 
 - **A gallery pane.** `/claude-themes` opens it. The top shows the current theme as a drawn preview under an animated band in its colors. Below, each theme has a small preview, a name, color dots and a short note.
 - **Themes set their own mode.** Pick a dark theme and the app goes dark; pick a light one and it goes light. There are no separate Dark, Light or Auto buttons.
-- **Tabs, search and favorites.** Dark, Light, Favorites, Maker, Appearance and Settings. Search filters by name or note; the star adds a theme to Favorites.
+- **Tabs, search and favorites.** Dark, Light, Favorites, Maker, Appearance (backdrop, tuning, readability, day and night) and Settings (VS Code import, folder theme, reset, about). Search filters by name or note; the star adds a theme to Favorites.
 - **Switch from the prompt.** `/claude-themes dracula` changes theme without opening the pane.
 
 ## Themes
@@ -44,9 +44,9 @@ Restart the session, then type `/claude-themes`.
 
 - **Maker.** Type a name, an accent color and a dark or light base, and see the palette before you save. Colors the app would refuse are adjusted for you, and the tab lists what it changed.
 - **Tuning.** Eight dials per theme, each moved with `-` and `+`: warmth, saturation, surface brightness, text contrast, hue, surface tint, accent and status colors. Every result still has to pass the app's checks, so a dial stops where the palette would break.
-- **Backdrop.** Nine smooth color fields drawn in the theme's own colors (Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, Halo), with a Strength switch (Subtle, Normal, Bold) and a Color switch (accent or second color).
+- **Backdrop** (Appearance tab). Nine smooth color fields drawn in the theme's own colors (Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, Halo), with a Strength switch (Subtle, Normal, Bold) and a Color switch (accent or second color).
 - **Day and night.** Pick a day theme, a night theme and the hours, or switch to **Follow system** so the app uses the night theme in dark mode and the day theme in light mode.
-- **Per folder.** Tie the current theme to the folder you are in; a session started there uses it.
+- **Per folder.** Tie the current theme to the folder you are in (Settings tab); a session started there uses it.
 - **Readability.** A high-contrast switch for stronger borders and focus rings, and code colors in replies matched to the theme where the app has a matching one.
 
 ## Import
