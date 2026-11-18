@@ -236,10 +236,10 @@ export const register: Register = on => {
   }
 
   on('session.start', async ($, e, next) => {
-    // Registered first so a failure while restoring the theme cannot leave /themes missing.
+    // Registered first so a failure while restoring the theme cannot leave /claude-deskmod missing.
     await $.command.register({
-      name: 'themes',
-      description: 'Open the theme gallery: /themes, or /themes <name> [light|dark] to switch directly',
+      name: 'claude-deskmod',
+      description: 'Open the theme gallery: /claude-deskmod, or /claude-deskmod <name> [light|dark] to switch directly',
       argumentHint: '[name] [light | dark]',
       immediate: true,
     })
@@ -275,7 +275,7 @@ export const register: Register = on => {
   })
 
   // The command is the person's own ask, so the pane is placed at any width.
-  on('command.run', { command: 'themes' }, async ($, e) => {
+  on('command.run', { command: 'claude-deskmod' }, async ($, e) => {
     const words = e.args.trim().split(/\s+/).filter(w => w !== '')
     const last = words[words.length - 1]?.toLowerCase()
     const asMode: Mode | undefined = last === 'light' || last === 'dark' ? last : undefined
