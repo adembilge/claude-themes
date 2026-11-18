@@ -1,8 +1,8 @@
 # claude-themes
 
-Recolor the whole Claude desktop app, not just the chat area. 60 themes, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
+Recolor the whole Claude desktop app, not just the chat area. 53 themes, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.5.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.6.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -24,18 +24,18 @@ Restart the session, then type `/claude-themes`.
 
 ## Themes
 
-60 themes: 39 classics and 21 more from popular families (Catppuccin, Nightfox, Kanagawa, Gruvbox and Everforest variants, Rosé Pine Moon, GitHub Dark Dimmed and others). Palettes are the published ones, with small shifts to the lightest surface and the muted text where the app would otherwise refuse them (it rejects text that is too faint).
+53 themes: 38 classics and 15 more from popular families (Nightfox, Kanagawa, Poimandres, Cobalt2 and others). Palettes are the published ones, with small shifts to the lightest surface and the muted text where the app would otherwise refuse them (it rejects text that is too faint).
 
 | Dark | Light |
 |---|---|
 | Catppuccin Mocha (default) | Catppuccin Latte |
 | Espresso, Dracula, Nord, Monokai | GitHub Light, Solarized Light, Xcode, Notion |
 | Tokyo Night | Tokyo Night Day, One Light |
-| Gruvbox Dark, Gruvbox Dark Hard | Gruvbox Light, Gruvbox Light Hard |
-| One Dark, Rosé Pine, Rosé Pine Moon | Rosé Pine Dawn, Ayu Light |
-| Solarized Dark, GitHub Dark, GitHub Dark Dimmed | Everforest Light, Everforest Light Hard |
-| Ayu Dark, Ayu Mirage, Everforest, Everforest Hard | Dawnfox, Dayfox, Kanagawa Lotus |
-| Material Ocean, Kanagawa Wave, Kanagawa Dragon | Oceanic Next Light, Bluloco Light |
+| Gruvbox Dark | Gruvbox Light |
+| One Dark, Rosé Pine | Rosé Pine Dawn, Ayu Light |
+| Solarized Dark, GitHub Dark | Everforest Light |
+| Ayu Dark, Ayu Mirage, Everforest | Dawnfox, Dayfox, Kanagawa Lotus |
+| Material Ocean, Kanagawa Dragon | Oceanic Next Light, Bluloco Light |
 | Nightfox, Carbonfox, Synthwave, Matrix, Night Owl | Night Owl Light |
 | Cobalt2, Palenight, Poimandres, Vesper, Houston | |
 | Absolutely, Linear, Lobster, OG, Oscurange, Raycast, Sentry, Temple, Vercel, VS Code Plus | |
@@ -43,13 +43,13 @@ Restart the session, then type `/claude-themes`.
 ## Make your own
 
 - **Maker.** Type a name, an accent color and a dark or light base, and see the palette before you save. Colors the app would refuse are adjusted for you, and the tab lists what it changed.
-- **Tuning.** Seven dials per theme, each moved with `-` and `+`: warmth, saturation, surface brightness, text contrast, surface tint, accent and status colors. Every result still has to pass the app's checks, so a dial stops where the palette would break.
+- **Tuning.** Seven dials per theme, shown as compact cards and moved with `-` and `+`: warmth, saturation, surface brightness, text contrast, surface tint, accent and status colors. Every result still has to pass the app's checks, so a dial stops where the palette would break.
 - **Backdrop** (Appearance tab). Nine smooth color fields drawn in the theme's own colors (Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, Halo), with a Strength switch (Subtle, Normal, Bold).
 - **Day and night.** Pick a day theme, a night theme and the hours, or switch to **Follow system** so the app uses the night theme in dark mode and the day theme in light mode.
 - **Per folder.** Tie the current theme to the folder you are in (Settings tab); a session started there uses it.
 - **Readability** (Appearance tab). High contrast for stronger borders and focus rings, and code colors matched to the theme, plus two options that apply to every theme:
-  - **Soften glare**: dims the main text on dark themes and the lightest surfaces on light ones.
-  - **Night comfort**: a warmer cast with less blue, optionally only at night by the Day and night hours.
+  - **Soften glare** (On or Off): dims the main text on dark themes and the lightest surfaces on light ones.
+  - **Night comfort** (On or Off): a warmer cast with less blue, optionally only at night by the Day and night hours.
   Both are still checked against the app's rules, and an option backs off by itself where a theme could not take it. One button resets them.
 
 ## Import

@@ -356,7 +356,7 @@ test('day and night applies the theme for the hour, and changes with the hours',
   }
 })
 
-test('readability options change the theme that is set, are saved, and can be reset', async ($, on) => {
+test('soften glare and night comfort are plain switches that change the theme and are saved', async ($, on) => {
   const calls: string[] = []
   const stored: Record<string, unknown> = {}
   host(on, {}, calls, stored)
@@ -364,49 +364,39 @@ test('readability options change the theme that is set, are saved, and can be re
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
   await ui.press({ key: 'tab-appearance' })
-  expect(await ui.find({ key: 'read-reset' })).toBeUndefined()
+  expect(await labelOf(ui, 'read-glare')).toContain('Off')
+  expect(await labelOf(ui, 'read-night')).toContain('Off')
   const plain = calls[calls.length - 1]
 
-  await ui.press({ key: 'read-glare-2' })
+  await ui.press({ key: 'read-glare' })
+  expect(await labelOf(ui, 'read-glare')).toContain('On')
   expect(calls[calls.length - 1]).not.toBe(plain)
-  expect((stored.prefs as { reading: { glare: number } }).reading.glare).toBe(2)
-  expect(await ui.find({ key: 'read-reset' })).toBeDefined()
-
-  await ui.press({ key: 'read-glare-1' })
-  expect((stored.prefs as { reading: unknown }).reading).toEqual({ glare: 1, night: 0, nightOnly: false })
+  expect((stored.prefs as { reading: unknown }).reading).toEqual({ glare: 2, night: 0, nightOnly: false })
 
   // "Only at night" is offered once night comfort is on.
   expect(await ui.find({ key: 'read-night-only' })).toBeUndefined()
-  await ui.press({ key: 'read-night-2' })
+  await ui.press({ key: 'read-night' })
   expect(await labelOf(ui, 'read-night-only')).toContain('Off')
   await ui.press({ key: 'read-night-only' })
   expect(await labelOf(ui, 'read-night-only')).toContain('On')
+  expect((stored.prefs as { reading: unknown }).reading).toEqual({ glare: 2, night: 2, nightOnly: true })
 
-  await ui.press({ key: 'read-reset' })
+  // Off again, and the theme is as it was.
+  await ui.press({ key: 'read-glare' })
+  await ui.press({ key: 'read-night' })
   expect(calls[calls.length - 1]).toBe(plain)
-  expect((stored.prefs as { reading: unknown }).reading).toEqual({ glare: 0, night: 0, nightOnly: false })
-  expect(await ui.find({ key: 'read-reset' })).toBeUndefined()
+  expect(await ui.find({ key: 'read-night-only' })).toBeUndefined()
   await ui.unmount()
 })
 
-test('saved readability options are applied at the start, and damaged ones are ignored', async ($, on) => {
-  const calls: string[] = []
-  host(on, { prefs: { reading: { glare: 2, night: 1 } } }, calls)
+test('saved readability options are applied at the start, and damaged or removed ones are ignored', async ($, on) => {
+  host(on, { prefs: { reading: { glare: 1, night: 'x', colorblind: 'redgreen', muted: 2, focus: 2 } } })
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
   await ui.press({ key: 'tab-appearance' })
-  expect(await ui.find({ key: 'read-reset' })).toBeDefined()
-  await ui.unmount()
-})
-
-test('corrupted readability settings fall back to off', async ($, on) => {
-  host(on, { prefs: { reading: { glare: 9, night: 'x', colorblind: 'rainbow', muted: 2, focus: 2 } } })
-  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
-  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-
-  await ui.press({ key: 'tab-appearance' })
-  expect(await ui.find({ key: 'read-reset' })).toBeUndefined()
+  expect(await labelOf(ui, 'read-glare')).toContain('On')
+  expect(await labelOf(ui, 'read-night')).toContain('Off')
   await ui.unmount()
 })
 
@@ -467,7 +457,7 @@ test('a folder keeps its own theme, and the clock does not replace it', async ($
   // Folder keys ignore case and the trailing slash.
   expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
   await ui.press({ key: 'tab-settings' })
-  expect(await ui.find({ type: 'Text', text: /"App": uses Dracula/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /This folder: uses Dracula/ })).toBeDefined()
   expect(await ui.find({ key: 'project-clear' })).toBeDefined()
 
   await ui.press({ key: 'project-clear' })

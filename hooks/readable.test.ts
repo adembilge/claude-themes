@@ -28,9 +28,11 @@ test('cleanReading makes anything safe, and ignores options that were removed', 
   expect(cleanReading('x')).toEqual(NO_READING)
   expect(cleanReading([])).toEqual(NO_READING)
   expect(cleanReading({ glare: 7, night: -1, nightOnly: 1 })).toEqual(NO_READING)
-  expect(cleanReading({ glare: 2, night: 1, nightOnly: true })).toEqual({ glare: 2, night: 1, nightOnly: true })
+  expect(cleanReading({ glare: 2, night: 2, nightOnly: true })).toEqual({ glare: 2, night: 2, nightOnly: true })
+  // Soft and Softer from an earlier version both mean on now.
+  expect(cleanReading({ glare: 1, night: 1 })).toEqual({ glare: 2, night: 2, nightOnly: false })
   // Saved by an earlier version: only glare and night are kept.
-  expect(cleanReading({ colorblind: 'redgreen', muted: 2, focus: 2, glare: 1 })).toEqual(on({ glare: 1 }))
+  expect(cleanReading({ colorblind: 'redgreen', muted: 2, focus: 2, glare: 1 })).toEqual(on({ glare: 2 }))
 })
 
 test('with nothing on, the theme comes back as it is', () => {

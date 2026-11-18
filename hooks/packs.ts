@@ -23,11 +23,6 @@ function pack(
 }
 
 export const PACKS: Theme[] = [
-  // https://github.com/rose-pine/rose-pine-palette/blob/main/palette.json
-  // shifted: surface 4 derived; second text derived; muted text #908caa -> #928eac
-  pack('Rosé Pine', 'dark', 'rose-pine-moon', 'Rosé Pine Moon', 'muted rose and gold, deeper dusk',
-    ['#232136', '#2a273f', '#393552', '#45415c'], ['#e0def4', '#b8b5cf', '#928eac'], '#ea9a97',
-    ['#eb6f92', '#9ccfd8', '#f6c177', '#c4a7e7']),
   // https://github.com/EdenEast/nightfox.nvim/blob/main/lua/nightfox/palette/nightfox.lua
   // shifted: muted text #71839b -> #74859d
   pack('Nightfox', 'dark', 'nightfox', 'Nightfox', 'cool navy, soft blue',
@@ -62,19 +57,6 @@ export const PACKS: Theme[] = [
   pack('Ayu', 'dark', 'ayu-mirage', 'Ayu Mirage', 'dusky blue-grey with gold',
     ['#1f2430', '#242936', '#282e3b', '#353b47'], ['#cccac2', '#9ea2a7', '#7f8695'], '#ffcc66',
     ['#f28273', '#87d96c', '#f29e74', '#ddbbff']),
-  // https://github.com/primer/github-vscode-theme (via shikijs tm-themes github-dark-dimmed.json)
-  // shifted: muted text #768390 -> #7e8a97
-  pack('GitHub', 'dark', 'github-dark-dimmed', 'GitHub Dark Dimmed', 'softer slate-blue GitHub',
-    ['#1c2128', '#22272e', '#2d333b', '#373e47'], ['#cdd9e5', '#adbac7', '#7e8a97'], '#539bf5',
-    ['#f47067', '#57ab5a', '#c69026', '#b083f0']),
-  // https://github.com/morhetz/gruvbox/blob/master/colors/gruvbox.vim (page: bg_dim of sainnhe/gruvbox-material hard)
-  pack('Gruvbox', 'dark', 'gruvbox-dark-hard', 'Gruvbox Dark Hard', 'retro warm, deeper contrast',
-    ['#141617', '#1d2021', '#282828', '#3c3836'], ['#ebdbb2', '#d5c4a1', '#a89984'], '#fe8019',
-    ['#fb4934', '#b8bb26', '#fabd2f', '#d3869b']),
-  // https://github.com/sainnhe/everforest/blob/master/autoload/everforest.vim
-  pack('Everforest', 'dark', 'everforest-hard', 'Everforest Hard', 'deeper forest greens',
-    ['#1e2326', '#272e33', '#2e383c', '#374145'], ['#d3c6aa', '#9da9a0', '#859289'], '#a7c080',
-    ['#e67e80', '#a7c080', '#dbbc7f', '#d699b6']),
   // https://github.com/raunofreiberg/vesper (via shikijs tm-themes vesper.json)
   pack('Vesper', 'dark', 'vesper', 'Vesper', 'near-black, peach and mint',
     ['#101010', '#161616', '#1c1c1c', '#232323'], ['#ffffff', '#a0a0a0', '#7e7e7e'], '#ffc799',
@@ -97,15 +79,6 @@ export const PACKS: Theme[] = [
   pack('Kanagawa', 'light', 'kanagawa-lotus', 'Kanagawa Lotus', 'pale parchment, indigo ink',
     ['#d5cea3', '#e5ddb0', '#f2ecbc', '#f2ecbc'], ['#43436c', '#545464', '#716e61'], '#4d699b',
     ['#c84053', '#6f894e', '#cc6d00', '#624c83']),
-  // https://github.com/morhetz/gruvbox/blob/master/colors/gruvbox.vim
-  pack('Gruvbox', 'light', 'gruvbox-light-hard', 'Gruvbox Light Hard', 'retro warm, bright paper',
-    ['#ebdbb2', '#f2e5bc', '#f9f5d7', '#f9f5d7'], ['#3c3836', '#504945', '#7c6f64'], '#d65d0e',
-    ['#cc241d', '#79740e', '#d79921', '#b16286']),
-  // https://github.com/sainnhe/everforest/blob/master/autoload/everforest.vim
-  // shifted: muted text #829181 -> #7d8c81
-  pack('Everforest', 'light', 'everforest-light-hard', 'Everforest Light Hard', 'bright cream and moss',
-    ['#f2efdf', '#f8f5e4', '#fffbef', '#fffbef'], ['#5c6a72', '#708089', '#7d8c81'], '#8da101',
-    ['#f85552', '#8da101', '#dfa000', '#df69ba']),
   // https://github.com/mhartington/oceanic-next/blob/master/colors/OceanicNextLight.vim
   pack('Oceanic Next', 'light', 'oceanic-next-light', 'Oceanic Next Light', 'cool white, slate ink',
     ['#d4d8dc', '#f5f7fa', '#ffffff', '#ffffff'], ['#343d46', '#4f5b66', '#65737e'], '#5a87b4',
@@ -123,17 +96,11 @@ export const PACKS: Theme[] = [
 
 /** The code-highlighting theme to pair with a pack, by the name the app's highlighter knows (a wrong name is ignored). */
 export const PACK_CODE_THEMES: Record<string, string> = {
-  'rose-pine-moon': 'rose-pine-moon',
   'kanagawa-dragon': 'kanagawa-dragon',
   'kanagawa-lotus': 'kanagawa-lotus',
   poimandres: 'poimandres',
   palenight: 'material-theme-palenight',
   'ayu-mirage': 'ayu-mirage',
-  'github-dark-dimmed': 'github-dark-dimmed',
-  'gruvbox-dark-hard': 'gruvbox-dark-hard',
-  'gruvbox-light-hard': 'gruvbox-light-hard',
-  'everforest-hard': 'everforest-dark',
-  'everforest-light-hard': 'everforest-light',
   'night-owl-light': 'night-owl-light',
   vesper: 'vesper',
   houston: 'houston',

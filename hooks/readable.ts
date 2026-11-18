@@ -8,9 +8,9 @@ import { NO_TUNE, accepted, tuneTheme } from './tune.js'
 export type Level = 0 | 1 | 2
 
 export type Reading = {
-  /** 0 off, 1 soft, 2 softer. */
+  /** 0 off, 2 on. */
   glare: Level
-  /** 0 off, 1 soft, 2 warm. */
+  /** 0 off, 2 on. */
   night: Level
   /** Only while the Day and night clock says night. */
   nightOnly: boolean
@@ -21,7 +21,8 @@ export const NO_READING: Reading = { glare: 0, night: 0, nightOnly: false }
 /** True when any option changes the colors (nightOnly alone changes nothing). */
 export const isReading = (r: Reading): boolean => r.glare > 0 || r.night > 0
 
-const level = (v: unknown): Level => (v === 1 || v === 2 ? v : 0)
+// Each option is on or off; an earlier version kept Soft and Softer apart, and either now means on.
+const level = (v: unknown): Level => (v === 1 || v === 2 ? 2 : 0)
 
 /** A Reading from anything a store might hold; every field falls back to off. Options that were removed are ignored. */
 export function cleanReading(raw: unknown): Reading {
@@ -91,17 +92,3 @@ export function readableOf(p: Theme, reading: Reading): Theme {
 
   return p
 }
-
-// ---- words ----
-
-export const GLARE_CHOICES: { value: Level; label: string }[] = [
-  { value: 0, label: 'Off' },
-  { value: 1, label: 'Soft' },
-  { value: 2, label: 'Softer' },
-]
-
-export const NIGHT_CHOICES: { value: Level; label: string }[] = [
-  { value: 0, label: 'Off' },
-  { value: 1, label: 'Soft' },
-  { value: 2, label: 'Warm' },
-]

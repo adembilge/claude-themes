@@ -22,11 +22,8 @@ import {
 import type { Mode, Roles, Surfaces, Text3, Theme } from './model.js'
 import { PACKS, PACK_CODE_THEMES } from './packs.js'
 import {
-  GLARE_CHOICES,
-  NIGHT_CHOICES,
   NO_READING,
   cleanReading,
-  isReading,
   readableOf,
 } from './readable.js'
 import type { Reading } from './readable.js'
@@ -97,9 +94,6 @@ const BASE_THEMES: Theme[] = [
   theme('dark', 'material-ocean', 'Material Ocean', 'deep navy, soft blue',
     ['#090b10', '#0f111a', '#1a1c25', '#292d3e'], ['#eeffff', '#b0bec5', '#8f93a2'], '#82aaff',
     ['#f07178', '#c3e88d', '#ffcb6b', '#c792ea']),
-  theme('dark', 'kanagawa-wave', 'Kanagawa Wave', 'ink and indigo',
-    ['#16161d', '#1f1f28', '#2a2a37', '#363646'], ['#dcd7ba', '#c8c093', '#9c9a82'], '#7e9cd8',
-    ['#e46876', '#98bb6c', '#e6c384', '#957fb8']),
   theme('dark', 'synthwave', 'Synthwave', 'neon pink on midnight purple',
     ['#1a1726', '#262335', '#34294f', '#3d3361'], ['#ffffff', '#d9d4ee', '#a59fc9'], '#ff7edb',
     ['#fe4450', '#72f1b8', '#fede5d', '#b893ce']),
@@ -246,7 +240,6 @@ const CODE_THEMES: Record<string, string> = {
   everforest: 'everforest-dark',
   'everforest-light': 'everforest-light',
   'material-ocean': 'material-theme-ocean',
-  'kanagawa-wave': 'kanagawa-wave',
   synthwave: 'synthwave-84',
   'night-owl': 'night-owl',
   'vscode-plus': 'dark-plus',
@@ -271,9 +264,6 @@ const PROJECTS_KEY = 'projects'
 
 /** A folder as one stable key: slashes forward, no trailing slash, lower case. */
 const projectKey = (cwd: string): string => cwd.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
-
-/** The last part of a folder's path, for showing. */
-const folderName = (cwd: string): string => cwd.replace(/\\/g, '/').replace(/\/+$/, '').split('/').pop() || cwd
 
 type Strength = 'subtle' | 'normal' | 'bold'
 type Tone = 'accent' | 'pro'
@@ -1365,7 +1355,7 @@ export const register: Register = on => {
 
     if (!here.follow && mine !== undefined && mine.id !== here.id) {
       await apply($, mine.id, false)
-      say($, `${folderName(here.cwd)}: using ${mine.name}.`)
+      say($, `This folder: using ${mine.name}.`)
     }
 
     return next(e)
@@ -1829,8 +1819,8 @@ export const register: Register = on => {
       const toggleRow = (key: string, title: string, about: string, isOn: boolean, toggle: () => Promise<void>, plain = false) => (
         <Box key={`row-${key}`} alignItems="center" gap={1}>
           <Box flexDirection="column" flexGrow={1}>
-            {plain ? <Text>{title}</Text> : <Text weight="bold">{title}</Text>}
-            <Text dimColor>{about}</Text>
+            {plain ? <Text>{`${title}. ${about}`}</Text> : <Text weight="bold">{title}</Text>}
+            {plain ? null : <Text dimColor>{about}</Text>}
           </Box>
           <Button key={key} variant={isOn ? 'primary' : 'secondary'} onPress={toggle}>
             {isOn ? 'On' : 'Off'}
@@ -1965,31 +1955,49 @@ export const register: Register = on => {
         'tune',
         `Tune ${cur.name}`,
         <Box flexDirection="column" gap={1}>
-          {TUNE_AXES.map(ax => (
-            <Box key={`tune-row-${ax.key}`} alignItems="center" gap={1}>
-              <Box flexDirection="column" flexGrow={1}>
-                <Text weight="bold">{ax.label}</Text>
-                <Text dimColor>{`${ax.low}  ${tuneBar(t[ax.key])}  ${ax.high}`}</Text>
-              </Box>
-              <Button
-                key={`tune-${ax.key}-down`}
-                onPress={async () => {
-                  await stepTune($, ax.key, -1)
-                }}
-              >
-                −
-              </Button>
-              <Text>{`${t[ax.key] > 0 ? '+' : ''}${t[ax.key]}`}</Text>
-              <Button
-                key={`tune-${ax.key}-up`}
-                onPress={async () => {
-                  await stepTune($, ax.key, 1)
-                }}
-              >
-                +
-              </Button>
-            </Box>
-          ))}
+          <Box flexWrap="wrap" gap={1}>
+            {TUNE_AXES.map(ax => {
+              const v = t[ax.key]
+
+              return (
+                <Box
+                  key={`tune-row-${ax.key}`}
+                  flexDirection="column"
+                  flexGrow={1}
+                  width="48%"
+                  minWidth={22}
+                  paddingX={1}
+                  borderStyle="round"
+                  borderColor={c3}
+                >
+                  <Box justifyContent="space-between">
+                    <Text weight="bold">{ax.label}</Text>
+                    <Text dimColor={v === 0}>{`${v > 0 ? '+' : ''}${v}`}</Text>
+                  </Box>
+                  <Box alignItems="center" justifyContent="space-between">
+                    <Button
+                      key={`tune-${ax.key}-down`}
+                      onPress={async () => {
+                        await stepTune($, ax.key, -1)
+                      }}
+                    >
+                      −
+                    </Button>
+                    <Text dimColor>{tuneBar(v)}</Text>
+                    <Button
+                      key={`tune-${ax.key}-up`}
+                      onPress={async () => {
+                        await stepTune($, ax.key, 1)
+                      }}
+                    >
+                      +
+                    </Button>
+                  </Box>
+                  <Text dimColor>{`${ax.low} ↔ ${ax.high}`}</Text>
+                </Box>
+              )
+            })}
+          </Box>
           {!isTuned(t) ? null : (
             <Box>
               <Button
@@ -2057,30 +2065,6 @@ export const register: Register = on => {
         </Box>,
       )
 
-      // A row of choices for one readability option; the chosen one is filled.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const choiceRow = (key: string, title: string, about: string, choices: { value: any; label: string }[], selected: unknown, set: (v: any) => Promise<void>) => (
-        <Box key={`read-${key}`} flexDirection="column" gap={1}>
-          <Box flexDirection="column">
-            <Text weight="bold">{title}</Text>
-            <Text dimColor>{about}</Text>
-          </Box>
-          <Box gap={1} flexWrap="wrap">
-            {choices.map(c => (
-              <Button
-                key={`read-${key}-${String(c.value)}`}
-                variant={selected === c.value ? 'primary' : 'secondary'}
-                onPress={async () => {
-                  await set(c.value)
-                }}
-              >
-                {c.label}
-              </Button>
-            ))}
-          </Box>
-        </Box>
-      )
-
       const readability = card(
         'readability',
         'Readability',
@@ -2091,11 +2075,11 @@ export const register: Register = on => {
           {toggleRow('contrast-toggle', 'High contrast', 'Stronger borders and focus rings, useful on the light themes.', now.highContrast, async () => {
             await toggleFlag($, 'highContrast')
           })}
-          {choiceRow('glare', 'Soften glare', 'Dims bright whites: the main text on dark themes, the lightest surfaces on light themes.', GLARE_CHOICES, now.reading.glare, async v => {
-            await setReading($, { glare: v })
+          {toggleRow('read-glare', 'Soften glare', 'Dims bright whites: the main text on dark themes, the lightest surfaces on light themes.', now.reading.glare > 0, async () => {
+            await setReading($, { glare: now.reading.glare > 0 ? 0 : 2 })
           })}
-          {choiceRow('night', 'Night comfort', 'A warmer cast with less blue light.', NIGHT_CHOICES, now.reading.night, async v => {
-            await setReading($, { night: v })
+          {toggleRow('read-night', 'Night comfort', 'A warmer cast with less blue light.', now.reading.night > 0, async () => {
+            await setReading($, { night: now.reading.night > 0 ? 0 : 2 })
           })}
           {now.reading.night === 0
             ? null
@@ -2108,18 +2092,6 @@ export const register: Register = on => {
                   await setReading($, { nightOnly: !now.reading.nightOnly })
                 },
               )}
-          {!isReading(now.reading) ? null : (
-            <Box>
-              <Button
-                key="read-reset"
-                onPress={async () => {
-                  await setReading($, null)
-                }}
-              >
-                Reset these options
-              </Button>
-            </Box>
-          )}
         </Box>,
       )
 
@@ -2129,7 +2101,7 @@ export const register: Register = on => {
         'Day and night',
         <Box flexDirection="column" gap={1}>
           <Text dimColor>
-            Switch themes by the clock (checked when a session starts and when you send a prompt), or follow the app's own light and dark setting, which follows your computer when it is set to System. A theme you pick yourself stays until the next switch.
+            Switch themes by the clock (checked when a session starts and when you send a prompt), or follow the app's own light and dark setting. A theme you pick yourself stays until the next switch.
           </Text>
           <Box gap={1} flexWrap="wrap">
             {(['off', 'hour', 'system'] as Switch[]).map(m => (
@@ -2183,7 +2155,7 @@ export const register: Register = on => {
               'Theme for this folder',
               <Box flexDirection="column" gap={1}>
                 <Text dimColor>
-                  {`This folder, "${folderName(now.cwd)}": ${mineHere === undefined ? 'no theme of its own yet.' : `uses ${mineHere.name} whenever a session starts here.`}`}
+                  {`This folder: ${mineHere === undefined ? 'no theme of its own yet.' : `uses ${mineHere.name} whenever a session starts here.`}`}
                 </Text>
                 <Box gap={1} flexWrap="wrap">
                   <Button

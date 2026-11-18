@@ -2,6 +2,19 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.6.0] - 2026-11-19
+
+### Removed
+- Seven themes: GitHub Dark Dimmed, Gruvbox Dark Hard, Gruvbox Light Hard, Rosé Pine Moon, Everforest Hard, Everforest Light Hard and Kanagawa Wave (53 themes now). A saved choice of one of them falls back to the default.
+- The name of the folder on the "Theme for this folder" card and in its notice.
+- The Reset button of the readability options, and the Soft / Softer and Soft / Warm steps.
+
+### Changed
+- Tuning is redesigned: the dials are compact cards, two to a row, each with a small `−` and `+`, a step track and its range.
+- Soften glare and Night comfort are plain On and Off switches. A saved Soft or Softer now means On.
+- The backdrop switch reads "Soft color behind the chat. Drawn in the theme's colors." on one line in the normal text color.
+- Day and night no longer explains what System does.
+
 ## [3.5.0] - 2026-11-19
 
 ### Removed
