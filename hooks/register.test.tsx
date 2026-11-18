@@ -190,6 +190,10 @@ test('the maker saves a theme of your own, refuses bad input and deletes it', as
     expect(await ui.find({ type: 'Text', text: /six-digit hex/ })).toBeDefined()
     expect(await ui.find({ key: 'maker-del-my-test-blue' })).toBeUndefined()
 
+    // A quick accent fills the field, and its own preview is built.
+    await ui.press({ key: 'accent-sky' })
+    expect(await ui.find({ type: 'Text', text: /#38bdf8/ })).toBeDefined()
+
     // A good one is saved, applied, listed under My themes and in the Dark tab.
     await ui.input({ key: 'maker-accent', text: '#3b82f6' })
     await ui.press({ key: 'maker-save' })

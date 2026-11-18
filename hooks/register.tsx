@@ -726,6 +726,18 @@ function sanitizeTheme(o: unknown): Theme | null {
 }
 
 const MAX_CUSTOM = 24
+
+/** Named starting points for the accent, one press each. */
+const QUICK_ACCENTS: [string, string][] = [
+  ['Coral', '#ff6f61'],
+  ['Amber', '#f5a524'],
+  ['Lime', '#84cc16'],
+  ['Teal', '#14b8a6'],
+  ['Sky', '#38bdf8'],
+  ['Indigo', '#6366f1'],
+  ['Violet', '#a855f7'],
+  ['Rose', '#f43f5e'],
+]
 const CUSTOM_KEY = 'custom'
 
 function cleanCustom(raw: unknown): Theme[] {
@@ -1270,13 +1282,26 @@ export const register: Register = on => {
     }
 
     const makerTab = () => {
+      const c3 = cur.surfaces[3]
       // Until a name is typed the preview uses a stand-in; the missing name is only pointed out when saving.
       const built = validateDraft({ ...now.draft, name: now.draft.name.trim() === '' ? 'My theme' : now.draft.name })
+      const draftAccent = /^#[0-9a-f]{6}$/i.test(now.draft.accent.trim()) ? now.draft.accent.trim() : /^[0-9a-f]{6}$/i.test(now.draft.accent.trim()) ? `#${now.draft.accent.trim()}` : ''
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const field = (key: string, label: string, placeholder: string, value: string, change: (v: string) => Promise<void>, submit: (v: string) => Promise<void>): any =>
+      const card = (key: string, title: string, children: any) => (
+        <Box key={`card-${key}`} flexDirection="column" gap={1} padding={1} borderStyle="round" borderColor={c3} backgroundColor={c0}>
+          <Text weight="bold" size="heading">{title}</Text>
+          {children}
+        </Box>
+      )
+      // A label above its box, so every box starts at the same edge.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const field = (key: string, label: string, placeholder: string, value: string, change: (v: string) => Promise<void>, submit: (v: string) => Promise<void>, hint?: any): any =>
         Input === undefined ? null : (
-          <Box key={`field-${key}`} flexDirection="column" alignItems="stretch">
-            <Text dimColor>{label}</Text>
+          <Box key={`field-${key}`} flexDirection="column" alignItems="stretch" flexGrow={1}>
+            <Box gap={1} alignItems="center">
+              <Text dimColor>{label}</Text>
+              {hint}
+            </Box>
             <Input key={key} placeholder={placeholder} value={value} onInput={change} onSubmit={submit} />
           </Box>
         )
@@ -1292,13 +1317,51 @@ export const register: Register = on => {
       const runImport = async (v: string) => {
         await importCode($, v)
       }
+      const good = /^(Saved|Copied|Deleted)/.test(now.msg)
 
-      return (
+      const preview =
+        'error' in built ? (
+          <Text color={cur.roles.danger}>{built.error}</Text>
+        ) : (
+          <Box flexDirection="column" alignItems="center" gap={1}>
+            {Svg === undefined ? (
+              <Text>
+                {[built.theme.accent, built.theme.roles.danger, built.theme.roles.success, built.theme.roles.warning, built.theme.roles.pro].map((c, i) => (
+                  <Text key={`mk${i}`} color={c}>●</Text>
+                ))}
+              </Text>
+            ) : (
+              <Svg source={previewSvg(built.theme, false)} alt={`${built.theme.name} preview`} width={264} height={132} />
+            )}
+            <Text dimColor>{`${built.theme.name} · ${built.theme.mode} · ${built.theme.accent}`}</Text>
+          </Box>
+        )
+
+      const make = card(
+        'make',
+        '✎ Your theme',
         <Box flexDirection="column" gap={1}>
-          <Text weight="bold">Make your own theme</Text>
-          <Text dimColor>Pick a name, an accent color and a base. The rest of the palette is built from your accent.</Text>
-          {field('maker-name', 'Name', 'My theme', now.draft.name, setName, setName)}
-          {field('maker-accent', 'Accent', '#d98a4e', now.draft.accent, setAccent, setAccent)}
+          {preview}
+          <Box gap={1} flexWrap="wrap">
+            {field('maker-name', 'Name', 'My theme', now.draft.name, setName, setName)}
+            {field(
+              'maker-accent',
+              'Accent',
+              '#d98a4e',
+              now.draft.accent,
+              setAccent,
+              setAccent,
+              Svg === undefined || draftAccent === '' ? null : (
+                <Svg
+                  source={`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="${draftAccent}" stroke="#808080" stroke-opacity="0.5"/></svg>`}
+                  alt={`Accent ${draftAccent}`}
+                  width={14}
+                  height={14}
+                />
+              ),
+            )}
+          </Box>
+          <Text dimColor>Base</Text>
           <Box gap={1} flexWrap="wrap">
             <Button
               key="maker-dark"
@@ -1307,7 +1370,7 @@ export const register: Register = on => {
                 await setDraft($, { mode: 'dark' })
               }}
             >
-              ☾ Dark base
+              ☾ Dark
             </Button>
             <Button
               key="maker-light"
@@ -1316,23 +1379,23 @@ export const register: Register = on => {
                 await setDraft($, { mode: 'light' })
               }}
             >
-              ☀ Light base
+              ☀ Light
             </Button>
           </Box>
-
-          {'error' in built ? (
-            <Text dimColor>{built.error}</Text>
-          ) : Svg === undefined ? (
-            <Text>
-              {[built.theme.accent, built.theme.roles.danger, built.theme.roles.success, built.theme.roles.warning, built.theme.roles.pro].map((c, i) => (
-                <Text key={`mk${i}`} color={c}>●</Text>
-              ))}
-            </Text>
-          ) : (
-            <Svg source={previewSvg(built.theme, false)} alt={`${built.theme.name} preview`} width={200} height={100} />
-          )}
-
-          <Box>
+          <Text dimColor>Quick accents</Text>
+          <Box gap={1} flexWrap="wrap">
+            {QUICK_ACCENTS.map(([name, hex]) => (
+              <Button
+                key={`accent-${name.toLowerCase()}`}
+                onPress={async () => {
+                  await setDraft($, { accent: hex })
+                }}
+              >
+                {name}
+              </Button>
+            ))}
+          </Box>
+          <Box gap={1} alignItems="center" flexWrap="wrap">
             <Button
               key="maker-save"
               variant="primary"
@@ -1342,11 +1405,47 @@ export const register: Register = on => {
             >
               Save and apply
             </Button>
+            {now.msg === '' ? null : <Text color={good ? cur.roles.success : cur.roles.danger}>{now.msg}</Text>}
           </Box>
-          {now.msg === '' ? null : <Text>{now.msg}</Text>}
+        </Box>,
+      )
 
-          <Text weight="bold">Share</Text>
-          <Text dimColor>Copy the code of the current theme to share it, or paste a code below and press Enter to add one.</Text>
+      const mine = card(
+        'mine',
+        '★ My themes',
+        now.custom.length === 0 ? (
+          <Text dimColor>No themes of your own yet. Make one above, or import a code below.</Text>
+        ) : (
+          <Box flexDirection="column" gap={1}>
+            {now.custom.map(t => (
+              <Box key={`mine-${t.id}`} alignItems="center" gap={1} padding={1} borderStyle="round" borderColor={t.id === now.id ? t.accent : c3}>
+                {Svg === undefined ? null : <Svg source={previewSvg(t, false)} alt={`${t.name} preview`} width={96} height={48} />}
+                <Box flexDirection="column" flexGrow={1}>
+                  <Text weight="bold">{t.name}</Text>
+                  <Text dimColor>{`${t.mode} · ${t.accent}`}</Text>
+                </Box>
+                <Button key={`maker-use-${t.id}`} variant={t.id === now.id ? 'primary' : 'secondary'} onPress={pick(t.id)}>
+                  {t.id === now.id ? '✓ Using' : 'Use'}
+                </Button>
+                <Button
+                  key={`maker-del-${t.id}`}
+                  onPress={async () => {
+                    await removeCustom($, t.id)
+                  }}
+                >
+                  ✕
+                </Button>
+              </Box>
+            ))}
+          </Box>
+        ),
+      )
+
+      const share = card(
+        'share',
+        '⇄ Share',
+        <Box flexDirection="column" gap={1}>
+          <Text dimColor>Copy the code of the theme you are on to share it, or paste a code below and press Enter to add one.</Text>
           <Box>
             <Button
               key="share-copy"
@@ -1358,27 +1457,14 @@ export const register: Register = on => {
             </Button>
           </Box>
           {field('share-import', 'Import', 'Paste a code, press Enter', now.importText, setImport, runImport)}
+        </Box>,
+      )
 
-          {now.custom.length === 0 ? null : (
-            <Box flexDirection="column" gap={1}>
-              <Text weight="bold">My themes</Text>
-              {now.custom.map(t => (
-                <Box key={`mine-${t.id}`} gap={1} alignItems="center" flexWrap="wrap">
-                  <Button key={`maker-use-${t.id}`} variant={t.id === now.id ? 'primary' : 'secondary'} onPress={pick(t.id)}>
-                    {t.name}
-                  </Button>
-                  <Button
-                    key={`maker-del-${t.id}`}
-                    onPress={async () => {
-                      await removeCustom($, t.id)
-                    }}
-                  >
-                    ✕ Delete
-                  </Button>
-                </Box>
-              ))}
-            </Box>
-          )}
+      return (
+        <Box flexDirection="column" gap={1}>
+          {guard('The maker', () => make)}
+          {guard('My themes', () => mine)}
+          {guard('Share', () => share)}
         </Box>
       )
     }
