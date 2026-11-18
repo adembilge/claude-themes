@@ -2,7 +2,6 @@ export type ThemeId = string
 
 declare module 'claude-code' {
   interface PluginState {
-    deskmod: { current: Shaped<ThemeId> }
+    deskmod: { current: Shaped<{ id: ThemeId; mode: 'dark' | 'light'; auto: boolean }> }
   }
 }
-

@@ -1,12 +1,14 @@
 # claude-deskmod
 
-A mod for the Claude desktop app that recolors the whole window, not just the chat area. This first version ships six dark brown themes and lets you switch between them with a click.
+A mod for the Claude desktop app that recolors the whole window, not just the chat area. It ships 16 themes, each in dark and light, and a gallery pane where you see every theme before you pick it.
 
-## What you get (v0.1.1)
+## What you get (v0.2.0)
 
-- **A row of theme buttons above the prompt.** Click one and the whole app changes color. Your choice is saved.
-- **A `/themes` pane.** Type `/themes` to open a list of themes with short descriptions.
-- **`/themes <name>`** switches directly, for example `/themes walnut`.
+- **`/themes` opens a gallery pane.** Each card shows a small preview (sidebar, message, code line, Send, Error, Warning), the theme name and a short description, and a row of swatch dots.
+- **Dark / Light buttons** at the top of the pane switch every card and the whole app.
+- **Auto mode** follows the time of day: dark from 19:00 to 07:00, light otherwise. Picking a theme or a mode by hand turns Auto off.
+- **`/themes <name> [light|dark]`** switches directly, for example `/themes walnut light`.
+- Your choice is saved.
 
 | Theme | Feel |
 |---|---|
@@ -16,6 +18,16 @@ A mod for the Claude desktop app that recolors the whole window, not just the ch
 | mocha-rose | reddish brown, rose |
 | coffee-olive | greenish brown, gold |
 | chestnut-ember | deep red brown, copper |
+| slate-blue | cool blue-grey, sky |
+| forest | deep green, leaf |
+| midnight-indigo | blue-violet night, periwinkle |
+| plum | dark purple, orchid |
+| teal-sea | deep teal, aqua |
+| graphite | neutral grey, steel |
+| sage | muted grey-green, moss |
+| rose-quartz | soft pink-grey, rose |
+| lavender-dusk | dusty violet, lilac |
+| crimson-night | dark wine, crimson |
 
 ## Install
 
@@ -26,11 +38,11 @@ In Claude Code:
 /plugin install deskmod@claude-deskmod
 ```
 
-Then restart the session. The theme row appears above the prompt box.
+Then restart the session and type `/themes`.
 
 ## Status
 
-Early. Tested on Windows only. Planned next: a backdrop for each theme, light variants, swatch dots in the switcher, automatic theme by time of day, and a theme maker.
+Early. Tested on Windows only. Planned next: a backdrop for each theme and a theme maker. The light variants are generated from each theme's hue and still need a contrast review.
 
 ## Develop
 
