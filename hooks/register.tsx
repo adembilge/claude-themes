@@ -216,24 +216,26 @@ const current = atom(
 
 const modeAt = (hour: number): Mode => (hour >= NIGHT_FROM || hour < NIGHT_TO ? 'dark' : 'light')
 
-export const register: Register = on => {
-  // Applies and remembers one choice; every path (buttons, command, timer) goes through here.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function apply($: any, next: State, save: boolean): Promise<void> {
-    const chosen = lookFor(next.id, next.mode)
+// Applies and remembers one choice; every path (buttons, command, timer) goes through here.
+// Declared at the top of the file because the engine only follows `$` into top-level functions.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function apply($: any, next: State, save: boolean): Promise<void> {
+  const chosen = lookFor(next.id, next.mode)
 
-    if (chosen !== undefined) {
-      // Nothing is reported if no client draws themes yet; the theme still stands for one that attaches.
-      await $.theme.set(chosen)
-    }
-    await update($, current, () => next)
-
-    if (save) {
-      await $.store.set(STORE_KEY, next.id)
-      await $.store.set(MODE_KEY, next.mode)
-      await $.store.set(AUTO_KEY, next.auto)
-    }
+  if (chosen !== undefined) {
+    // Nothing is reported if no client draws themes yet; the theme still stands for one that attaches.
+    await $.theme.set(chosen)
   }
+  await update($, current, () => next)
+
+  if (save) {
+    await $.store.set(STORE_KEY, next.id)
+    await $.store.set(MODE_KEY, next.mode)
+    await $.store.set(AUTO_KEY, next.auto)
+  }
+}
+
+export const register: Register = on => {
 
   on('session.start', async ($, e, next) => {
     // Registered first so a failure while restoring the theme cannot leave /claude-deskmod missing.
