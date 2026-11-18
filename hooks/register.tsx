@@ -1,9 +1,7 @@
-import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, ThemeSetArgs } from 'claude-code'
+import type { Register, ThemeSetArgs } from 'claude-code'
 
 import { makeColors } from './make-colors.js'
 
-const PANE = 'deskmod'
 const STORE_KEY = 'theme'
 const DEFAULT_THEME = 'espresso'
 
@@ -95,38 +93,11 @@ const LOOKS = new Map<string, ThemeSetArgs>(PALETTES.map(p => [p.id, look(p)]))
 // "Mocha rose", "mocha_rose" and "mocha-rose" all name the same theme.
 const idOf = (text: string): string => text.trim().toLowerCase().replace(/[\s_]+/g, '-')
 
-// Change the tag if the value's shape changes: it declines what an earlier version stored.
-const current = atom({ plugin: 'deskmod', key: 'current' } as const, DEFAULT_THEME, {
-  shape: 'current-1',
-})
-
-// The surface reads `placement` only when it first shows a pane, and it keeps a pane's
-// seat (a dock, say) per id across sessions, while `$.ui.panes()` lists only this
-// session's. So reusing one id re-opens a new chat docked. Open under a fresh id each
-// time so every open is a first show, and close any of our earlier ones.
-const openWidget = async ($: EngineInterface) => {
-  for (const p of await $.ui.panes()) {
-    if (p.id.startsWith(PANE)) {
-      await $.ui.close({ id: p.id })
-    }
-  }
-
-  return $.ui.open({
-    id: `${PANE}-${Date.now().toString(36)}`,
-    title: 'Themes',
-    rows: 14,
-    columns: 34,
-    placement: 'widget',
-  })
-}
-
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const saved = await $.store.get(STORE_KEY)
     const id = typeof saved === 'string' && LOOKS.has(saved) ? saved : DEFAULT_THEME
     const chosen = LOOKS.get(id)
-
-    await update($, current, () => id)
 
     if (chosen !== undefined) {
       const set = await $.theme.set(chosen)
@@ -138,89 +109,30 @@ export const register: Register = on => {
 
     await $.command.register({
       name: 'themes',
-      description: 'Pick a brown theme: /themes opens the panel, /themes <name> switches directly',
+      description: 'Pick a brown theme: /themes lists them, /themes <name> switches',
     })
-
-    // Open the switcher as a floating widget on its own. If the window is too narrow
-    // to draw it, say how to get it later.
-    const opened = await openWidget($)
-
-    if (!opened.isPlaced) {
-      $.ui.status('Themes window not drawn here. Type /themes to open it.')
-    }
 
     return next(e)
   })
 
-  // The command is the person's own ask, so the pane is placed at any width.
   on('command.run', { command: 'themes' }, async ($, e) => {
     const want = idOf(e.args)
 
-    if (want !== '') {
-      const picked = LOOKS.get(want)
+    if (want === '') {
+      const saved = await $.store.get(STORE_KEY)
+      const now = typeof saved === 'string' && LOOKS.has(saved) ? saved : DEFAULT_THEME
+      const lines = PALETTES.map(p => `${p.id === now ? '*' : ' '} ${p.id.padEnd(15)}${p.note}`)
 
-      if (picked === undefined) {
-        return { text: `No theme called "${e.args.trim()}". Try: ${PALETTES.map(p => p.id).join(', ')}` }
-      }
-      await $.theme.set(picked)
-      await update($, current, () => want)
-      await $.store.set(STORE_KEY, want)
-
-      return { text: `Theme: ${want}` }
+      return { text: ['Themes (* is current). Switch with /themes <name>:', ...lines].join('\n') }
     }
-    const opened = await openWidget($)
+    const picked = LOOKS.get(want)
 
-    return {
-      text: opened.isPlaced
-        ? 'Theme switcher opened.'
-        : `Theme switcher not drawn here: ${opened.reason}. Use /themes <name> instead.`,
+    if (picked === undefined) {
+      return { text: `No theme called "${e.args.trim()}". Try: ${PALETTES.map(p => p.id).join(', ')}` }
     }
-  })
+    await $.theme.set(picked)
+    await $.store.set(STORE_KEY, want)
 
-  // The switcher lives in a panel (no row above the prompt). Full form when it is
-  // docked or open, a compact row of dots when the app shrinks it to a widget.
-  on('ui.render', { component: 'Pane' }, async ($, e, next) => {
-    if (!e.requestId.startsWith(PANE)) {
-      return next(e)
-    }
-    const { Box, Text, Button } = $.ui.resolve(e)
-    const id = await read($, current)
-    const isWidget = e.props.placement === 'widget'
-
-    const choose = async (themeId: string) => {
-      const picked = LOOKS.get(themeId)
-
-      if (picked === undefined) {
-        return
-      }
-      await $.theme.set(picked)
-      await update($, current, () => themeId)
-      await $.store.set(STORE_KEY, themeId)
-    }
-
-    if (isWidget) {
-      return (
-        <Box gap={1}>
-          <Text dimColor>{PALETTES.find(p => p.id === id)?.name ?? 'Theme'}</Text>
-          {PALETTES.map(p => (
-            <Button key={p.id} variant={p.id === id ? 'primary' : 'secondary'} onPress={() => choose(p.id)}>
-              <Text color={p.roles.accent}>●</Text>
-            </Button>
-          ))}
-        </Box>
-      )
-    }
-
-    return (
-      <Box flexDirection="column" gap={1}>
-        <Text dimColor>Pick a dark brown theme. Your choice is saved.</Text>
-        {PALETTES.map(p => (
-          <Button key={p.id} variant={p.id === id ? 'primary' : 'secondary'} onPress={() => choose(p.id)}>
-            <Text color={p.roles.accent}>●</Text> {p.name}
-            {p.id === id ? ' (current)' : ''} <Text dimColor>{p.note}</Text>
-          </Button>
-        ))}
-      </Box>
-    )
+    return { text: `Theme: ${want}` }
   })
 }
