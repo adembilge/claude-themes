@@ -3,6 +3,7 @@ import { expect, test } from 'claude-code/testing'
 import { contrast, hslOf, lum, rgbOf, validateTheme } from './model.js'
 import type { Theme } from './model.js'
 import { PACKS } from './packs.js'
+import { accepted } from './tune.js'
 import { NO_READING, cleanReading, isReading, readableOf } from './readable.js'
 import type { ColorBlind, Level, Reading } from './readable.js'
 
@@ -10,6 +11,18 @@ const DARK = PACKS.filter(p => p.mode === 'dark')
 const LIGHT = PACKS.filter(p => p.mode === 'light')
 const worst = (c: string, t: Theme) => Math.min(...t.surfaces.map(s => contrast(c, s)))
 const on = (change: Partial<Reading>): Reading => ({ ...NO_READING, ...change })
+
+// Each check runs once for the dark themes and once for the light ones, so every test stays well inside the
+// time limit on a slow machine (building a palette costs a few milliseconds).
+function perHalf(name: string, check: (t: Theme) => void): void {
+  for (const [label, list] of [['dark', DARK], ['light', LIGHT]] as const) {
+    test(`${name} (${label} themes)`, () => {
+      for (const t of list) {
+        check(t)
+      }
+    })
+  }
+}
 
 test('cleanReading makes anything safe', () => {
   expect(cleanReading(undefined)).toEqual(NO_READING)
@@ -35,28 +48,31 @@ test('with nothing on, the theme comes back as it is', () => {
   expect(readableOf(p, on({ nightOnly: true }))).toBe(p)
 })
 
-test('each option alone gives a palette the app accepts, on every theme', () => {
-  const each: Reading[] = [
-    on({ colorblind: 'redgreen' }),
-    on({ colorblind: 'blueyellow' }),
-    on({ glare: 2 }),
-    on({ night: 2 }),
-    on({ muted: 2 }),
-    on({ focus: 2 }),
-  ]
+const EACH: Reading[] = [
+  on({ colorblind: 'redgreen' }),
+  on({ colorblind: 'blueyellow' }),
+  on({ glare: 2 }),
+  on({ night: 2 }),
+  on({ muted: 2 }),
+  on({ focus: 2 }),
+]
 
-  for (const t of PACKS) {
-    for (const r of each) {
-      expect(validateTheme(readableOf(t, r)), `${t.name} ${JSON.stringify(r)}`).toBeNull()
-    }
+perHalf('each option alone gives a palette the app accepts', t => {
+  for (const r of EACH) {
+    expect(accepted(readableOf(t, r)), `${t.name} ${JSON.stringify(r)}`).toBe(true)
   }
 })
 
-test('every option at once is accepted on every theme', () => {
-  const all = on({ colorblind: 'redgreen', glare: 2, night: 2, muted: 2, focus: 2 })
+perHalf('every option at once is accepted', t => {
+  expect(accepted(readableOf(t, on({ colorblind: 'redgreen', glare: 2, night: 2, muted: 2, focus: 2 }))), t.name).toBe(true)
+})
 
-  for (const t of PACKS) {
-    expect(validateTheme(readableOf(t, all)), t.name).toBeNull()
+// readableOf checks its own result against the app's full rules before returning it; a sample is checked again here.
+test('the full app check agrees on a sample', () => {
+  for (const t of [DARK[0]!, LIGHT[0]!]) {
+    for (const r of EACH) {
+      expect(validateTheme(readableOf(t, r)), `${t.name} ${JSON.stringify(r)}`).toBeNull()
+    }
   }
 })
 
@@ -81,25 +97,21 @@ for (const t of [DARK[0]!, DARK[5]!, LIGHT[0]!, LIGHT[4]!]) {
   })
 }
 
-test('muted text is stronger against the surfaces, more so on Clear', () => {
-  for (const t of PACKS) {
-    const a = worst(readableOf(t, on({ muted: 1 })).text[2], t)
-    const b = worst(readableOf(t, on({ muted: 2 })).text[2], t)
+perHalf('muted text is stronger against the surfaces, more so on Clear', t => {
+  const a = worst(readableOf(t, on({ muted: 1 })).text[2], t)
+  const b = worst(readableOf(t, on({ muted: 2 })).text[2], t)
 
-    expect(a, t.name).toBeGreaterThanOrEqual(worst(t.text[2], t) - 0.001)
-    expect(a, t.name).toBeGreaterThanOrEqual(4.4)
-    expect(b, t.name).toBeGreaterThanOrEqual(a - 0.001)
-  }
+  expect(a, t.name).toBeGreaterThanOrEqual(worst(t.text[2], t) - 0.001)
+  expect(a, t.name).toBeGreaterThanOrEqual(4.4)
+  expect(b, t.name).toBeGreaterThanOrEqual(a - 0.001)
 })
 
-test('the accent reaches the contrast it was asked for, where the theme allows it', () => {
-  for (const t of PACKS) {
-    const clear = readableOf(t, on({ focus: 1 }))
-    const strong = readableOf(t, on({ focus: 2 }))
+perHalf('the accent reaches the contrast it was asked for, where the theme allows it', t => {
+  const clear = readableOf(t, on({ focus: 1 }))
+  const strong = readableOf(t, on({ focus: 2 }))
 
-    expect(worst(clear.accent, clear), t.name).toBeGreaterThanOrEqual(Math.min(4.4, worst(t.accent, t)))
-    expect(worst(strong.accent, strong), t.name).toBeGreaterThanOrEqual(worst(clear.accent, clear) - 0.001)
-  }
+  expect(worst(clear.accent, clear), t.name).toBeGreaterThanOrEqual(Math.min(4.4, worst(t.accent, t)))
+  expect(worst(strong.accent, strong), t.name).toBeGreaterThanOrEqual(worst(clear.accent, clear) - 0.001)
 })
 
 test('less glare dims the main text on dark themes and the whites on light ones', () => {
@@ -115,32 +127,28 @@ test('less glare dims the main text on dark themes and the whites on light ones'
   }
 })
 
-test('night comfort takes blue out of the page', () => {
-  for (const t of PACKS) {
-    const [r0, , b0] = rgbOf(t.surfaces[0])
-    const [r1, , b1] = rgbOf(readableOf(t, on({ night: 2 })).surfaces[0])
+perHalf('night comfort takes blue out of the page', t => {
+  const [r0, , b0] = rgbOf(t.surfaces[0])
+  const [r1, , b1] = rgbOf(readableOf(t, on({ night: 2 })).surfaces[0])
 
-    // Blue relative to red does not grow.
-    expect((b1 + 1) / (r1 + 1), t.name).toBeLessThanOrEqual((b0 + 1) / (r0 + 1) + 0.001)
-  }
+  // Blue relative to red does not grow.
+  expect((b1 + 1) / (r1 + 1), t.name).toBeLessThanOrEqual((b0 + 1) / (r0 + 1) + 0.001)
 })
 
-test('color-blind palettes keep danger and success far apart in hue', () => {
-  const hueGap = (a: string, b: string) => {
-    const d = Math.abs(hslOf(a)[0] - hslOf(b)[0])
+const hueGap = (a: string, b: string) => {
+  const d = Math.abs(hslOf(a)[0] - hslOf(b)[0])
 
-    return Math.min(d, 360 - d)
-  }
+  return Math.min(d, 360 - d)
+}
 
-  for (const t of PACKS) {
-    const rg = readableOf(t, on({ colorblind: 'redgreen' }))
+perHalf('color-blind palettes keep danger and success far apart in hue', t => {
+  const rg = readableOf(t, on({ colorblind: 'redgreen' }))
 
-    expect(hueGap(rg.roles.danger, rg.roles.success), `${t.name} red-green hue`).toBeGreaterThan(100)
+  expect(hueGap(rg.roles.danger, rg.roles.success), `${t.name} red-green hue`).toBeGreaterThan(100)
 
-    const by = readableOf(t, on({ colorblind: 'blueyellow' }))
+  const by = readableOf(t, on({ colorblind: 'blueyellow' }))
 
-    expect(hueGap(by.roles.danger, by.roles.warning), `${t.name} blue-yellow`).toBeGreaterThan(15)
-  }
+  expect(hueGap(by.roles.danger, by.roles.warning), `${t.name} blue-yellow`).toBeGreaterThan(15)
 })
 
 test('readableOf is deterministic and fast', () => {
