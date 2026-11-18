@@ -353,6 +353,20 @@ function sceneSvg(p: Theme, style: Exclude<BackdropStyle, 'glow'>): string {
   return `${head}${base}${art}</svg>`
 }
 
+/** The glow as a picture, the same radial blend the glow backdrop paints. */
+function glowSvg(p: Theme): string {
+  const [s0, s1, s2] = p.surfaces
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="g" cx="0.5" cy="0.5" r="0.7"><stop offset="0" stop-color="${mix(s2, p.accent, 0.12)}"/><stop offset="0.55" stop-color="${mix(s1, p.accent, 0.04)}"/><stop offset="1" stop-color="${s0}"/></radialGradient></defs><rect width="1600" height="1000" fill="url(#g)"/></svg>`
+}
+
+/** A small picture of one backdrop style in a theme, for choosing among them. */
+function thumbSvg(p: Theme, style: BackdropStyle): string {
+  const full = style === 'glow' ? glowSvg(p) : sceneSvg(p, style)
+
+  return full.replace('width="1600" height="1000"', 'width="84" height="52"')
+}
+
 function cleanProjects(raw: unknown, known: Set<string>): Record<string, string> {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
     return {}
@@ -1370,21 +1384,24 @@ export const register: Register = on => {
     }
 
     const settingsTab = () => {
-      const flag = (key: string, name: Flag, title: string, about: string, isOn: boolean) => (
-        <Box key={`flag-${key}`} flexDirection="column" gap={1}>
-          <Text weight="bold">{title}</Text>
-          <Text dimColor>{about}</Text>
-          <Box>
-            <Button
-              key={key}
-              variant={isOn ? 'primary' : 'secondary'}
-              onPress={async () => {
-                await toggleFlag($, name)
-              }}
-            >
-              {`${title}: ${isOn ? 'on' : 'off'}`}
-            </Button>
+      const c3 = cur.surfaces[3]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const card = (key: string, title: string, children: any) => (
+        <Box key={`card-${key}`} flexDirection="column" gap={1} padding={1} borderStyle="round" borderColor={c3} backgroundColor={c0}>
+          <Text weight="bold" size="heading">{title}</Text>
+          {children}
+        </Box>
+      )
+      // A title and its one line on the left, one compact switch on the right.
+      const toggleRow = (key: string, title: string, about: string, isOn: boolean, toggle: () => Promise<void>) => (
+        <Box key={`row-${key}`} alignItems="center" gap={1}>
+          <Box flexDirection="column" flexGrow={1}>
+            <Text weight="bold">{title}</Text>
+            <Text dimColor>{about}</Text>
           </Box>
+          <Button key={key} variant={isOn ? 'primary' : 'secondary'} onPress={toggle}>
+            {isOn ? 'On' : 'Off'}
+          </Button>
         </Box>
       )
       const themeOptions = all.map(p => ({ value: p.id, label: p.name }))
@@ -1393,82 +1410,100 @@ export const register: Register = on => {
         <Select key={key} label={label} options={options} value={value} onSelect={set} />
       )
 
-      const styleControls =
-        !now.backdrop || Select === undefined ? null : (
-          <Box key="backdrop-style" flexDirection="column" gap={1}>
-            {picker('backdrop-style', 'Backdrop style', STYLES, now.backdropStyle, async v => {
-              await setBackdrop($, { backdropStyle: v as BackdropStyle })
-            })}
-            {now.backdropStyle === 'glow'
-              ? null
-              : picker('glass-blur', 'Panel blur', BLURS.map(b => ({ value: String(b), label: b === 0 ? 'None' : String(b) })), String(now.glassBlur), async v => {
-                  await setBackdrop($, { glassBlur: Number(v) })
+      const appearance = card(
+        'appearance',
+        '◈ Appearance',
+        <Box flexDirection="column" gap={1}>
+          {toggleRow('backdrop-toggle', 'Backdrop', "Something soft behind the conversation, in the theme's colors.", now.backdrop, async () => {
+            await toggleFlag($, 'backdrop')
+          })}
+          {!now.backdrop ? null : (
+            <Box flexDirection="column" gap={1}>
+              <Text dimColor>Style</Text>
+              <Box gap={1} flexWrap="wrap">
+                {STYLES.map(st => {
+                  const selected = now.backdropStyle === st.value
+
+                  return (
+                    <Box
+                      key={`style-${st.value}`}
+                      flexDirection="column"
+                      alignItems="center"
+                      gap={1}
+                      padding={1}
+                      borderStyle={selected ? 'bold' : 'round'}
+                      borderColor={selected ? cur.accent : c3}
+                    >
+                      {Svg === undefined ? null : <Svg source={thumbSvg(cur, st.value)} alt={`${st.label} backdrop`} width={84} height={52} />}
+                      <Button
+                        key={`backdrop-style-${st.value}`}
+                        variant={selected ? 'primary' : 'secondary'}
+                        onPress={async () => {
+                          await setBackdrop($, { backdropStyle: st.value })
+                        }}
+                      >
+                        {st.label}
+                      </Button>
+                    </Box>
+                  )
                 })}
-          </Box>
-        )
-      const folder = projectKey(now.cwd)
-      const mineHere = folder === '' ? undefined : themeById(now.projects[folder] ?? '', now.custom)
-      const projectBox =
-        folder === '' ? null : (
-          <Box key="project" flexDirection="column" gap={1}>
-            <Text weight="bold">This project</Text>
-            <Text dimColor>
-              {`${folderName(now.cwd)}: ${mineHere === undefined ? 'no theme of its own.' : `uses ${mineHere.name} whenever a session starts here.`}`}
-            </Text>
-            <Box gap={1} flexWrap="wrap">
-              <Button
-                key="project-use"
-                onPress={async () => {
-                  await setProject($, now.id)
-                }}
-              >
-                {`Use ${cur.name} here`}
-              </Button>
-              {mineHere === undefined ? null : (
-                <Button
-                  key="project-clear"
-                  onPress={async () => {
-                    await setProject($, null)
-                  }}
-                >
-                  Stop using one here
-                </Button>
+              </Box>
+              {now.backdropStyle === 'glow' ? null : (
+                <Box flexDirection="column" gap={1}>
+                  <Text dimColor>Panel blur</Text>
+                  <Box gap={1} flexWrap="wrap">
+                    {BLURS.map(b => (
+                      <Button
+                        key={`glass-blur-${b}`}
+                        variant={now.glassBlur === b ? 'primary' : 'secondary'}
+                        onPress={async () => {
+                          await setBackdrop($, { glassBlur: b })
+                        }}
+                      >
+                        {b === 0 ? 'None' : String(b)}
+                      </Button>
+                    ))}
+                  </Box>
+                </Box>
               )}
             </Box>
-          </Box>
-        )
+          )}
+        </Box>,
+      )
 
-      return (
+      const readability = card(
+        'readability',
+        '◉ Readability',
         <Box flexDirection="column" gap={1}>
-          {flag('backdrop-toggle', 'backdrop', 'Backdrop', "A soft glow of the theme's accent behind the conversation. Off keeps the app's plain background.", now.backdrop)}
-          {styleControls}
-          {flag('code-toggle', 'codePair', 'Code colors', 'Pairs the code highlighting in replies with the theme where the app has a matching one.', now.codePair)}
-          {flag('contrast-toggle', 'highContrast', 'High contrast', 'Stronger borders and focus rings, useful on the light themes.', now.highContrast)}
+          {toggleRow('code-toggle', 'Code colors', 'Pairs the code highlighting in replies with the theme where the app has a matching one.', now.codePair, async () => {
+            await toggleFlag($, 'codePair')
+          })}
+          {toggleRow('contrast-toggle', 'High contrast', 'Stronger borders and focus rings, useful on the light themes.', now.highContrast, async () => {
+            await toggleFlag($, 'highContrast')
+          })}
+        </Box>,
+      )
 
-          <Box flexDirection="column" gap={1}>
-            <Text weight="bold">Day and night</Text>
-            <Text dimColor>Switch themes by the time of day. It is checked when a session starts and when you send a prompt; a theme you pick yourself stays until the next switch.</Text>
-            <Box>
-              <Button
-                key="auto-toggle"
-                variant={now.auto.on ? 'primary' : 'secondary'}
-                onPress={async () => {
-                  await setAuto($, { on: !now.auto.on })
-                }}
-              >
-                {`Day and night: ${now.auto.on ? 'on' : 'off'}`}
-              </Button>
-            </Box>
-            {!now.auto.on ? null : Select === undefined ? (
-              <Text dimColor>Pickers are not available here.</Text>
-            ) : (
-              <Box flexDirection="column" gap={1}>
+      const dayNight = card(
+        'daynight',
+        '☾ Day and night',
+        <Box flexDirection="column" gap={1}>
+          {toggleRow('auto-toggle', 'Switch by the hour', 'Checked when a session starts and when you send a prompt. A theme you pick yourself stays until the next switch.', now.auto.on, async () => {
+            await setAuto($, { on: !now.auto.on })
+          })}
+          {!now.auto.on ? null : Select === undefined ? (
+            <Text dimColor>Pickers are not available here.</Text>
+          ) : (
+            <Box flexDirection="column" gap={1}>
+              <Box gap={1} flexWrap="wrap">
                 {picker('auto-day', 'Day theme', themeOptions, now.auto.day, async v => {
                   await setAuto($, { day: v })
                 })}
                 {picker('auto-night', 'Night theme', themeOptions, now.auto.night, async v => {
                   await setAuto($, { night: v })
                 })}
+              </Box>
+              <Box gap={1} flexWrap="wrap">
                 {picker('auto-from', 'Day starts', hourOptions, String(now.auto.from), async v => {
                   await setAuto($, { from: Number(v) })
                 })}
@@ -1476,14 +1511,66 @@ export const register: Register = on => {
                   await setAuto($, { to: Number(v) })
                 })}
               </Box>
-            )}
-          </Box>
+            </Box>
+          )}
+        </Box>,
+      )
 
-          {projectBox}
+      const folder = projectKey(now.cwd)
+      const mineHere = folder === '' ? undefined : themeById(now.projects[folder] ?? '', now.custom)
+      const project =
+        folder === ''
+          ? null
+          : card(
+              'project',
+              '⌂ This project',
+              <Box flexDirection="column" gap={1}>
+                <Text dimColor>
+                  {`${folderName(now.cwd)}: ${mineHere === undefined ? 'no theme of its own.' : `uses ${mineHere.name} whenever a session starts here.`}`}
+                </Text>
+                <Box gap={1} flexWrap="wrap">
+                  <Button
+                    key="project-use"
+                    onPress={async () => {
+                      await setProject($, now.id)
+                    }}
+                  >
+                    {`Use ${cur.name} here`}
+                  </Button>
+                  {mineHere === undefined ? null : (
+                    <Button
+                      key="project-clear"
+                      onPress={async () => {
+                        await setProject($, null)
+                      }}
+                    >
+                      Stop using one here
+                    </Button>
+                  )}
+                </Box>
+              </Box>,
+            )
 
+      const about = card(
+        'about',
+        'ℹ About',
+        <Box flexDirection="column" gap={1}>
+          <Text dimColor>
+            {`Claude Themes: ${all.length} themes${now.custom.length === 0 ? '' : `, ${now.custom.length} of them yours`}.`}
+          </Text>
           <Text dimColor>
             Documents and source code: <Link href={REPO_URL}>{REPO_URL}</Link>
           </Text>
+        </Box>,
+      )
+
+      return (
+        <Box flexDirection="column" gap={1}>
+          {guard('Appearance', () => appearance)}
+          {guard('Readability', () => readability)}
+          {guard('Day and night', () => dayNight)}
+          {project === null ? null : guard('This project', () => project)}
+          {guard('About', () => about)}
         </Box>
       )
     }

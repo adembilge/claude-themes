@@ -16,6 +16,12 @@ const PANE = {
 
 const SURFACES = ['terminal', 'desktop', 'vscode', 'mobile'] as const
 
+// What a Button says right now, by its key: the switches read On or Off.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function labelOf(ui: any, key: string): Promise<string | undefined> {
+  return (await ui.find({ key }))?.text
+}
+
 // The host's answers, as a fresh session sees them. `prefs` and `theme` are what the store holds.
 function host(on: any, saved: { prefs?: unknown; theme?: unknown; custom?: unknown; projects?: unknown } = {}, calls: string[] = []) {
   on('command.register', () => ({ value: { command: 'claude-themes' } }))
@@ -122,9 +128,9 @@ test('the settings tab switches the backdrop and the list comes back', async ($,
     const ui = await $.ui.mount({ ...PANE, surface })
 
     await ui.press({ key: 'tab-settings' })
-    expect(await ui.find({ type: 'Button', text: /Backdrop: on/ })).toBeDefined()
+    expect(await labelOf(ui, 'backdrop-toggle')).toContain('On')
     await ui.press({ key: 'backdrop-toggle' })
-    expect(await ui.find({ type: 'Button', text: /Backdrop: off/ })).toBeDefined()
+    expect(await labelOf(ui, 'backdrop-toggle')).toContain('Off')
     await ui.press({ key: 'backdrop-toggle' })
 
     await ui.press({ key: 'tab-dark' })
@@ -260,11 +266,11 @@ test('high contrast and code colors reach the theme that is set', async ($, on) 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
   await ui.press({ key: 'tab-settings' })
-  expect(await ui.find({ type: 'Button', text: /Code colors: on/ })).toBeDefined()
-  expect(await ui.find({ type: 'Button', text: /High contrast: off/ })).toBeDefined()
+  expect(await labelOf(ui, 'code-toggle')).toContain('On')
+  expect(await labelOf(ui, 'contrast-toggle')).toContain('Off')
 
   await ui.press({ key: 'contrast-toggle' })
-  expect(await ui.find({ type: 'Button', text: /High contrast: on/ })).toBeDefined()
+  expect(await labelOf(ui, 'contrast-toggle')).toContain('On')
   expect(calls[calls.length - 1]).toContain('"contrast":"more"')
 
   // A theme with a matching code theme sends it for its own mode.
@@ -275,7 +281,7 @@ test('high contrast and code colors reach the theme that is set', async ($, on) 
   // Switched off, the app keeps its own.
   await ui.press({ key: 'tab-settings' })
   await ui.press({ key: 'code-toggle' })
-  expect(await ui.find({ type: 'Button', text: /Code colors: off/ })).toBeDefined()
+  expect(await labelOf(ui, 'code-toggle')).toContain('Off')
   expect(calls[calls.length - 1]).not.toContain('codeTheme')
   await ui.unmount()
 })
@@ -288,9 +294,9 @@ test('day and night applies the theme for the hour, and changes with the hours',
     const ui = await $.ui.mount({ ...PANE, surface })
 
     await ui.press({ key: 'tab-settings' })
-    expect(await ui.find({ type: 'Button', text: /Day and night: off/ })).toBeDefined()
+    expect(await labelOf(ui, 'auto-toggle')).toContain('Off')
     await ui.press({ key: 'auto-toggle' })
-    expect(await ui.find({ type: 'Button', text: /Day and night: on/ })).toBeDefined()
+    expect(await labelOf(ui, 'auto-toggle')).toContain('On')
 
     // Equal start and end hours mean it is always day.
     await ui.select({ key: 'auto-day', value: 'github-light' })
@@ -306,7 +312,7 @@ test('day and night applies the theme for the hour, and changes with the hours',
     expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
 
     await ui.press({ key: 'auto-toggle' })
-    expect(await ui.find({ type: 'Button', text: /Day and night: off/ })).toBeDefined()
+    expect(await labelOf(ui, 'auto-toggle')).toContain('Off')
     await ui.press({ key: 'tab-dark' })
     await ui.unmount()
   }
@@ -318,9 +324,9 @@ test('corrupted saved settings fall back to the defaults', async ($, on) => {
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
   await ui.press({ key: 'tab-settings' })
-  expect(await ui.find({ type: 'Button', text: /Day and night: off/ })).toBeDefined()
-  expect(await ui.find({ type: 'Button', text: /High contrast: off/ })).toBeDefined()
-  expect(await ui.find({ type: 'Button', text: /Code colors: on/ })).toBeDefined()
+  expect(await labelOf(ui, 'auto-toggle')).toContain('Off')
+  expect(await labelOf(ui, 'contrast-toggle')).toContain('Off')
+  expect(await labelOf(ui, 'code-toggle')).toContain('On')
   await ui.unmount()
 })
 
@@ -332,26 +338,26 @@ test('backdrop styles and panel blur reach the theme, and the scene is drawn', a
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
   await ui.press({ key: 'tab-settings' })
-  expect(await ui.find({ key: 'backdrop-style' })).toBeDefined()
+  expect(await ui.find({ key: 'backdrop-style-glow' })).toBeDefined()
   // The glow is a plain gradient and has no blur to set.
-  expect(await ui.find({ key: 'glass-blur' })).toBeUndefined()
+  expect(await ui.find({ key: 'glass-blur-24' })).toBeUndefined()
 
-  await ui.select({ key: 'backdrop-style', value: 'waves' })
+  await ui.press({ key: 'backdrop-style-waves' })
   expect(calls[calls.length - 1]).toContain('"scene":"style-waves"')
   expect(calls[calls.length - 1]).toContain('"blur":16')
-  expect(await ui.find({ key: 'glass-blur' })).toBeDefined()
+  expect(await ui.find({ key: 'glass-blur-24' })).toBeDefined()
 
-  await ui.select({ key: 'glass-blur', value: '24' })
+  await ui.press({ key: 'glass-blur-24' })
   expect(calls[calls.length - 1]).toContain('"blur":24')
 
-  await ui.select({ key: 'backdrop-style', value: 'glow' })
+  await ui.press({ key: 'backdrop-style-glow' })
   expect(calls[calls.length - 1]).toContain('"gradient"')
   expect(calls[calls.length - 1]).not.toContain('"scene"')
 
   // Switched off, there is no backdrop at all.
   await ui.press({ key: 'backdrop-toggle' })
   expect(calls[calls.length - 1]).not.toContain('"backdrop"')
-  expect(await ui.find({ key: 'backdrop-style' })).toBeUndefined()
+  expect(await ui.find({ key: 'backdrop-style-glow' })).toBeUndefined()
   await ui.unmount()
 
   // The scene itself is an Svg in the current theme's colors, for each style.
