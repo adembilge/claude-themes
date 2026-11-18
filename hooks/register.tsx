@@ -184,7 +184,7 @@ const idOf = (text: string): string =>
     .replace(/[̀-ͯ]/g, '')
     .replace(/[\s_]+/g, '-')
 
-type Tab = 'themes' | 'settings'
+type Tab = 'themes' | 'favorites' | 'settings'
 
 type State = { id: string; tab: Tab; q: string; favs: string[]; recents: string[]; backdrop: boolean }
 
@@ -401,7 +401,7 @@ export const register: Register = on => {
     const now = await read($, current)
     const cur = BY_ID.get(now.id) ?? DEFAULT
     const [c0, c1, c2] = cur.surfaces
-    const tab: Tab = now.tab === 'settings' ? 'settings' : 'themes'
+    const tab: Tab = now.tab === 'settings' || now.tab === 'favorites' ? now.tab : 'themes'
     const q = now.q.trim().toLowerCase()
     const matches = (p: Theme) => q === '' || `${p.name} ${p.note} ${p.id} ${p.mode}`.toLowerCase().includes(q)
 
@@ -465,7 +465,7 @@ export const register: Register = on => {
             <Text color={p.text[2]}>{p.note}</Text>
           </Box>
           <Box backgroundColor={c2}>
-            <Button key={`fav-${section}-${p.id}`} label={`${isFav ? 'Remove' : 'Add'} ${p.name} ${isFav ? 'from' : 'to'} favorites`} onPress={star(p.id)}>
+            <Button key={`fav-${section}-${p.id}`} onPress={star(p.id)}>
               {isFav ? '★' : '☆'}
             </Button>
           </Box>
@@ -501,7 +501,6 @@ export const register: Register = on => {
     )
 
     const themesTab = () => {
-      const favs = now.favs.map(id => BY_ID.get(id)).filter((p): p is Theme => p !== undefined)
       const recents = now.recents.map(id => BY_ID.get(id)).filter((p): p is Theme => p !== undefined)
       const shown = THEMES.filter(matches)
 
@@ -534,13 +533,6 @@ export const register: Register = on => {
             </Box>
           )}
 
-          {q !== '' || favs.length === 0 ? null : (
-            <Box flexDirection="column" gap={1}>
-              <Text weight="bold">★ Favorites</Text>
-              {favs.map(p => guard(p.name, () => row(p, 'fav')))}
-            </Box>
-          )}
-
           {shown.length === 0 ? (
             <Text dimColor>No theme matches "{now.q.trim()}".</Text>
           ) : (
@@ -555,6 +547,18 @@ export const register: Register = on => {
               )
             })
           )}
+        </Box>
+      )
+    }
+
+    const favoritesTab = () => {
+      const favs = now.favs.map(id => BY_ID.get(id)).filter((p): p is Theme => p !== undefined)
+
+      return favs.length === 0 ? (
+        <Text dimColor>No favorites yet. Press ☆ on a theme to keep it here.</Text>
+      ) : (
+        <Box flexDirection="column" gap={1}>
+          {favs.map(p => guard(p.name, () => row(p, 'fav')))}
         </Box>
       )
     }
@@ -574,6 +578,10 @@ export const register: Register = on => {
             {now.backdrop ? 'Backdrop: on' : 'Backdrop: off'}
           </Button>
         </Box>
+
+        <Text dimColor>
+          Documents and source code: <Link href={REPO_URL}>{REPO_URL}</Link>
+        </Text>
       </Box>
     )
 
@@ -593,16 +601,18 @@ export const register: Register = on => {
           <Button key="tab-themes" variant={tab === 'themes' ? 'primary' : 'secondary'} onPress={goTab('themes')}>
             Themes
           </Button>
+          <Button key="tab-favorites" variant={tab === 'favorites' ? 'primary' : 'secondary'} onPress={goTab('favorites')}>
+            ★ Favorites
+          </Button>
           <Button key="tab-settings" variant={tab === 'settings' ? 'primary' : 'secondary'} onPress={goTab('settings')}>
             Settings
           </Button>
         </Box>
 
-        {guard(tab === 'themes' ? 'The theme list' : 'Settings', tab === 'themes' ? themesTab : settingsTab)}
-
-        <Text dimColor>
-          Documents and source code: <Link href={REPO_URL}>{REPO_URL}</Link>
-        </Text>
+        {guard(
+          tab === 'themes' ? 'The theme list' : tab === 'favorites' ? 'Favorites' : 'Settings',
+          tab === 'themes' ? themesTab : tab === 'favorites' ? favoritesTab : settingsTab,
+        )}
       </Box>
     )
   })

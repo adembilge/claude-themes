@@ -2,7 +2,7 @@ export type ThemeId = string
 
 export type ThemeState = {
   id: ThemeId
-  tab: 'themes' | 'settings'
+  tab: 'themes' | 'favorites' | 'settings'
   q: string
   favs: ThemeId[]
   recents: ThemeId[]

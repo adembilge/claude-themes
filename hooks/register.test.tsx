@@ -39,10 +39,14 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
     expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeDefined()
     expect(await ui.find({ type: 'Button', text: /Espresso/ })).toBeDefined()
 
-    // Both tabs are offered, and the dock ends with a link to the docs and source.
+    // Three tabs are offered; the link to the docs and source is on the Settings tab only.
     expect(await ui.find({ key: 'tab-themes' })).toBeDefined()
+    expect(await ui.find({ key: 'tab-favorites' })).toBeDefined()
     expect(await ui.find({ key: 'tab-settings' })).toBeDefined()
+    expect(await ui.find({ type: 'Link' })).toBeUndefined()
+    await ui.press({ key: 'tab-settings' })
     expect(await ui.find({ type: 'Link', text: /github\.com\/adembilge\/claude-themes/ })).toBeDefined()
+    await ui.press({ key: 'tab-themes' })
 
     // The terminal has no Svg and keeps a preview built from boxes.
     if (surface === 'terminal') {
@@ -61,16 +65,24 @@ test('favorites and recents appear when used', async ($, on) => {
   for (const surface of SURFACES) {
     const ui = await $.ui.mount({ ...PANE, surface })
 
+    await ui.press({ key: 'tab-favorites' })
+    expect(await ui.find({ type: 'Text', text: /No favorites yet/ })).toBeDefined()
+
+    await ui.press({ key: 'tab-themes' })
     await ui.press({ key: 'fav-all-dracula' })
-    expect(await ui.find({ type: 'Text', text: /Favorites/ })).toBeDefined()
+    // The list on the Themes tab carries no Favorites section; the tab holds them.
+    expect(await ui.find({ key: 'pick-fav-dracula' })).toBeUndefined()
+    await ui.press({ key: 'tab-favorites' })
     expect(await ui.find({ key: 'pick-fav-dracula' })).toBeDefined()
 
+    await ui.press({ key: 'tab-themes' })
     await ui.press({ key: 'pick-all-nord' })
     expect(await ui.find({ key: 'recent-nord' })).toBeDefined()
 
     // Pressing the star again takes it out.
+    await ui.press({ key: 'tab-favorites' })
     await ui.press({ key: 'fav-fav-dracula' })
-    expect(await ui.find({ type: 'Text', text: /Favorites/ })).toBeUndefined()
+    expect(await ui.find({ type: 'Text', text: /No favorites yet/ })).toBeDefined()
     await ui.unmount()
   }
 })
