@@ -123,10 +123,10 @@ export const register: Register = on => {
 
     // Open the switcher panel on its own. If the window is too narrow to draw it,
     // say how to get it later.
-    const opened = await $.ui.open({ id: PANE, title: 'Themes', rows: 14, columns: 34 })
+    const opened = await $.ui.open({ id: PANE, title: 'Themes', rows: 14, columns: 34, placement: 'widget' })
 
     if (!opened.isPlaced) {
-      $.ui.status('Themes panel not drawn here. Type /themes to open it.')
+      $.ui.status('Themes window not drawn here. Type /themes to open it.')
     }
 
     return next(e)
@@ -148,7 +148,7 @@ export const register: Register = on => {
 
       return { text: `Theme: ${want}` }
     }
-    const opened = await $.ui.open({ id: PANE, title: 'Themes' })
+    const opened = await $.ui.open({ id: PANE, title: 'Themes', placement: 'widget' })
 
     return {
       text: opened.isPlaced
@@ -178,6 +178,7 @@ export const register: Register = on => {
     if (isWidget) {
       return (
         <Box gap={1}>
+          <Text dimColor>{PALETTES.find(p => p.id === id)?.name ?? 'Theme'}</Text>
           {PALETTES.map(p => (
             <Button key={p.id} variant={p.id === id ? 'primary' : 'secondary'} onPress={() => choose(p.id)}>
               <Text color={p.roles.accent}>●</Text>
