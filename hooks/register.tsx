@@ -184,7 +184,7 @@ const idOf = (text: string): string =>
     .replace(/[̀-ͯ]/g, '')
     .replace(/[\s_]+/g, '-')
 
-type Tab = 'themes' | 'favorites' | 'settings'
+type Tab = 'dark' | 'light' | 'favorites' | 'settings'
 
 type State = { id: string; tab: Tab; q: string; favs: string[]; recents: string[]; backdrop: boolean }
 
@@ -197,7 +197,7 @@ const PREFS_KEY = 'prefs'
 // Change the tag if the value's shape changes: it declines what an earlier version stored.
 const current = atom(
   { plugin: 'desktop-themes', key: 'current' } as const,
-  { id: DEFAULT_THEME, tab: 'themes', q: '', favs: [], recents: [], backdrop: true } as State,
+  { id: DEFAULT_THEME, tab: 'dark', q: '', favs: [], recents: [], backdrop: true } as State,
   { shape: 'current-4' },
 )
 
@@ -401,7 +401,7 @@ export const register: Register = on => {
     const now = await read($, current)
     const cur = BY_ID.get(now.id) ?? DEFAULT
     const [c0, c1, c2] = cur.surfaces
-    const tab: Tab = now.tab === 'settings' || now.tab === 'favorites' ? now.tab : 'themes'
+    const tab: Tab = now.tab === 'light' || now.tab === 'settings' || now.tab === 'favorites' ? now.tab : 'dark'
     const q = now.q.trim().toLowerCase()
     const matches = (p: Theme) => q === '' || `${p.name} ${p.note} ${p.id} ${p.mode}`.toLowerCase().includes(q)
 
@@ -500,16 +500,16 @@ export const register: Register = on => {
       </Box>
     )
 
-    const themesTab = () => {
+    const modeTab = (mode: Mode) => () => {
       const recents = now.recents.map(id => BY_ID.get(id)).filter((p): p is Theme => p !== undefined)
-      const shown = THEMES.filter(matches)
+      const shown = THEMES.filter(p => p.mode === mode && matches(p))
 
       return (
         <Box flexDirection="column" gap={1}>
           {Input === undefined ? null : (
             <Input
               key="search"
-              placeholder="Search themes"
+              placeholder={`Search ${mode} themes`}
               value={now.q}
               onInput={async (value: string) => {
                 await patch($, { q: value.slice(0, 40) })
@@ -534,18 +534,9 @@ export const register: Register = on => {
           )}
 
           {shown.length === 0 ? (
-            <Text dimColor>No theme matches "{now.q.trim()}".</Text>
+            <Text dimColor>{q === '' ? `No ${mode} themes.` : `No ${mode} theme matches "${now.q.trim()}".`}</Text>
           ) : (
-            GROUPS.map(g => {
-              const inGroup = shown.filter(p => p.mode === g.mode)
-
-              return inGroup.length === 0 ? null : (
-                <Box key={`group-${g.mode}`} flexDirection="column" gap={1}>
-                  <Text weight="bold">{g.title}</Text>
-                  {inGroup.map(p => guard(p.name, () => row(p, 'all')))}
-                </Box>
-              )
-            })
+            shown.map(p => guard(p.name, () => row(p, 'all')))
           )}
         </Box>
       )
@@ -597,9 +588,12 @@ export const register: Register = on => {
 
         {guard('The current theme', () => hero)}
 
-        <Box gap={1}>
-          <Button key="tab-themes" variant={tab === 'themes' ? 'primary' : 'secondary'} onPress={goTab('themes')}>
-            Themes
+        <Box gap={1} flexWrap="wrap">
+          <Button key="tab-dark" variant={tab === 'dark' ? 'primary' : 'secondary'} onPress={goTab('dark')}>
+            ☾ Dark
+          </Button>
+          <Button key="tab-light" variant={tab === 'light' ? 'primary' : 'secondary'} onPress={goTab('light')}>
+            ☀ Light
           </Button>
           <Button key="tab-favorites" variant={tab === 'favorites' ? 'primary' : 'secondary'} onPress={goTab('favorites')}>
             ★ Favorites
@@ -610,8 +604,8 @@ export const register: Register = on => {
         </Box>
 
         {guard(
-          tab === 'themes' ? 'The theme list' : tab === 'favorites' ? 'Favorites' : 'Settings',
-          tab === 'themes' ? themesTab : tab === 'favorites' ? favoritesTab : settingsTab,
+          tab === 'dark' ? 'Dark themes' : tab === 'light' ? 'Light themes' : tab === 'favorites' ? 'Favorites' : 'Settings',
+          tab === 'dark' ? modeTab('dark') : tab === 'light' ? modeTab('light') : tab === 'favorites' ? favoritesTab : settingsTab,
         )}
       </Box>
     )

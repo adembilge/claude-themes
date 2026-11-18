@@ -34,19 +34,24 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
 
   for (const surface of SURFACES) {
     const ui = await $.ui.mount({ ...PANE, surface })
-    // A dark and a light theme are both listed, and each is one press.
+    // The Dark tab opens first, and each theme is one press; the Light tab holds the light ones.
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
-    expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeDefined()
     expect(await ui.find({ type: 'Button', text: /Espresso/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeUndefined()
+    await ui.press({ key: 'tab-light' })
+    expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeUndefined()
+    await ui.press({ key: 'tab-dark' })
 
-    // Three tabs are offered; the link to the docs and source is on the Settings tab only.
-    expect(await ui.find({ key: 'tab-themes' })).toBeDefined()
+    // Four tabs are offered; the link to the docs and source is on the Settings tab only.
+    expect(await ui.find({ key: 'tab-dark' })).toBeDefined()
+    expect(await ui.find({ key: 'tab-light' })).toBeDefined()
     expect(await ui.find({ key: 'tab-favorites' })).toBeDefined()
     expect(await ui.find({ key: 'tab-settings' })).toBeDefined()
     expect(await ui.find({ type: 'Link' })).toBeUndefined()
     await ui.press({ key: 'tab-settings' })
     expect(await ui.find({ type: 'Link', text: /github\.com\/adembilge\/claude-themes/ })).toBeDefined()
-    await ui.press({ key: 'tab-themes' })
+    await ui.press({ key: 'tab-dark' })
 
     // The terminal has no Svg and keeps a preview built from boxes.
     if (surface === 'terminal') {
@@ -68,14 +73,14 @@ test('favorites and recents appear when used', async ($, on) => {
     await ui.press({ key: 'tab-favorites' })
     expect(await ui.find({ type: 'Text', text: /No favorites yet/ })).toBeDefined()
 
-    await ui.press({ key: 'tab-themes' })
+    await ui.press({ key: 'tab-dark' })
     await ui.press({ key: 'fav-all-dracula' })
     // The list on the Themes tab carries no Favorites section; the tab holds them.
     expect(await ui.find({ key: 'pick-fav-dracula' })).toBeUndefined()
     await ui.press({ key: 'tab-favorites' })
     expect(await ui.find({ key: 'pick-fav-dracula' })).toBeDefined()
 
-    await ui.press({ key: 'tab-themes' })
+    await ui.press({ key: 'tab-dark' })
     await ui.press({ key: 'pick-all-nord' })
     expect(await ui.find({ key: 'recent-nord' })).toBeDefined()
 
@@ -95,7 +100,7 @@ test('search filters the list and says when nothing matches', async ($, on) => {
     const ui = await $.ui.mount({ ...PANE, surface })
 
     await ui.input({ key: 'search', text: 'zzzz' })
-    expect(await ui.find({ type: 'Text', text: /No theme matches/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /theme matches/ })).toBeDefined()
 
     await ui.input({ key: 'search', text: 'drac' })
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
@@ -117,7 +122,7 @@ test('the settings tab switches the backdrop and the list comes back', async ($,
     expect(await ui.find({ type: 'Button', text: /Backdrop: off/ })).toBeDefined()
     await ui.press({ key: 'backdrop-toggle' })
 
-    await ui.press({ key: 'tab-themes' })
+    await ui.press({ key: 'tab-dark' })
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
     await ui.unmount()
   }
