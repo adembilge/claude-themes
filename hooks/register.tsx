@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { Register, ThemeSetArgs } from 'claude-code'
+import type { EngineInterface, Register, ThemeSetArgs } from 'claude-code'
 
 import { makeColors } from './make-colors.js'
 
@@ -100,6 +100,17 @@ const current = atom({ plugin: 'deskmod', key: 'current' } as const, DEFAULT_THE
   shape: 'current-1',
 })
 
+// The surface reads `placement` only when it first shows a pane, so a pane that is
+// already open (docked from an earlier session, or expanded by hand) would stay a
+// side panel. Close it first so the open below seats it as a widget again.
+const openWidget = async ($: EngineInterface) => {
+  if ((await $.ui.panes()).some(p => p.id === PANE)) {
+    await $.ui.close({ id: PANE })
+  }
+
+  return $.ui.open({ id: PANE, title: 'Themes', rows: 14, columns: 34, placement: 'widget' })
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const saved = await $.store.get(STORE_KEY)
@@ -121,9 +132,9 @@ export const register: Register = on => {
       description: 'Pick a brown theme: /themes opens the panel, /themes <name> switches directly',
     })
 
-    // Open the switcher panel on its own. If the window is too narrow to draw it,
-    // say how to get it later.
-    const opened = await $.ui.open({ id: PANE, title: 'Themes', rows: 14, columns: 34, placement: 'widget' })
+    // Open the switcher as a floating widget on its own. If the window is too narrow
+    // to draw it, say how to get it later.
+    const opened = await openWidget($)
 
     if (!opened.isPlaced) {
       $.ui.status('Themes window not drawn here. Type /themes to open it.')
@@ -148,7 +159,7 @@ export const register: Register = on => {
 
       return { text: `Theme: ${want}` }
     }
-    const opened = await $.ui.open({ id: PANE, title: 'Themes', placement: 'widget' })
+    const opened = await openWidget($)
 
     return {
       text: opened.isPlaced

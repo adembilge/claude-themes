@@ -1,6 +1,6 @@
 {
   "name": "deskmod",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Recolor the Claude desktop app with click-to-switch brown themes: a small floating Themes window that opens with the session, plus /themes.",
   "author": { "name": "adembilge", "url": "https://github.com/adembilge" },
   "homepage": "https://github.com/adembilge/claude-deskmod",
