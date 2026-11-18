@@ -276,19 +276,6 @@ function periodOf(cfg: AutoCfg, hour: number): 'day' | 'night' {
   return (cfg.from < cfg.to ? hour >= cfg.from && hour < cfg.to : hour >= cfg.from || hour < cfg.to) ? 'day' : 'night'
 }
 
-type BackdropStyle = 'glow' | 'grid' | 'dots' | 'waves' | 'stars' | 'aurora'
-
-const STYLES: { value: BackdropStyle; label: string }[] = [
-  { value: 'glow', label: 'Glow' },
-  { value: 'grid', label: 'Grid' },
-  { value: 'dots', label: 'Dots' },
-  { value: 'waves', label: 'Waves' },
-  { value: 'stars', label: 'Stars' },
-  { value: 'aurora', label: 'Aurora' },
-]
-const BLURS = [0, 8, 16, 24, 32]
-// How solid the frosted panels are over a scene: lower shows more of it.
-const OPACITIES = [0.2, 0.4, 0.6, 0.8]
 const MAX_PROJECTS = 50
 const PROJECTS_KEY = 'projects'
 
@@ -298,100 +285,192 @@ const projectKey = (cwd: string): string => cwd.replace(/\\/g, '/').replace(/\/+
 /** The last part of a folder's path, for showing. */
 const folderName = (cwd: string): string => cwd.replace(/\\/g, '/').replace(/\/+$/, '').split('/').pop() || cwd
 
-/**
- * A scene behind the conversation, drawn in the theme's own colors. It fills the window (`slice`), and
- * the app frosts its panels over it. Everything but the glow is a scene; the glow is a plain gradient.
- */
-function sceneSvg(p: Theme, style: Exclude<BackdropStyle, 'glow'>): string {
-  const [s0, s1] = p.surfaces
-  const head = '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">'
-  // The panels are frosted over the scene, so it has to be bold enough to show through them.
-  const base = `<defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${mix(s1, p.accent, 0.12)}"/><stop offset="1" stop-color="${s0}"/></linearGradient></defs><rect width="1600" height="1000" fill="url(#b)"/>`
+type Strength = 'subtle' | 'normal' | 'bold'
+type Tone = 'accent' | 'pro'
+
+const STRENGTHS: { value: Strength; label: string; k: number }[] = [
+  { value: 'subtle', label: 'Subtle', k: 0.6 },
+  { value: 'normal', label: 'Normal', k: 1 },
+  { value: 'bold', label: 'Bold', k: 1.7 },
+]
+const TONES: { value: Tone; label: string }[] = [
+  { value: 'accent', label: 'Accent' },
+  { value: 'pro', label: 'Second color' },
+]
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Ground = any
+
+/** The tints a pattern is drawn in: blends of the darkest surface with the accent (or the second color). */
+function tints(p: Theme, strength: Strength, tone: Tone) {
+  const k = STRENGTHS.find(s => s.value === strength)?.k ?? 1
+  const [s0, s1, s2] = p.surfaces
+  const base = tone === 'pro' ? p.roles.pro : p.accent
+  const other = tone === 'pro' ? p.accent : p.roles.pro
+  const t = (x: number) => Math.min(0.7, x * k)
+
+  return {
+    s0,
+    s1,
+    s2,
+    line: mix(s0, base, t(0.22)),
+    soft: mix(s0, base, t(0.14)),
+    alt: mix(s0, other, t(0.16)),
+    lift: mix(s2, base, t(0.12)),
+    faint: mix(s1, base, t(0.05)),
+  }
+}
+
+const dot = (x: number, y: number, r: number): string => `M${x} ${y - r}a${r} ${r} 0 1 0 0 ${2 * r}a${r} ${r} 0 1 0 0 ${-2 * r}Z`
+
+type Make = (c: ReturnType<typeof tints>) => Ground
+
+const tile = (w: number, h: number, paths: unknown[]): Ground => ({ vector: { viewBox: [w, h], size: [w, h], repeat: true, paths } })
+const wide = (paths: unknown[]): Ground => ({ vector: { viewBox: [100, 60], paths } })
+
+/** Every backdrop style: a still ground the app draws by itself, as a gradient or a vector. */
+const GROUNDS: { value: string; label: string; make: Make }[] = [
+  { value: 'glow', label: 'Glow', make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: c.lift }, { at: 0.55, color: c.faint }, { at: 1, color: c.s0 }] } }) },
+  { value: 'sunrise', label: 'Sunrise', make: c => ({ gradient: { angle: 0, stops: [{ at: 0, color: mix(c.s0, c.line, 0.9) }, { at: 0.5, color: c.faint }, { at: 1, color: c.s0 }] } }) },
+  { value: 'spotlight', label: 'Spotlight', make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: mix(c.lift, c.line, 0.6) }, { at: 0.35, color: c.faint }, { at: 1, color: c.s0 }] } }) },
+  { value: 'duotone', label: 'Duotone', make: c => ({ gradient: { angle: 135, stops: [{ at: 0, color: mix(c.s0, c.line, 0.9) }, { at: 0.5, color: c.s0 }, { at: 1, color: mix(c.s0, c.alt, 0.9) }] } }) },
+  { value: 'vignette', label: 'Vignette', make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: c.lift }, { at: 0.6, color: c.s1 }, { at: 1, color: mix(c.s0, '#000000', 0.45) }] } }) },
+  { value: 'grid', label: 'Grid', make: c => tile(56, 56, [{ d: 'M0 0H56M0 0V56', strokeWidth: 1, color: c.line }]) },
+  { value: 'dots', label: 'Dots', make: c => tile(28, 28, [{ d: dot(14, 14, 2.5), color: c.line }]) },
+  { value: 'waves', label: 'Waves', make: c => tile(96, 24, [{ d: 'M0 12Q24 0 48 12T96 12', strokeWidth: 1.5, color: c.line }]) },
+  {
+    value: 'stars',
+    label: 'Stars',
+    make: c =>
+      tile(160, 120, [
+        { d: dot(20, 19.6, 1.6), color: c.line },
+        { d: dot(96, 53.2, 1.2), color: c.soft },
+        { d: dot(138, 15.4, 1.4), color: c.line },
+        { d: dot(52, 93.8, 1.8), color: c.soft },
+        { d: dot(128, 101.2, 1.2), color: c.line },
+      ]),
+  },
+  {
+    value: 'aurora',
+    label: 'Aurora',
+    make: c =>
+      wide([
+        { d: 'M0 14Q25 2 50 14T100 10V30Q75 40 50 30T0 34Z', color: c.soft },
+        { d: 'M0 34Q30 24 60 36T100 30V46Q70 56 40 46T0 50Z', color: c.alt },
+      ]),
+  },
+  { value: 'diagonal', label: 'Diagonal', make: c => tile(20, 20, [{ d: 'M-5 5L5 -5M0 20L20 0M15 25L25 15', strokeWidth: 1, color: c.line }]) },
+  { value: 'crosses', label: 'Crosses', make: c => tile(40, 40, [{ d: 'M20 15V25M15 20H25', strokeWidth: 1.5, color: c.line }]) },
+  { value: 'hexagons', label: 'Hexagons', make: c => tile(48, 27.71, [{ d: 'M8 0H24L32 13.86L24 27.71H8L0 13.86ZM32 13.86H48', strokeWidth: 1, color: c.line }]) },
+  {
+    value: 'circuit',
+    label: 'Circuit',
+    make: c =>
+      tile(64, 64, [
+        { d: 'M0 20H20L32 32V44H48L56 36V20H64M10 20V34', strokeWidth: 1.2, color: c.line },
+        { d: dot(20, 20, 2), color: c.line },
+        { d: dot(56, 36, 2), color: c.line },
+        { d: dot(10, 34, 2), color: c.line },
+      ]),
+  },
+  { value: 'topography', label: 'Topography', make: c => tile(120, 60, [{ d: 'M0 14C30 -4 60 32 120 14M0 40C30 22 70 58 120 40', strokeWidth: 1, color: c.line }]) },
+  { value: 'rain', label: 'Rain', make: c => tile(40, 40, [{ d: 'M10 4L6 14M30 22L26 32', strokeWidth: 1.2, color: c.line }]) },
+  { value: 'triangles', label: 'Triangles', make: c => tile(48, 48, [{ d: 'M0 0H48M0 0L24 48L48 0', strokeWidth: 1, color: c.line }]) },
+  {
+    value: 'plaid',
+    label: 'Plaid',
+    make: c =>
+      tile(64, 64, [
+        { d: 'M0 0H64V12H0Z', color: c.soft },
+        { d: 'M0 0H12V64H0Z', color: c.alt },
+      ]),
+  },
+  { value: 'checker', label: 'Checker', make: c => tile(64, 64, [{ d: 'M0 0H32V32H0ZM32 32H64V64H32Z', color: c.soft }]) },
+  { value: 'scales', label: 'Scales', make: c => tile(40, 20, [{ d: 'M0 20A20 20 0 0 1 40 20M8 20A12 12 0 0 1 32 20M16 20A4 4 0 0 1 24 20', strokeWidth: 1, color: c.line }]) },
+  {
+    value: 'mountains',
+    label: 'Mountains',
+    make: c =>
+      wide([
+        { d: 'M0 40L15 28L28 38L45 22L62 40L78 30L100 42V60H0Z', color: c.soft },
+        { d: 'M0 50L20 38L36 48L58 34L80 50L100 44V60H0Z', color: c.alt },
+      ]),
+  },
+  {
+    value: 'horizon',
+    label: 'Horizon',
+    make: c =>
+      wide([
+        { d: 'M38 38A12 12 0 0 1 62 38Z', color: c.line },
+        { d: 'M0 38H100V60H0Z', color: c.soft },
+      ]),
+  },
+  {
+    value: 'blobs',
+    label: 'Blobs',
+    make: c =>
+      wide([
+        { d: dot(29, 20, 14), color: c.soft },
+        { d: dot(80, 40, 18), color: c.alt },
+        { d: dot(47, 8, 7), color: c.line },
+      ]),
+  },
+  {
+    value: 'rings',
+    label: 'Rings',
+    make: c => wide([{ d: 'M85 60A15 15 0 0 1 100 45M70 60A30 30 0 0 1 100 30M55 60A45 45 0 0 1 100 15M40 60A60 60 0 0 1 100 0', strokeWidth: 1.2, color: c.line }]),
+  },
+]
+
+type BackdropStyle = string
+
+const groundFor = (p: Theme, style: string, strength: Strength, tone: Tone): Ground =>
+  (GROUNDS.find(g => g.value === style) ?? GROUNDS[0]).make(tints(p, strength, tone))
+
+/** A small picture of a ground, for choosing among them: the same data the app is given, drawn as an Svg. */
+function groundThumb(p: Theme, g: Ground, w: number, h: number): string {
+  const head = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`
+  const bg = `<rect width="${w}" height="${h}" fill="${p.surfaces[0]}"/>`
   let art = ''
 
-  if (style === 'grid') {
-    const lines: string[] = []
+  if (g.gradient !== undefined) {
+    const gr = g.gradient
+    const stops = (gr.stops as (string | { at: number; color: string })[])
+      .map((s, i, a) => `<stop offset="${typeof s === 'string' ? i / (a.length - 1) : s.at}" stop-color="${typeof s === 'string' ? s : s.color}"/>`)
+      .join('')
 
-    for (let x = 0; x <= 1600; x += 64) {
-      lines.push(`M${x} 0V1000`)
+    if (gr.shape === 'radial') {
+      art = `<defs><radialGradient id="g" cx="0.5" cy="0.5" r="0.7">${stops}</radialGradient></defs><rect width="${w}" height="${h}" fill="url(#g)"/>`
+    } else {
+      const a = ((gr.angle ?? 180) * Math.PI) / 180
+      const dx = Math.sin(a)
+      const dy = -Math.cos(a)
+
+      art = `<defs><linearGradient id="g" x1="${0.5 - dx / 2}" y1="${0.5 - dy / 2}" x2="${0.5 + dx / 2}" y2="${0.5 + dy / 2}">${stops}</linearGradient></defs><rect width="${w}" height="${h}" fill="url(#g)"/>`
     }
+  } else if (g.vector !== undefined) {
+    const v = g.vector
+    const [vw, vh] = typeof v.viewBox === 'number' ? [v.viewBox, v.viewBox] : (v.viewBox as [number, number])
+    const paths = (v.paths as (string | { d: string; strokeWidth?: number; color?: string })[])
+      .map(pt => {
+        const d = typeof pt === 'string' ? pt : pt.d
+        const col = (typeof pt === 'string' ? undefined : pt.color) ?? v.color
+        const sw = typeof pt === 'string' ? undefined : pt.strokeWidth
 
-    for (let y = 0; y <= 1000; y += 64) {
-      lines.push(`M0 ${y}H1600`)
+        return sw === undefined ? `<path d="${d}" fill="${col}" fill-rule="evenodd"/>` : `<path d="${d}" fill="none" stroke="${col}" stroke-width="${sw}"/>`
+      })
+      .join('')
+
+    if (v.repeat === true) {
+      const sc = 0.6
+
+      art = `<defs><pattern id="t" width="${vw * sc}" height="${vh * sc}" patternUnits="userSpaceOnUse"><g transform="scale(${sc})">${paths}</g></pattern></defs><rect width="${w}" height="${h}" fill="url(#t)"/>`
+    } else {
+      art = `<g transform="scale(${w / vw} ${h / vh})">${paths}</g>`
     }
-    art = `<path d="${lines.join('')}" stroke="${p.accent}" stroke-opacity="0.5" stroke-width="3" fill="none"/>`
-  } else if (style === 'dots') {
-    const dots: string[] = []
-
-    for (let y = 32; y < 1000; y += 48) {
-      for (let x = 32; x < 1600; x += 48) {
-        dots.push(`M${x} ${y}h0.1`)
-      }
-    }
-    art = `<path d="${dots.join('')}" stroke="${p.accent}" stroke-opacity="0.6" stroke-width="7" stroke-linecap="round" fill="none"/>`
-  } else if (style === 'waves') {
-    // Each layer repeats every 800 and slides one period, so the loop has no seam.
-    const wave = (y: number, amp: number, color: string, op: number, dur: number) => {
-      let d = `M-800 ${y}`
-
-      for (let i = 0; i < 9; i++) {
-        d += `Q${-800 + i * 400 + 200} ${y + (i % 2 === 0 ? -amp : amp)} ${-800 + (i + 1) * 400} ${y}`
-      }
-
-      return `<path d="${d}V1000H-800Z" fill="${color}" fill-opacity="${op}"><animateTransform attributeName="transform" type="translate" values="0 0;-800 0" dur="${dur}s" repeatCount="indefinite"/></path>`
-    }
-
-    art = wave(560, 90, p.accent, 0.22, 38) + wave(690, 75, p.roles.pro, 0.24, 52) + wave(820, 60, p.accent, 0.3, 70)
-  } else if (style === 'stars') {
-    // A fixed scatter, so the sky is the same every time; some of the stars slowly twinkle.
-    let seed = 7
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647
-
-      return seed / 2147483647
-    }
-    const stars: string[] = []
-
-    for (let i = 0; i < 130; i++) {
-      const x = Math.round(rand() * 1600)
-      const y = Math.round(rand() * 1000)
-      const r = (0.8 + rand() * 2.2).toFixed(1)
-      const color = i % 5 === 0 ? p.accent : p.text[0]
-      const twinkle =
-        i % 3 === 0
-          ? `<animate attributeName="fill-opacity" values="0.85;0.2;0.85" dur="${(3 + rand() * 5).toFixed(1)}s" begin="${(rand() * 4).toFixed(1)}s" repeatCount="indefinite"/>`
-          : ''
-
-      stars.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" fill-opacity="0.7">${twinkle}</circle>`)
-    }
-    art = stars.join('')
-  } else {
-    const blob = (cx: number, cy: number, rx: number, ry: number, color: string, op: number, dx: number, dur: number) =>
-      `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${color}" fill-opacity="${op}"><animate attributeName="cx" values="${cx};${cx + dx};${cx}" dur="${dur}s" repeatCount="indefinite"/></ellipse>`
-
-    art =
-      '<defs><filter id="f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="80"/></filter></defs><g filter="url(#f)">' +
-      blob(420, 300, 520, 200, p.accent, 0.6, 360, 24) +
-      blob(1150, 520, 480, 220, p.roles.pro, 0.5, -380, 31) +
-      blob(800, 820, 580, 180, p.roles.success, 0.38, 300, 40) +
-      '</g>'
   }
 
-  return `${head}${base}${art}</svg>`
-}
-
-/** The glow as a picture, the same radial blend the glow backdrop paints. */
-function glowSvg(p: Theme): string {
-  const [s0, s1, s2] = p.surfaces
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="g" cx="0.5" cy="0.5" r="0.7"><stop offset="0" stop-color="${mix(s2, p.accent, 0.12)}"/><stop offset="0.55" stop-color="${mix(s1, p.accent, 0.04)}"/><stop offset="1" stop-color="${s0}"/></radialGradient></defs><rect width="1600" height="1000" fill="url(#g)"/></svg>`
-}
-
-/** A small picture of one backdrop style in a theme, for choosing among them. */
-function thumbSvg(p: Theme, style: BackdropStyle): string {
-  const full = style === 'glow' ? glowSvg(p) : sceneSvg(p, style)
-
-  return full.replace('width="1600" height="1000"', 'width="84" height="52"')
+  return `${head}${bg}${art}</svg>`
 }
 
 function cleanProjects(raw: unknown, known: Set<string>): Record<string, string> {
@@ -424,9 +503,8 @@ type State = {
   auto: AutoCfg
   autoPeriod: string
   backdropStyle: BackdropStyle
-  glassBlur: number
-  glassOpacity: number
-  issue: string
+  strength: Strength
+  tone: Tone
   cwd: string
   projects: Record<string, string>
   custom: Theme[]
@@ -442,8 +520,8 @@ type Prefs = {
   codePair: boolean
   auto: AutoCfg
   backdropStyle: BackdropStyle
-  glassBlur: number
-  glassOpacity: number
+  strength: Strength
+  tone: Tone
 }
 
 const MAX_FAVS = 12
@@ -463,9 +541,8 @@ const current = atom(
     auto: DEFAULT_AUTO,
     autoPeriod: '',
     backdropStyle: 'glow',
-    glassBlur: 0,
-    glassOpacity: 0.4,
-    issue: '',
+    strength: 'normal',
+    tone: 'accent',
     cwd: '',
     projects: {},
     custom: [],
@@ -473,7 +550,7 @@ const current = atom(
     msg: '',
     importText: '',
   } as State,
-  { shape: 'current-8' },
+  { shape: 'current-9' },
 )
 
 /** Known theme ids only, no repeats, at most `max`: anything else a saved value held is dropped. */
@@ -497,9 +574,9 @@ function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
     backdrop: r.backdrop !== false,
     highContrast: r.highContrast === true,
     codePair: r.codePair !== false,
-    backdropStyle: STYLES.some(x => x.value === r.backdropStyle) ? (r.backdropStyle as BackdropStyle) : 'glow',
-    glassBlur: BLURS.includes(r.glassBlur as number) ? (r.glassBlur as number) : 0,
-    glassOpacity: OPACITIES.includes(r.glassOpacity as number) ? (r.glassOpacity as number) : 0.4,
+    backdropStyle: GROUNDS.some(x => x.value === r.backdropStyle) ? (r.backdropStyle as BackdropStyle) : 'glow',
+    strength: STRENGTHS.some(x => x.value === r.strength) ? (r.strength as Strength) : 'normal',
+    tone: TONES.some(x => x.value === r.tone) ? (r.tone as Tone) : 'accent',
     auto: {
       on: a.on === true,
       day: id(a.day, DEFAULT_AUTO.day),
@@ -516,73 +593,6 @@ function mix(a: string, b: string, t: number): `#${string}` {
   const out = [0, 1, 2].map(i => Math.round(ch(a, i) * (1 - t) + ch(b, i) * t).toString(16).padStart(2, '0')).join('')
 
   return `#${out}`
-}
-
-/** A soft glow of the theme's accent, centered on the page, easing out to its darkest surface. */
-function backdropFor(p: Theme): ThemeSetArgs['backdrop'] {
-  const [s0, s1, s2] = p.surfaces
-
-  return {
-    gradient: {
-      shape: 'radial',
-      stops: [
-        { at: 0, color: mix(s2, p.accent, 0.12) },
-        { at: 0.55, color: mix(s1, p.accent, 0.04) },
-        { at: 1, color: s0 as `#${string}` },
-      ],
-    },
-  }
-}
-
-/**
- * The same styles as still vector grounds, which the app draws by itself with no render hook (a live
- * scene was never drawn on some desktops). Tiled lines, dots and waves in a tint of the accent.
- */
-function groundFor(p: Theme, style: Exclude<BackdropStyle, 'glow'>): ThemeSetArgs['backdrop'] {
-  const [s0] = p.surfaces
-  const line = mix(s0, p.accent, 0.22)
-  const soft = mix(s0, p.accent, 0.14)
-  const pro = mix(s0, p.roles.pro, 0.16)
-
-  if (style === 'grid') {
-    return { vector: { viewBox: [56, 56], size: [56, 56], repeat: true, paths: [{ d: 'M0 0H56M0 0V56', strokeWidth: 1, color: line }] } }
-  }
-
-  if (style === 'dots') {
-    return { vector: { viewBox: [28, 28], size: [28, 28], repeat: true, paths: [{ d: 'M14 11.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5Z', color: line }] } }
-  }
-
-  if (style === 'waves') {
-    return { vector: { viewBox: [96, 24], size: [96, 24], repeat: true, paths: [{ d: 'M0 12Q24 0 48 12T96 12', strokeWidth: 1.5, color: line }] } }
-  }
-
-  if (style === 'stars') {
-    return {
-      vector: {
-        viewBox: [160, 120],
-        size: [160, 120],
-        repeat: true,
-        paths: [
-          { d: 'M20 18a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 1 0 0-3.2Z', color: line },
-          { d: 'M96 52a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4Z', color: soft },
-          { d: 'M138 14a1.4 1.4 0 1 0 0 2.8a1.4 1.4 0 1 0 0-2.8Z', color: line },
-          { d: 'M52 92a1.8 1.8 0 1 0 0 3.6a1.8 1.8 0 1 0 0-3.6Z', color: soft },
-          { d: 'M128 100a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4Z', color: line },
-        ],
-      },
-    }
-  }
-
-  // aurora: broad bands, stretched over the whole page
-  return {
-    vector: {
-      viewBox: [100, 60],
-      paths: [
-        { d: 'M0 14Q25 2 50 14T100 10V30Q75 40 50 30T0 34Z', color: soft },
-        { d: 'M0 34Q30 24 60 36T100 30V46Q70 56 40 46T0 50Z', color: pro },
-      ],
-    },
-  }
 }
 
 /**
@@ -861,7 +871,7 @@ function parseCode(text: string): { theme: Theme } | { error: string } {
 async function savePrefs($: any): Promise<void> {
   const s = await read($, current)
 
-  await $.store.set(PREFS_KEY, { favs: s.favs, backdrop: s.backdrop, highContrast: s.highContrast, codePair: s.codePair, auto: s.auto, backdropStyle: s.backdropStyle, glassBlur: s.glassBlur, glassOpacity: s.glassOpacity })
+  await $.store.set(PREFS_KEY, { favs: s.favs, backdrop: s.backdrop, highContrast: s.highContrast, codePair: s.codePair, auto: s.auto, backdropStyle: s.backdropStyle, strength: s.strength, tone: s.tone })
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -893,19 +903,11 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
 
     // Nothing is reported if no client draws themes yet; the theme still stands for one that attaches.
     try {
-      const backdrop = !before.backdrop
-        ? undefined
-        : before.backdropStyle === 'glow'
-          ? backdropFor(p)
-          : groundFor(p, before.backdropStyle)
+      const backdrop = !before.backdrop ? undefined : groundFor(p, before.backdropStyle, before.strength, before.tone)
 
-      const result = await $.theme.set(backdrop === undefined ? chosen : ({ ...chosen, backdrop } as ThemeSetArgs))
-
-      // An answer that says nothing draws it is kept, to be shown, instead of being lost.
-      await patch($, { issue: result?.isDrawn === false ? `not drawn: ${String(result.reason ?? '').slice(0, 140)}` : `drawn as ${String(result?.requestId ?? '?')}` })
-    } catch (err) {
-      // A surface that refuses the backdrop still gets the colors, and the person gets to see why.
-      await patch($, { issue: `refused: ${String(err).slice(0, 140)}` })
+      await $.theme.set(backdrop === undefined ? chosen : ({ ...chosen, backdrop } as ThemeSetArgs))
+    } catch {
+      // A surface that refuses the backdrop still gets the colors.
       await $.theme.set(chosen)
     }
   } catch {
@@ -963,7 +965,7 @@ async function setProject($: any, id: string | null): Promise<void> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function setBackdrop($: any, change: Partial<Pick<State, 'backdropStyle' | 'glassBlur' | 'glassOpacity'>>): Promise<void> {
+async function setBackdrop($: any, change: Partial<Pick<State, 'backdropStyle' | 'strength' | 'tone'>>): Promise<void> {
   const s = await read($, current)
 
   await patch($, change)
@@ -1123,11 +1125,6 @@ async function copyCode($: any, surface: string): Promise<void> {
   }
 }
 
-// How many times the app has asked this mod to draw a scene, and for which: shown in Settings, so a
-// backdrop that stays blank can be told apart from one the app never asked for.
-let sceneAsks = 0
-let lastAsk = ''
-
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     // Registered first so a failure while restoring the theme cannot leave /claude-themes missing.
@@ -1173,22 +1170,6 @@ export const register: Register = on => {
     }
 
     return next(e)
-  })
-
-  // The scene behind the conversation, in the current theme's colors. Another mod's scene is left alone.
-  on('ui.render', { component: 'Backdrop' }, async ($, e, next) => {
-    if (e.props.plugin !== 'desktop-themes' || (e.surface !== 'desktop' && e.surface !== 'mobile')) {
-      return next(e)
-    }
-    sceneAsks += 1
-    lastAsk = `${e.surface} / ${String(e.props.scene)}`
-    const now = await read($, current)
-    const p = themeById(now.id, now.custom) ?? DEFAULT
-    const style = STYLES.find(x => x.value === now.backdropStyle && x.value !== 'glow')?.value ?? 'grid'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { Svg } = $.ui.resolve(e) as any
-
-    return <Svg source={sceneSvg(p, style as Exclude<BackdropStyle, 'glow'>)} alt={`${p.name} backdrop`} />
   })
 
   // The command is the person's own ask, so the pane is placed at any width.
@@ -1573,16 +1554,11 @@ export const register: Register = on => {
           {toggleRow('backdrop-toggle', 'Backdrop', "Something soft behind the conversation, in the theme's colors.", now.backdrop, async () => {
             await toggleFlag($, 'backdrop')
           })}
-          {!now.backdrop || now.issue === '' ? null : (
-            <Text color={/^(not drawn|refused)/.test(now.issue) ? cur.roles.danger : undefined} dimColor={!/^(not drawn|refused)/.test(now.issue)}>
-              {`The app said: ${now.issue}. Scene requests so far: ${sceneAsks}${lastAsk === '' ? '' : ` (last: ${lastAsk})`}.`}
-            </Text>
-          )}
           {!now.backdrop ? null : (
             <Box flexDirection="column" gap={1}>
               <Text dimColor>Style</Text>
               <Box gap={1} flexWrap="wrap">
-                {STYLES.map(st => {
+                {GROUNDS.map(st => {
                   const selected = now.backdropStyle === st.value
 
                   return (
@@ -1595,7 +1571,9 @@ export const register: Register = on => {
                       borderStyle={selected ? 'bold' : 'round'}
                       borderColor={selected ? cur.accent : c3}
                     >
-                      {Svg === undefined ? null : <Svg source={thumbSvg(cur, st.value)} alt={`${st.label} backdrop`} width={84} height={52} />}
+                      {Svg === undefined ? null : (
+                        <Svg source={groundThumb(cur, st.make(tints(cur, now.strength, now.tone)), 84, 52)} alt={`${st.label} backdrop`} width={84} height={52} />
+                      )}
                       <Button
                         key={`backdrop-style-${st.value}`}
                         variant={selected ? 'primary' : 'secondary'}
@@ -1609,38 +1587,34 @@ export const register: Register = on => {
                   )
                 })}
               </Box>
-              {true ? null : (
-                <Box flexDirection="column" gap={1}>
-                  <Text dimColor>Panel opacity: lower shows more of the scene</Text>
-                  <Box gap={1} flexWrap="wrap">
-                    {OPACITIES.map(o => (
-                      <Button
-                        key={`glass-opacity-${Math.round(o * 100)}`}
-                        variant={now.glassOpacity === o ? 'primary' : 'secondary'}
-                        onPress={async () => {
-                          await setBackdrop($, { glassOpacity: o })
-                        }}
-                      >
-                        {`${Math.round(o * 100)}%`}
-                      </Button>
-                    ))}
-                  </Box>
-                  <Text dimColor>Panel blur</Text>
-                  <Box gap={1} flexWrap="wrap">
-                    {BLURS.map(b => (
-                      <Button
-                        key={`glass-blur-${b}`}
-                        variant={now.glassBlur === b ? 'primary' : 'secondary'}
-                        onPress={async () => {
-                          await setBackdrop($, { glassBlur: b })
-                        }}
-                      >
-                        {b === 0 ? 'None' : String(b)}
-                      </Button>
-                    ))}
-                  </Box>
-                </Box>
-              )}
+              <Text dimColor>Strength</Text>
+              <Box gap={1} flexWrap="wrap">
+                {STRENGTHS.map(x => (
+                  <Button
+                    key={`backdrop-strength-${x.value}`}
+                    variant={now.strength === x.value ? 'primary' : 'secondary'}
+                    onPress={async () => {
+                      await setBackdrop($, { strength: x.value })
+                    }}
+                  >
+                    {x.label}
+                  </Button>
+                ))}
+              </Box>
+              <Text dimColor>Color</Text>
+              <Box gap={1} flexWrap="wrap">
+                {TONES.map(x => (
+                  <Button
+                    key={`backdrop-tone-${x.value}`}
+                    variant={now.tone === x.value ? 'primary' : 'secondary'}
+                    onPress={async () => {
+                      await setBackdrop($, { tone: x.value })
+                    }}
+                  >
+                    {x.label}
+                  </Button>
+                ))}
+              </Box>
             </Box>
           )}
         </Box>,
