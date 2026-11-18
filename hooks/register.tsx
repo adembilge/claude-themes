@@ -100,15 +100,24 @@ const current = atom({ plugin: 'deskmod', key: 'current' } as const, DEFAULT_THE
   shape: 'current-1',
 })
 
-// The surface reads `placement` only when it first shows a pane, so a pane that is
-// already open (docked from an earlier session, or expanded by hand) would stay a
-// side panel. Close it first so the open below seats it as a widget again.
+// The surface reads `placement` only when it first shows a pane, and it keeps a pane's
+// seat (a dock, say) per id across sessions, while `$.ui.panes()` lists only this
+// session's. So reusing one id re-opens a new chat docked. Open under a fresh id each
+// time so every open is a first show, and close any of our earlier ones.
 const openWidget = async ($: EngineInterface) => {
-  if ((await $.ui.panes()).some(p => p.id === PANE)) {
-    await $.ui.close({ id: PANE })
+  for (const p of await $.ui.panes()) {
+    if (p.id.startsWith(PANE)) {
+      await $.ui.close({ id: p.id })
+    }
   }
 
-  return $.ui.open({ id: PANE, title: 'Themes', rows: 14, columns: 34, placement: 'widget' })
+  return $.ui.open({
+    id: `${PANE}-${Date.now().toString(36)}`,
+    title: 'Themes',
+    rows: 14,
+    columns: 34,
+    placement: 'widget',
+  })
 }
 
 export const register: Register = on => {
@@ -170,7 +179,10 @@ export const register: Register = on => {
 
   // The switcher lives in a panel (no row above the prompt). Full form when it is
   // docked or open, a compact row of dots when the app shrinks it to a widget.
-  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
+  on('ui.render', { component: 'Pane' }, async ($, e, next) => {
+    if (!e.requestId.startsWith(PANE)) {
+      return next(e)
+    }
     const { Box, Text, Button } = $.ui.resolve(e)
     const id = await read($, current)
     const isWidget = e.props.placement === 'widget'
