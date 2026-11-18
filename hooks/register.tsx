@@ -316,7 +316,7 @@ export const register: Register = on => {
           ) : (
             <Svg source={previewSvg(cur, true)} alt={`${cur.name} preview`} width={264} height={132} />
           )}
-          <Text weight="bold" color={cur.text[0]}>Now: {cur.name} ({cur.mode})</Text>
+          <Text weight="bold" color={cur.text[0]}>Active: {cur.name} ({cur.mode})</Text>
         </Box>
 
         {GROUPS.map(g => (
@@ -342,13 +342,10 @@ export const register: Register = on => {
                     <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={128} height={64} />
                   )}
                   <Box flexDirection="column" alignItems="center" flexGrow={1} gap={1}>
-                    {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so the name button sits on a plate of that same theme: it stays readable on a row of the other mode. */}
-                    <Box backgroundColor={c2}>
-                      <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
+                    <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
                         {isCurrent ? '✓ ' : ''}
                         {p.name}
                       </Button>
-                    </Box>
                     {Svg === undefined ? (
                       <Text>
                         {dots.map((c, i) => (
