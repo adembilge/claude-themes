@@ -318,107 +318,33 @@ function tints(p: Theme, strength: Strength, tone: Tone) {
     alt: mix(s0, other, t(0.16)),
     lift: mix(s2, base, t(0.12)),
     faint: mix(s1, base, t(0.05)),
+    warm: mix(s0, p.roles.warning, t(0.2)),
+    good: mix(s0, p.roles.success, t(0.16)),
   }
 }
 
-const dot = (x: number, y: number, r: number): string => `M${x} ${y - r}a${r} ${r} 0 1 0 0 ${2 * r}a${r} ${r} 0 1 0 0 ${-2 * r}Z`
-
 type Make = (c: ReturnType<typeof tints>) => Ground
 
-const tile = (w: number, h: number, paths: unknown[]): Ground => ({ vector: { viewBox: [w, h], size: [w, h], repeat: true, paths } })
-const wide = (paths: unknown[]): Ground => ({ vector: { viewBox: [100, 60], paths } })
-
-/** Every backdrop style: a still ground the app draws by itself, as a gradient or a vector. */
+/** Smooth color fields only, no lines or shapes: each is a gradient the app draws by itself. */
 const GROUNDS: { value: string; label: string; make: Make }[] = [
   { value: 'glow', label: 'Glow', make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: c.lift }, { at: 0.55, color: c.faint }, { at: 1, color: c.s0 }] } }) },
   { value: 'sunrise', label: 'Sunrise', make: c => ({ gradient: { angle: 0, stops: [{ at: 0, color: mix(c.s0, c.line, 0.9) }, { at: 0.5, color: c.faint }, { at: 1, color: c.s0 }] } }) },
   { value: 'spotlight', label: 'Spotlight', make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: mix(c.lift, c.line, 0.6) }, { at: 0.35, color: c.faint }, { at: 1, color: c.s0 }] } }) },
   { value: 'duotone', label: 'Duotone', make: c => ({ gradient: { angle: 135, stops: [{ at: 0, color: mix(c.s0, c.line, 0.9) }, { at: 0.5, color: c.s0 }, { at: 1, color: mix(c.s0, c.alt, 0.9) }] } }) },
   { value: 'vignette', label: 'Vignette', make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: c.lift }, { at: 0.6, color: c.s1 }, { at: 1, color: mix(c.s0, '#000000', 0.45) }] } }) },
-  { value: 'grid', label: 'Grid', make: c => tile(56, 56, [{ d: 'M0 0H56M0 0V56', strokeWidth: 1, color: c.line }]) },
-  { value: 'dots', label: 'Dots', make: c => tile(28, 28, [{ d: dot(14, 14, 2.5), color: c.line }]) },
-  { value: 'waves', label: 'Waves', make: c => tile(96, 24, [{ d: 'M0 12Q24 0 48 12T96 12', strokeWidth: 1.5, color: c.line }]) },
+  { value: 'dusk', label: 'Dusk', make: c => ({ gradient: { angle: 180, stops: [{ at: 0, color: c.line }, { at: 0.5, color: c.s0 }, { at: 1, color: c.alt }] } }) },
+  { value: 'twilight', label: 'Twilight', make: c => ({ gradient: { angle: 180, stops: [{ at: 0, color: c.s0 }, { at: 0.6, color: c.faint }, { at: 0.85, color: c.alt }, { at: 1, color: c.s0 }] } }) },
+  { value: 'ember', label: 'Ember', make: c => ({ gradient: { angle: 0, stops: [{ at: 0, color: c.warm }, { at: 0.35, color: c.soft }, { at: 1, color: c.s0 }] } }) },
+  { value: 'halo', label: 'Halo', make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: c.s0 }, { at: 0.5, color: c.line }, { at: 1, color: c.s0 }] } }) },
+  { value: 'corner', label: 'Corner glow', make: c => ({ gradient: { angle: 135, stops: [{ at: 0, color: c.line }, { at: 0.55, color: c.faint }, { at: 1, color: c.s0 }] } }) },
+  { value: 'split', label: 'Split tone', make: c => ({ gradient: { angle: 90, stops: [{ at: 0, color: c.line }, { at: 1, color: c.alt }] } }) },
+  { value: 'mist', label: 'Mist', make: c => ({ gradient: { angle: 180, stops: [{ at: 0, color: c.faint }, { at: 1, color: c.s1 }] } }) },
+  { value: 'prism', label: 'Prism', make: c => ({ gradient: { angle: 135, stops: [{ at: 0, color: c.line }, { at: 0.35, color: c.alt }, { at: 0.7, color: c.good }, { at: 1, color: c.s0 }] } }) },
+  { value: 'deep', label: 'Deep', make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: mix(c.s0, '#000000', 0.35) }, { at: 1, color: c.lift }] } }) },
   {
-    value: 'stars',
-    label: 'Stars',
-    make: c =>
-      tile(160, 120, [
-        { d: dot(20, 19.6, 1.6), color: c.line },
-        { d: dot(96, 53.2, 1.2), color: c.soft },
-        { d: dot(138, 15.4, 1.4), color: c.line },
-        { d: dot(52, 93.8, 1.8), color: c.soft },
-        { d: dot(128, 101.2, 1.2), color: c.line },
-      ]),
-  },
-  {
-    value: 'aurora',
-    label: 'Aurora',
-    make: c =>
-      wide([
-        { d: 'M0 14Q25 2 50 14T100 10V30Q75 40 50 30T0 34Z', color: c.soft },
-        { d: 'M0 34Q30 24 60 36T100 30V46Q70 56 40 46T0 50Z', color: c.alt },
-      ]),
-  },
-  { value: 'diagonal', label: 'Diagonal', make: c => tile(20, 20, [{ d: 'M-5 5L5 -5M0 20L20 0M15 25L25 15', strokeWidth: 1, color: c.line }]) },
-  { value: 'crosses', label: 'Crosses', make: c => tile(40, 40, [{ d: 'M20 15V25M15 20H25', strokeWidth: 1.5, color: c.line }]) },
-  { value: 'hexagons', label: 'Hexagons', make: c => tile(48, 27.71, [{ d: 'M8 0H24L32 13.86L24 27.71H8L0 13.86ZM32 13.86H48', strokeWidth: 1, color: c.line }]) },
-  {
-    value: 'circuit',
-    label: 'Circuit',
-    make: c =>
-      tile(64, 64, [
-        { d: 'M0 20H20L32 32V44H48L56 36V20H64M10 20V34', strokeWidth: 1.2, color: c.line },
-        { d: dot(20, 20, 2), color: c.line },
-        { d: dot(56, 36, 2), color: c.line },
-        { d: dot(10, 34, 2), color: c.line },
-      ]),
-  },
-  { value: 'topography', label: 'Topography', make: c => tile(120, 60, [{ d: 'M0 14C30 -4 60 32 120 14M0 40C30 22 70 58 120 40', strokeWidth: 1, color: c.line }]) },
-  { value: 'rain', label: 'Rain', make: c => tile(40, 40, [{ d: 'M10 4L6 14M30 22L26 32', strokeWidth: 1.2, color: c.line }]) },
-  { value: 'triangles', label: 'Triangles', make: c => tile(48, 48, [{ d: 'M0 0H48M0 0L24 48L48 0', strokeWidth: 1, color: c.line }]) },
-  {
-    value: 'plaid',
-    label: 'Plaid',
-    make: c =>
-      tile(64, 64, [
-        { d: 'M0 0H64V12H0Z', color: c.soft },
-        { d: 'M0 0H12V64H0Z', color: c.alt },
-      ]),
-  },
-  { value: 'checker', label: 'Checker', make: c => tile(64, 64, [{ d: 'M0 0H32V32H0ZM32 32H64V64H32Z', color: c.soft }]) },
-  { value: 'scales', label: 'Scales', make: c => tile(40, 20, [{ d: 'M0 20A20 20 0 0 1 40 20M8 20A12 12 0 0 1 32 20M16 20A4 4 0 0 1 24 20', strokeWidth: 1, color: c.line }]) },
-  {
-    value: 'mountains',
-    label: 'Mountains',
-    make: c =>
-      wide([
-        { d: 'M0 40L15 28L28 38L45 22L62 40L78 30L100 42V60H0Z', color: c.soft },
-        { d: 'M0 50L20 38L36 48L58 34L80 50L100 44V60H0Z', color: c.alt },
-      ]),
-  },
-  {
-    value: 'horizon',
-    label: 'Horizon',
-    make: c =>
-      wide([
-        { d: 'M38 38A12 12 0 0 1 62 38Z', color: c.line },
-        { d: 'M0 38H100V60H0Z', color: c.soft },
-      ]),
-  },
-  {
-    value: 'blobs',
-    label: 'Blobs',
-    make: c =>
-      wide([
-        { d: dot(29, 20, 14), color: c.soft },
-        { d: dot(80, 40, 18), color: c.alt },
-        { d: dot(47, 8, 7), color: c.line },
-      ]),
-  },
-  {
-    value: 'rings',
-    label: 'Rings',
-    make: c => wide([{ d: 'M85 60A15 15 0 0 1 100 45M70 60A30 30 0 0 1 100 30M55 60A45 45 0 0 1 100 15M40 60A60 60 0 0 1 100 0', strokeWidth: 1.2, color: c.line }]),
+    value: 'cloud',
+    label: 'Cloud',
+    make: c => ({ gradient: { shape: 'radial', stops: [{ at: 0, color: c.lift }, { at: 0.2, color: c.faint }, { at: 0.35, color: c.alt }, { at: 0.55, color: c.faint }, { at: 0.75, color: c.soft }, { at: 1, color: c.s0 }] } }),
   },
 ]
 
@@ -427,7 +353,7 @@ type BackdropStyle = string
 const groundFor = (p: Theme, style: string, strength: Strength, tone: Tone): Ground =>
   (GROUNDS.find(g => g.value === style) ?? GROUNDS[0]!).make(tints(p, strength, tone))
 
-/** A small picture of a ground, for choosing among them: the same data the app is given, drawn as an Svg. */
+/** A small picture of a ground, for choosing among them: the same gradient the app is given, drawn as an Svg. */
 function groundThumb(p: Theme, g: Ground, w: number, h: number): string {
   const head = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`
   const bg = `<rect width="${w}" height="${h}" fill="${p.surfaces[0]}"/>`
@@ -447,26 +373,6 @@ function groundThumb(p: Theme, g: Ground, w: number, h: number): string {
       const dy = -Math.cos(a)
 
       art = `<defs><linearGradient id="g" x1="${0.5 - dx / 2}" y1="${0.5 - dy / 2}" x2="${0.5 + dx / 2}" y2="${0.5 + dy / 2}">${stops}</linearGradient></defs><rect width="${w}" height="${h}" fill="url(#g)"/>`
-    }
-  } else if (g.vector !== undefined) {
-    const v = g.vector
-    const [vw, vh] = typeof v.viewBox === 'number' ? [v.viewBox, v.viewBox] : (v.viewBox as [number, number])
-    const paths = (v.paths as (string | { d: string; strokeWidth?: number; color?: string })[])
-      .map(pt => {
-        const d = typeof pt === 'string' ? pt : pt.d
-        const col = (typeof pt === 'string' ? undefined : pt.color) ?? v.color
-        const sw = typeof pt === 'string' ? undefined : pt.strokeWidth
-
-        return sw === undefined ? `<path d="${d}" fill="${col}" fill-rule="evenodd"/>` : `<path d="${d}" fill="none" stroke="${col}" stroke-width="${sw}"/>`
-      })
-      .join('')
-
-    if (v.repeat === true) {
-      const sc = 0.6
-
-      art = `<defs><pattern id="t" width="${vw * sc}" height="${vh * sc}" patternUnits="userSpaceOnUse"><g transform="scale(${sc})">${paths}</g></pattern></defs><rect width="${w}" height="${h}" fill="url(#t)"/>`
-    } else {
-      art = `<g transform="scale(${w / vw} ${h / vh})">${paths}</g>`
     }
   }
 

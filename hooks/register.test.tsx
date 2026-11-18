@@ -339,19 +339,16 @@ test('backdrop styles reach the theme as still grounds', async ($, on) => {
 
   await ui.press({ key: 'tab-settings' })
   expect(await ui.find({ key: 'backdrop-style-glow' })).toBeDefined()
-  // Every style is a still ground the app draws by itself: a vector, or a gradient.
-  for (const style of ['grid', 'dots', 'waves', 'stars', 'aurora', 'diagonal', 'crosses', 'hexagons', 'circuit', 'topography', 'rain', 'triangles', 'plaid', 'checker', 'scales', 'mountains', 'horizon', 'blobs', 'rings']) {
-    await ui.press({ key: `backdrop-style-${style}` })
-    expect(calls[calls.length - 1]).toContain('"vector"')
-    expect(calls[calls.length - 1]).not.toContain('"scene"')
-  }
-  for (const style of ['sunrise', 'spotlight', 'duotone', 'vignette']) {
+  // Every style is a smooth gradient the app draws by itself.
+  for (const style of ['glow', 'sunrise', 'spotlight', 'duotone', 'vignette', 'dusk', 'twilight', 'ember', 'halo', 'corner', 'split', 'mist', 'prism', 'deep', 'cloud']) {
     await ui.press({ key: `backdrop-style-${style}` })
     expect(calls[calls.length - 1]).toContain('"gradient"')
+    expect(calls[calls.length - 1]).not.toContain('"vector"')
   }
+  expect(await ui.find({ key: 'backdrop-style-grid' })).toBeUndefined()
 
   // Strength and color change what is handed over.
-  await ui.press({ key: 'backdrop-style-grid' })
+  await ui.press({ key: 'backdrop-style-dusk' })
   const normal = calls[calls.length - 1]
   await ui.press({ key: 'backdrop-strength-bold' })
   expect(calls[calls.length - 1]).not.toBe(normal)
