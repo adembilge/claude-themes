@@ -81,14 +81,18 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeUndefined()
     await ui.press({ key: 'tab-dark' })
 
-    // Four tabs are offered; the link to the docs and source is on the Settings tab only.
+    // Tabs are offered; the link to the docs and source is on the Appearance tab only.
     expect(await ui.find({ key: 'tab-dark' })).toBeDefined()
     expect(await ui.find({ key: 'tab-light' })).toBeDefined()
     expect(await ui.find({ key: 'tab-favorites' })).toBeDefined()
-    expect(await ui.find({ key: 'tab-settings' })).toBeDefined()
+    expect(await ui.find({ key: 'tab-appearance' })).toBeDefined()
     expect(await ui.find({ type: 'Link' })).toBeUndefined()
-    await ui.press({ key: 'tab-settings' })
+    await ui.press({ key: 'tab-appearance' })
     expect(await ui.find({ type: 'Link', text: /github\.com\/adembilge\/claude-themes/ })).toBeDefined()
+    // The Settings tab holds only the VS Code import.
+    await ui.press({ key: 'tab-settings' })
+    expect(await ui.find({ key: 'vscode-scan' })).toBeDefined()
+    expect(await ui.find({ key: 'backdrop-toggle' })).toBeUndefined()
     await ui.press({ key: 'tab-dark' })
 
     // The terminal has no Svg and keeps a preview built from boxes.
@@ -155,7 +159,7 @@ test('the settings tab switches the backdrop and the list comes back', async ($,
   for (const surface of SURFACES) {
     const ui = await $.ui.mount({ ...PANE, surface })
 
-    await ui.press({ key: 'tab-settings' })
+    await ui.press({ key: 'tab-appearance' })
     expect(await labelOf(ui, 'backdrop-toggle')).toContain('On')
     await ui.press({ key: 'backdrop-toggle' })
     expect(await labelOf(ui, 'backdrop-toggle')).toContain('Off')
@@ -294,7 +298,7 @@ test('high contrast and code colors reach the theme that is set', async ($, on) 
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
-  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'tab-appearance' })
   expect(await labelOf(ui, 'code-toggle')).toContain('On')
   expect(await labelOf(ui, 'contrast-toggle')).toContain('Off')
 
@@ -308,7 +312,7 @@ test('high contrast and code colors reach the theme that is set', async ($, on) 
   expect(calls[calls.length - 1]).toContain('"codeTheme":{"dark":"dracula"}')
 
   // Switched off, the app keeps its own.
-  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'tab-appearance' })
   await ui.press({ key: 'code-toggle' })
   expect(await labelOf(ui, 'code-toggle')).toContain('Off')
   expect(calls[calls.length - 1]).not.toContain('codeTheme')
@@ -322,7 +326,7 @@ test('day and night applies the theme for the hour, and changes with the hours',
   for (const surface of SURFACES) {
     const ui = await $.ui.mount({ ...PANE, surface })
 
-    await ui.press({ key: 'tab-settings' })
+    await ui.press({ key: 'tab-appearance' })
     expect(await ui.find({ key: 'auto-day' })).toBeUndefined()
     await ui.press({ key: 'switch-hour' })
     expect(await ui.find({ key: 'auto-day' })).toBeDefined()
@@ -352,7 +356,7 @@ test('corrupted saved settings fall back to the defaults', async ($, on) => {
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
-  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'tab-appearance' })
   expect(await ui.find({ key: 'auto-day' })).toBeUndefined()
   expect(await labelOf(ui, 'contrast-toggle')).toContain('Off')
   expect(await labelOf(ui, 'code-toggle')).toContain('On')
@@ -366,7 +370,7 @@ test('backdrop styles reach the theme as still grounds', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
-  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'tab-appearance' })
   expect(await ui.find({ key: 'backdrop-style-glow' })).toBeDefined()
   // Every style is a smooth gradient the app draws by itself.
   for (const style of ['glow', 'sunrise', 'spotlight', 'duotone', 'vignette', 'dusk', 'twilight', 'ember', 'halo']) {
@@ -403,8 +407,8 @@ test('a folder keeps its own theme, and the clock does not replace it', async ($
 
   // Folder keys ignore case and the trailing slash.
   expect(await ui.find({ type: 'Text', text: /Active: Dracula/ })).toBeDefined()
-  await ui.press({ key: 'tab-settings' })
-  expect(await ui.find({ type: 'Text', text: /App: uses Dracula/ })).toBeDefined()
+  await ui.press({ key: 'tab-appearance' })
+  expect(await ui.find({ type: 'Text', text: /"App": uses Dracula/ })).toBeDefined()
   expect(await ui.find({ key: 'project-clear' })).toBeDefined()
 
   await ui.press({ key: 'project-clear' })
@@ -423,7 +427,7 @@ test('reset: the app look, settings and everything each work, and the last two a
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
-  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'tab-appearance' })
   await ui.press({ key: 'contrast-toggle' })
   expect(await labelOf(ui, 'contrast-toggle')).toContain('On')
 
@@ -443,7 +447,7 @@ test('reset: the app look, settings and everything each work, and the last two a
   await ui.press({ key: 'pick-all-nord' })
   expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
 
-  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'tab-appearance' })
   await ui.press({ key: 'reset-all' })
   expect(await labelOf(ui, 'reset-all')).toContain('Press again')
   await ui.press({ key: 'reset-all' })
@@ -457,7 +461,7 @@ test('follow system builds one look with both modes and no backdrop', async ($, 
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
-  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'tab-appearance' })
   await ui.press({ key: 'switch-system' })
   expect(await ui.find({ type: 'Text', text: /Following the system/ })).toBeDefined()
   const last = calls[calls.length - 1] ?? ''
@@ -471,37 +475,9 @@ test('follow system builds one look with both modes and no backdrop', async ($, 
   await ui.press({ key: 'tab-dark' })
   await ui.press({ key: 'pick-all-nord' })
   expect(await ui.find({ type: 'Text', text: /Active: Nord/ })).toBeDefined()
-  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'tab-appearance' })
   expect(await ui.find({ key: 'auto-day' })).toBeUndefined()
   await ui.unmount()
-})
-
-test('usage glow warms the backdrop as the context fills and cools when it empties', async ($, on) => {
-  const calls: string[] = []
-  host(on, { prefs: { glow: { on: true, source: 'context', toast: false, budget: 5 } } }, calls)
-  // The engine's own answer to a measurement, beneath the mod's hook.
-  on('session.measure', () => ({ changed: ['context'] }))
-  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
-  const calm = calls[calls.length - 1]
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const measure = (percent: number) => ($.session as any).measure({ context: { window: 200000, percent }, rateLimits: [], changed: ['context'] })
-
-  await measure(40)
-  expect(calls[calls.length - 1]).toBe(calm)
-  await measure(75)
-  const warm = calls[calls.length - 1]
-
-  expect(warm).not.toBe(calm)
-  await measure(95)
-  const hot = calls[calls.length - 1]
-
-  expect(hot).not.toBe(warm)
-  // Falling a little does not flicker; falling well below does cool it.
-  await measure(89)
-  expect(calls[calls.length - 1]).toBe(hot)
-  await measure(10)
-  expect(calls[calls.length - 1]).toBe(calm)
 })
 
 test('tuning steps shift one theme, say so, and reset', async ($, on) => {
@@ -510,7 +486,7 @@ test('tuning steps shift one theme, say so, and reset', async ($, on) => {
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
-  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'tab-appearance' })
   const plain = calls[calls.length - 1]
 
   await ui.press({ key: 'tune-warmth-up' })

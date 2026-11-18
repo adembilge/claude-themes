@@ -86,7 +86,7 @@ export const PACKS: Theme[] = [
     ['#141617', '#1d2021', '#282828', '#3c3836'], ['#ebdbb2', '#d5c4a1', '#a89984'], '#fe8019',
     ['#fb4934', '#b8bb26', '#fabd2f', '#d3869b']),
   // https://github.com/sainnhe/everforest/blob/master/autoload/everforest.vim
-  pack('Everforest', 'dark', 'everforest-hard', 'Everforest Hard', 'forest greens, deeper contrast',
+  pack('Everforest', 'dark', 'everforest-hard', 'Everforest Hard', 'deeper forest greens',
     ['#1e2326', '#272e33', '#2e383c', '#374145'], ['#d3c6aa', '#9da9a0', '#859289'], '#a7c080',
     ['#e67e80', '#a7c080', '#dbbc7f', '#d699b6']),
   // https://github.com/raunofreiberg/vesper (via shikijs tm-themes vesper.json)
@@ -117,7 +117,7 @@ export const PACKS: Theme[] = [
     ['#cc241d', '#79740e', '#d79921', '#b16286']),
   // https://github.com/sainnhe/everforest/blob/master/autoload/everforest.vim
   // shifted: muted text #829181 -> #7d8c81
-  pack('Everforest', 'light', 'everforest-light-hard', 'Everforest Light Hard', 'forest greens, bright cream',
+  pack('Everforest', 'light', 'everforest-light-hard', 'Everforest Light Hard', 'bright cream and moss',
     ['#f2efdf', '#f8f5e4', '#fffbef', '#fffbef'], ['#5c6a72', '#708089', '#7d8c81'], '#8da101',
     ['#f85552', '#8da101', '#dfa000', '#df69ba']),
   // https://github.com/mhartington/oceanic-next/blob/master/colors/OceanicNextLight.vim

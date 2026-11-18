@@ -22,11 +22,10 @@ export type TuneState = {
   accent: number
   status: number
 }
-export type GlowState = { on: boolean; source: 'context' | 'plan' | 'cost' | 'any'; toast: boolean; budget: number }
 
 export type ThemeState = {
   id: ThemeId
-  tab: 'dark' | 'light' | 'favorites' | 'maker' | 'settings'
+  tab: 'dark' | 'light' | 'favorites' | 'maker' | 'appearance' | 'settings'
   q: string
   favs: ThemeId[]
   backdrop: boolean
@@ -45,8 +44,6 @@ export type ThemeState = {
   importText: string
   off: boolean
   confirm: string
-  glow: GlowState
-  heat: 0 | 1 | 2
   follow: boolean
   tunes: Record<string, TuneState>
   found: { label: string; uiTheme: string; path: string }[]

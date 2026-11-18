@@ -79,7 +79,7 @@ const BASE_THEMES: Theme[] = [
   theme('dark', 'ayu-dark', 'Ayu Dark', 'ink black with warm amber',
     ['#06080c', '#0b0e14', '#131721', '#1c212e'], ['#bfbdb6', '#9a9892', '#8a8984'], '#e6b450',
     ['#f07178', '#aad94c', '#ffb454', '#d2a6ff']),
-  theme('dark', 'everforest', 'Everforest', 'calm forest greens, easy on the eyes',
+  theme('dark', 'everforest', 'Everforest', 'soft forest greens',
     ['#232a2e', '#2d353b', '#343f44', '#3d484d'], ['#d3c6aa', '#b5ab93', '#9da9a0'], '#a7c080',
     ['#e67e80', '#a7c080', '#dbbc7f', '#d699b6']),
   theme('dark', 'material-ocean', 'Material Ocean', 'deep navy, soft blue',
@@ -152,7 +152,7 @@ const BASE_THEMES: Theme[] = [
   theme('light', 'ayu-light', 'Ayu Light', 'clean white with warm orange',
     ['#e7e8ea', '#f3f4f5', '#fafafa', '#fafafa'], ['#5c6166', '#6b7077', '#787b80'], '#ff9940',
     ['#f07171', '#86b300', '#f2ae49', '#a37acc']),
-  theme('light', 'everforest-light', 'Everforest Light', 'warm cream with moss green',
+  theme('light', 'everforest-light', 'Everforest Light', 'cream and moss',
     ['#efebd4', '#f4f0d9', '#fdf6e3', '#fdf6e3'], ['#4f5b58', '#5f6c68', '#6e7a70'], '#8da101',
     ['#f85552', '#8da101', '#dfa000', '#df69ba']),
   theme('light', 'notion', 'Notion', 'warm white paper, ink text',
@@ -264,7 +264,6 @@ const projectKey = (cwd: string): string => cwd.replace(/\\/g, '/').replace(/\/+
 const folderName = (cwd: string): string => cwd.replace(/\\/g, '/').replace(/\/+$/, '').split('/').pop() || cwd
 
 type Strength = 'subtle' | 'normal' | 'bold'
-type Heat = 0 | 1 | 2
 type Tone = 'accent' | 'pro'
 
 const STRENGTHS: { value: Strength; label: string; k: number }[] = [
@@ -281,12 +280,10 @@ const TONES: { value: Tone; label: string }[] = [
 type Ground = any
 
 /** The tints a pattern is drawn in: blends of the darkest surface with the accent (or the second color). */
-function tints(p: Theme, strength: Strength, tone: Tone, heat: Heat = 0) {
-  const k = (STRENGTHS.find(s => s.value === strength)?.k ?? 1) * (heat === 0 ? 1 : 1.5)
+function tints(p: Theme, strength: Strength, tone: Tone) {
+  const k = STRENGTHS.find(s => s.value === strength)?.k ?? 1
   const [s0, s1, s2] = p.surfaces
-  const base0 = tone === 'pro' ? p.roles.pro : p.accent
-  // Usage glow: the field warms toward the theme's own warning color, then its danger color.
-  const base = heat === 0 ? base0 : mix(base0, heat === 2 ? p.roles.danger : p.roles.warning, heat === 2 ? 0.85 : 0.65)
+  const base = tone === 'pro' ? p.roles.pro : p.accent
   const other = tone === 'pro' ? p.accent : p.roles.pro
   const t = (x: number) => Math.min(0.7, x * k)
 
@@ -320,8 +317,8 @@ const GROUNDS: { value: string; label: string; make: Make }[] = [
 
 type BackdropStyle = string
 
-const groundFor = (p: Theme, style: string, strength: Strength, tone: Tone, heat: Heat = 0): Ground =>
-  (GROUNDS.find(g => g.value === style) ?? GROUNDS[0]!).make(tints(p, strength, tone, heat))
+const groundFor = (p: Theme, style: string, strength: Strength, tone: Tone): Ground =>
+  (GROUNDS.find(g => g.value === style) ?? GROUNDS[0]!).make(tints(p, strength, tone))
 
 /** A small picture of a ground, for choosing among them: the same gradient the app is given, drawn as an Svg. */
 function groundThumb(p: Theme, g: Ground, w: number, h: number): string {
@@ -364,22 +361,9 @@ function cleanProjects(raw: unknown, known: Set<string>): Record<string, string>
   return Object.fromEntries(out.slice(-MAX_PROJECTS))
 }
 
-type Tab = 'dark' | 'light' | 'favorites' | 'maker' | 'settings'
+type Tab = 'dark' | 'light' | 'favorites' | 'maker' | 'appearance' | 'settings'
 
 type Draft = { name: string; accent: string; mode: Mode }
-
-type GlowSource = 'context' | 'plan' | 'cost' | 'any'
-
-type Glow = { on: boolean; source: GlowSource; toast: boolean; budget: number }
-
-const GLOW_SOURCES: { value: GlowSource; label: string }[] = [
-  { value: 'any', label: 'Whichever is highest' },
-  { value: 'context', label: 'Context window' },
-  { value: 'plan', label: 'Plan limit' },
-  { value: 'cost', label: 'Session cost' },
-]
-
-const DEFAULT_GLOW: Glow = { on: false, source: 'any', toast: true, budget: 5 }
 
 type Found = { label: string; uiTheme: string; path: string }
 
@@ -404,8 +388,6 @@ type State = {
   importText: string
   off: boolean
   confirm: string
-  glow: Glow
-  heat: Heat
   follow: boolean
   tunes: Record<string, Tune>
   found: Found[]
@@ -423,7 +405,6 @@ type Prefs = {
   strength: Strength
   tone: Tone
   off: boolean
-  glow: Glow
   follow: boolean
   tunes: Record<string, Tune>
 }
@@ -455,15 +436,13 @@ const current = atom(
     importText: '',
     off: false,
     confirm: '',
-    glow: DEFAULT_GLOW,
-    heat: 0,
     follow: false,
     tunes: {},
     found: [],
     foundQ: '',
     scanMsg: '',
   } as State,
-  { shape: 'current-11' },
+  { shape: 'current-12' },
 )
 
 /** Known theme ids only, no repeats, at most `max`: anything else a saved value held is dropped. */
@@ -473,18 +452,6 @@ function cleanIds(value: unknown, max: number, known: Set<string>): string[] {
   }
 
   return [...new Set(value.filter((x): x is string => typeof x === 'string' && known.has(x)))].slice(0, max)
-}
-
-function cleanGlow(raw: unknown): Glow {
-  const g = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>
-  const budget = typeof g.budget === 'number' && Number.isFinite(g.budget) && g.budget > 0 && g.budget <= 10000 ? g.budget : DEFAULT_GLOW.budget
-
-  return {
-    on: g.on === true,
-    source: GLOW_SOURCES.some(x => x.value === g.source) ? (g.source as GlowSource) : DEFAULT_GLOW.source,
-    toast: g.toast !== false,
-    budget,
-  }
 }
 
 function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
@@ -510,7 +477,6 @@ function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
       to: hour(a.to, DEFAULT_AUTO.to),
     },
     off: r.off === true,
-    glow: cleanGlow(r.glow),
     follow: r.follow === true && a.on !== true,
     tunes: cleanTunes(r.tunes, known),
   }
@@ -666,7 +632,6 @@ async function savePrefs($: any): Promise<void> {
     strength: s.strength,
     tone: s.tone,
     off: s.off,
-    glow: s.glow,
     follow: s.follow,
     tunes: s.tunes,
   })
@@ -785,7 +750,7 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
 
     // Nothing is reported if no client draws themes yet; the theme still stands for one that attaches.
     try {
-      const backdrop = !now.backdrop ? undefined : groundFor(p, now.backdropStyle, now.strength, now.tone, now.heat)
+      const backdrop = !now.backdrop ? undefined : groundFor(p, now.backdropStyle, now.strength, now.tone)
 
       await $.theme.set(backdrop === undefined ? chosen : ({ ...chosen, backdrop } as ThemeSetArgs))
     } catch {
@@ -926,67 +891,6 @@ async function setFollow($: any, on: boolean): Promise<void> {
   }
 }
 
-// ---- usage and cost glow ----
-
-/** Rises at 70 and 90, falls three points below those, so it does not flicker at a line. */
-function nextHeat(prev: Heat, level: number): Heat {
-  const up: Heat = level >= 90 ? 2 : level >= 70 ? 1 : 0
-
-  if (up > prev) {
-    return up
-  }
-  const down: Heat = level >= 87 ? 2 : level >= 67 ? 1 : 0
-
-  return Math.min(prev, down) as Heat
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function measureGlow($: any, e: any): Promise<void> {
-  const s = await read($, current)
-
-  if (!s.glow.on) {
-    if (s.heat !== 0) {
-      await patch($, { heat: 0 })
-      await apply($, s.id, false)
-    }
-
-    return
-  }
-  const parts: number[] = []
-  const src = s.glow.source
-  const ctxPct = e?.context?.percent
-  const limits: { kind?: string; percentUsed?: number }[] = Array.isArray(e?.rateLimits) ? e.rateLimits : []
-  const plan = (limits.find(r => r.kind === 'five_hour') ?? limits[0])?.percentUsed
-  const usd = e?.cost?.usd
-
-  if ((src === 'context' || src === 'any') && typeof ctxPct === 'number') {
-    parts.push(ctxPct)
-  }
-
-  if ((src === 'plan' || src === 'any') && typeof plan === 'number') {
-    parts.push(plan)
-  }
-
-  if ((src === 'cost' || src === 'any') && typeof usd === 'number' && s.glow.budget > 0) {
-    parts.push((usd / s.glow.budget) * 100)
-  }
-  const level = parts.length === 0 ? 0 : Math.max(...parts)
-  const heat = nextHeat(s.heat, level)
-
-  if (heat === s.heat) {
-    return
-  }
-  await patch($, { heat })
-
-  if (heat === 2 && s.glow.toast) {
-    say($, `Heads up: about ${Math.round(level)}% used.`)
-  }
-
-  if (s.backdrop && !s.follow) {
-    await apply($, s.id, false)
-  }
-}
-
 // ---- reset ----
 
 const DEFAULT_SETTINGS: Partial<State> = {
@@ -999,8 +903,6 @@ const DEFAULT_SETTINGS: Partial<State> = {
   strength: 'normal',
   tone: 'accent',
   off: false,
-  glow: DEFAULT_GLOW,
-  heat: 0,
   follow: false,
   tunes: {},
 }
@@ -1289,19 +1191,6 @@ async function importFound($: any, index: number): Promise<void> {
   await addCustom($, made.theme, made.notes ?? [])
 }
 
-async function setGlow($: any, change: Partial<Glow>): Promise<void> {
-  const s = await read($, current)
-
-  await patch($, { glow: { ...s.glow, ...change } })
-  await savePrefs($)
-
-  // Switched off (or no longer able to show): the backdrop cools at once.
-  if (change.on === false && s.heat !== 0) {
-    await patch($, { heat: 0 })
-    await apply($, s.id, false)
-  }
-}
-
 type Switch = 'off' | 'hour' | 'system'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1371,7 +1260,6 @@ export const register: Register = on => {
       projects: cleanProjects(await $.store.get(PROJECTS_KEY), known),
       id,
       confirm: '',
-      heat: 0,
       msg: '',
     })
 
@@ -1400,17 +1288,6 @@ export const register: Register = on => {
       await runAuto($, false)
     } catch {
       // the next prompt tries again
-    }
-
-    return next(e)
-  })
-
-  // Usage and cost glow: the engine pushes its measurements, so nothing is polled.
-  on('session.measure', async ($, e, next) => {
-    try {
-      await measureGlow($, e)
-    } catch {
-      // the next measurement tries again
     }
 
     return next(e)
@@ -1493,7 +1370,7 @@ export const register: Register = on => {
     const cur = byId(now.id) ?? DEFAULT
     const curT = tunedOf(cur, now.tunes)
     const [c0, c1, c2] = cur.surfaces
-    const tab: Tab = now.tab === 'light' || now.tab === 'settings' || now.tab === 'favorites' || now.tab === 'maker' ? now.tab : 'dark'
+    const tab: Tab = now.tab === 'light' || now.tab === 'settings' || now.tab === 'appearance' || now.tab === 'favorites' || now.tab === 'maker' ? now.tab : 'dark'
     const q = now.q.trim().toLowerCase()
     const matches = (p: Theme) => q === '' || `${p.name} ${p.note} ${p.id} ${p.mode}`.toLowerCase().includes(q)
 
@@ -1824,7 +1701,8 @@ export const register: Register = on => {
       )
     }
 
-    const settingsTab = () => {
+    // The Appearance tab holds the look and behaviour cards; the Settings tab holds only the VS Code import.
+    const settingsTab = (which: 'appearance' | 'settings') => () => {
       const c3 = cur.surfaces[3]
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const card = (key: string, title: string, children: any) => (
@@ -2029,56 +1907,6 @@ export const register: Register = on => {
         </Box>,
       )
 
-      const glow = card(
-        'glow',
-        'Usage glow',
-        <Box flexDirection="column" gap={1}>
-          {toggleRow('glow-toggle', 'Glow as usage grows', 'The backdrop warms toward the theme\'s warning color, then its danger color, as the context window, plan limit or cost fills. Needs the backdrop on.', now.glow.on, async () => {
-            await setGlow($, { on: !now.glow.on })
-          })}
-          {!now.glow.on ? null : (
-            <Box flexDirection="column" gap={1}>
-              <Text dimColor>Watch</Text>
-              <Box gap={1} flexWrap="wrap">
-                {GLOW_SOURCES.map(x => (
-                  <Button
-                    key={`glow-source-${x.value}`}
-                    variant={now.glow.source === x.value ? 'primary' : 'secondary'}
-                    onPress={async () => {
-                      await setGlow($, { source: x.value })
-                    }}
-                  >
-                    {x.label}
-                  </Button>
-                ))}
-              </Box>
-              {Input === undefined || (now.glow.source !== 'cost' && now.glow.source !== 'any') ? null : (
-                <Box flexDirection="column" alignItems="stretch">
-                  <Text dimColor>Session budget in dollars for the cost reading (an estimate)</Text>
-                  <Input
-                    key="glow-budget"
-                    placeholder="5"
-                    value={String(now.glow.budget)}
-                    onInput={async (v: string) => {
-                      const n = Number(v)
-
-                      if (Number.isFinite(n) && n > 0 && n <= 10000) {
-                        await setGlow($, { budget: n })
-                      }
-                    }}
-                    onSubmit={async () => {}}
-                  />
-                </Box>
-              )}
-              {toggleRow('glow-toast', 'Tell me when it is hot', 'A short notice once it passes 90%.', now.glow.toast, async () => {
-                await setGlow($, { toast: !now.glow.toast })
-              })}
-              <Text dimColor>{`Right now: ${['calm', 'warm', 'hot'][now.heat]}.${now.backdrop ? '' : ' The backdrop is off, so only the notice shows.'}${now.follow ? ' Following the system keeps the backdrop off.' : ''}`}</Text>
-            </Box>
-          )}
-        </Box>,
-      )
-
       const reset = card(
         'reset',
         'Reset',
@@ -2201,10 +2029,10 @@ export const register: Register = on => {
           ? null
           : card(
               'project',
-              'This project',
+              'Theme for this folder',
               <Box flexDirection="column" gap={1}>
                 <Text dimColor>
-                  {`${folderName(now.cwd)}: ${mineHere === undefined ? 'no theme of its own.' : `uses ${mineHere.name} whenever a session starts here.`}`}
+                  {`This folder, "${folderName(now.cwd)}": ${mineHere === undefined ? 'no theme of its own yet.' : `uses ${mineHere.name} whenever a session starts here.`}`}
                 </Text>
                 <Box gap={1} flexWrap="wrap">
                   <Button
@@ -2213,7 +2041,7 @@ export const register: Register = on => {
                       await setProject($, now.id)
                     }}
                   >
-                    {`Use ${cur.name} here`}
+                    {`Use ${cur.name} in this folder`}
                   </Button>
                   {mineHere === undefined ? null : (
                     <Button
@@ -2222,7 +2050,7 @@ export const register: Register = on => {
                         await setProject($, null)
                       }}
                     >
-                      Stop using one here
+                      Remove this folder's theme
                     </Button>
                   )}
                 </Box>
@@ -2242,15 +2070,17 @@ export const register: Register = on => {
         </Box>,
       )
 
+      if (which === 'settings') {
+        return <Box flexDirection="column" gap={1}>{guard('Import from VS Code', () => vscode)}</Box>
+      }
+
       return (
         <Box flexDirection="column" gap={1}>
           {guard('Tune', () => tune)}
-          {guard('From VS Code', () => vscode)}
           {guard('Appearance', () => appearance)}
           {guard('Readability', () => readability)}
-          {guard('Usage glow', () => glow)}
           {guard('Day and night', () => dayNight)}
-          {project === null ? null : guard('This project', () => project)}
+          {project === null ? null : guard('Theme for this folder', () => project)}
           {guard('Reset', () => reset)}
           {guard('About', () => about)}
         </Box>
@@ -2281,16 +2111,19 @@ export const register: Register = on => {
             ★ Favorites
           </Button>
           <Button key="tab-maker" variant={tab === 'maker' ? 'primary' : 'secondary'} onPress={goTab('maker')}>
-            ✎ Maker
+            ✎ Theme Maker
+          </Button>
+          <Button key="tab-appearance" variant={tab === 'appearance' ? 'primary' : 'secondary'} onPress={goTab('appearance')}>
+            ◐ Appearance
           </Button>
           <Button key="tab-settings" variant={tab === 'settings' ? 'primary' : 'secondary'} onPress={goTab('settings')}>
-            Settings
+            ⚙ Settings
           </Button>
         </Box>
 
         {guard(
-          tab === 'dark' ? 'Dark themes' : tab === 'light' ? 'Light themes' : tab === 'favorites' ? 'Favorites' : tab === 'maker' ? 'The maker' : 'Settings',
-          tab === 'dark' ? modeTab('dark') : tab === 'light' ? modeTab('light') : tab === 'favorites' ? favoritesTab : tab === 'maker' ? makerTab : settingsTab,
+          tab === 'dark' ? 'Dark themes' : tab === 'light' ? 'Light themes' : tab === 'favorites' ? 'Favorites' : tab === 'maker' ? 'The theme maker' : tab === 'appearance' ? 'Appearance' : 'Settings',
+          tab === 'dark' ? modeTab('dark') : tab === 'light' ? modeTab('light') : tab === 'favorites' ? favoritesTab : tab === 'maker' ? makerTab : tab === 'appearance' ? settingsTab('appearance') : settingsTab('settings'),
         )}
       </Box>
     )
