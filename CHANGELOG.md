@@ -2,6 +2,14 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.4.0] - 2026-11-19
+
+### Added
+- Readability options on the Appearance tab: color-blind safe status colors (red-green, blue-yellow), soften glare, night comfort (with an "only at night" switch that follows the Day and night hours), muted text and accent visibility, with a button to reset them. They apply to every theme, are saved, and back off by themselves where the app would refuse the result. Shares and exports are not affected.
+
+### Changed
+- Types for the saved state include the new options.
+
 ## [3.3.1] - 2026-11-19
 
 ### Changed

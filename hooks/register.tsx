@@ -21,6 +21,18 @@ import {
 } from './model.js'
 import type { Mode, Roles, Surfaces, Text3, Theme } from './model.js'
 import { PACKS, PACK_CODE_THEMES } from './packs.js'
+import {
+  COLORBLIND_CHOICES,
+  FOCUS_CHOICES,
+  GLARE_CHOICES,
+  MUTED_CHOICES,
+  NIGHT_CHOICES,
+  NO_READING,
+  cleanReading,
+  isReading,
+  readableOf,
+} from './readable.js'
+import type { Reading } from './readable.js'
 import { SHARE_URL, parseAny, themeToLink } from './share.js'
 import { NO_TUNE, TUNE_AXES, TUNE_MAX, cleanTunes, describeTune, isTuned, tuneTheme } from './tune.js'
 import type { Tune } from './tune.js'
@@ -378,6 +390,9 @@ type State = {
   backdrop: boolean
   highContrast: boolean
   codePair: boolean
+  reading: Reading
+  /** 'day' or 'night' as last applied for "only at night" comfort; not saved. */
+  nightPeriod: string
   auto: AutoCfg
   autoPeriod: string
   backdropStyle: BackdropStyle
@@ -403,6 +418,7 @@ type Prefs = {
   backdrop: boolean
   highContrast: boolean
   codePair: boolean
+  reading: Reading
   auto: AutoCfg
   backdropStyle: BackdropStyle
   strength: Strength
@@ -426,6 +442,8 @@ const current = atom(
     backdrop: true,
     highContrast: false,
     codePair: true,
+    reading: NO_READING,
+    nightPeriod: '',
     auto: DEFAULT_AUTO,
     autoPeriod: '',
     backdropStyle: 'glow',
@@ -445,7 +463,7 @@ const current = atom(
     foundQ: '',
     scanMsg: '',
   } as State,
-  { shape: 'current-12' },
+  { shape: 'current-13' },
 )
 
 /** Known theme ids only, no repeats, at most `max`: anything else a saved value held is dropped. */
@@ -469,6 +487,7 @@ function cleanPrefs(raw: unknown, known: Set<string>): Prefs {
     backdrop: r.backdrop !== false,
     highContrast: r.highContrast === true,
     codePair: r.codePair !== false,
+    reading: cleanReading(r.reading),
     backdropStyle: GROUNDS.some(x => x.value === r.backdropStyle) ? (r.backdropStyle as BackdropStyle) : 'glow',
     strength: STRENGTHS.some(x => x.value === r.strength) ? (r.strength as Strength) : 'normal',
     tone: TONES.some(x => x.value === r.tone) ? (r.tone as Tone) : 'accent',
@@ -630,6 +649,7 @@ async function savePrefs($: any): Promise<void> {
     backdrop: s.backdrop,
     highContrast: s.highContrast,
     codePair: s.codePair,
+    reading: s.reading,
     auto: s.auto,
     backdropStyle: s.backdropStyle,
     strength: s.strength,
@@ -670,6 +690,21 @@ function tunedOf(p: Theme, tunes: Record<string, Tune>): Theme {
   }
 }
 
+/**
+ * The readability options as they stand now. "Only at night" switches night comfort off in the day,
+ * by the hours of Day and night (those hours count even when Day and night itself is off).
+ */
+function readingFor(s: State, period?: 'day' | 'night'): Reading {
+  const r = s.reading
+
+  if (r.night === 0 || !r.nightOnly) {
+    return r
+  }
+  const now = period ?? periodOf(s.auto, new Date().getHours())
+
+  return now === 'night' ? r : { ...r, night: 0 }
+}
+
 /** What goes with the colors of one theme: the paired code theme and high contrast. */
 function withExtras(base: ThemeSetArgs, p: Theme, s: State): ThemeSetArgs {
   const code = s.codePair ? CODE_THEMES[p.id] : undefined
@@ -705,7 +740,11 @@ async function applyFollow($: any): Promise<void> {
   }
 
   try {
-    const base = lookPair(tunedOf(day, s.tunes), tunedOf(night, s.tunes))
+    // Following the system, "only at night" means the night theme only, since the app itself picks the look.
+    const base = lookPair(
+      readableOf(tunedOf(day, s.tunes), readingFor(s, 'day')),
+      readableOf(tunedOf(night, s.tunes), readingFor(s, 'night')),
+    )
     const light = s.codePair ? CODE_THEMES[day.id] : undefined
     const dark = s.codePair ? CODE_THEMES[night.id] : undefined
     const codeTheme = { ...(light === undefined ? {} : { light }), ...(dark === undefined ? {} : { dark }) }
@@ -746,7 +785,7 @@ async function apply($: any, id: string, save: boolean): Promise<void> {
     say($, 'Follow system is off: you picked a theme.')
   }
   const now = await read($, current)
-  const p = tunedOf(p0, now.tunes)
+  const p = readableOf(tunedOf(p0, now.tunes), readingFor(now))
 
   try {
     const chosen = withExtras(lookFor(p), p, now)
@@ -828,6 +867,33 @@ async function toggleFlag($: any, key: Flag): Promise<void> {
   await savePrefs($)
 }
 
+/** One readability option changed: remember it and draw the theme again. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function setReading($: any, change: Partial<Reading> | null): Promise<void> {
+  const s = await read($, current)
+
+  await patch($, { reading: change === null ? NO_READING : { ...s.reading, ...change } })
+  await savePrefs($)
+  await apply($, s.id, false)
+}
+
+/** "Only at night" comfort: draws the theme again when the clock crosses from day to night or back. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function refreshNight($: any): Promise<void> {
+  const s = await read($, current)
+
+  if (s.reading.night === 0 || !s.reading.nightOnly || s.off) {
+    return
+  }
+  const period = periodOf(s.auto, new Date().getHours())
+
+  if (s.nightPeriod === period) {
+    return
+  }
+  await patch($, { nightPeriod: period })
+  await apply($, s.id, false)
+}
+
 // ---- day and night, follow system ----
 
 /** Applies the day or night theme when the period has changed since it was last applied (or when `force`). */
@@ -900,6 +966,7 @@ const DEFAULT_SETTINGS: Partial<State> = {
   backdrop: true,
   highContrast: false,
   codePair: true,
+  reading: NO_READING,
   auto: DEFAULT_AUTO,
   autoPeriod: '',
   backdropStyle: 'glow',
@@ -1314,6 +1381,7 @@ export const register: Register = on => {
   on('prompt.submit', async ($, e, next) => {
     try {
       await runAuto($, false)
+      await refreshNight($)
     } catch {
       // the next prompt tries again
     }
@@ -1407,7 +1475,7 @@ export const register: Register = on => {
     const all = [...THEMES, ...now.custom]
     const byId = (id: string) => themeById(id, now.custom)
     const cur = byId(now.id) ?? DEFAULT
-    const curT = tunedOf(cur, now.tunes)
+    const curT = readableOf(tunedOf(cur, now.tunes), readingFor(now))
     const [c0, c1, c2] = cur.surfaces
     const tab: Tab = now.tab === 'light' || now.tab === 'settings' || now.tab === 'appearance' || now.tab === 'favorites' || now.tab === 'maker' ? now.tab : 'dark'
     const q = now.q.trim().toLowerCase()
@@ -2011,6 +2079,30 @@ export const register: Register = on => {
         </Box>,
       )
 
+      // A row of choices for one readability option; the chosen one is filled.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const choiceRow = (key: string, title: string, about: string, choices: { value: any; label: string }[], selected: unknown, set: (v: any) => Promise<void>) => (
+        <Box key={`read-${key}`} flexDirection="column" gap={1}>
+          <Box flexDirection="column">
+            <Text weight="bold">{title}</Text>
+            <Text dimColor>{about}</Text>
+          </Box>
+          <Box gap={1} flexWrap="wrap">
+            {choices.map(c => (
+              <Button
+                key={`read-${key}-${String(c.value)}`}
+                variant={selected === c.value ? 'primary' : 'secondary'}
+                onPress={async () => {
+                  await set(c.value)
+                }}
+              >
+                {c.label}
+              </Button>
+            ))}
+          </Box>
+        </Box>
+      )
+
       const readability = card(
         'readability',
         'Readability',
@@ -2021,6 +2113,58 @@ export const register: Register = on => {
           {toggleRow('contrast-toggle', 'High contrast', 'Stronger borders and focus rings, useful on the light themes.', now.highContrast, async () => {
             await toggleFlag($, 'highContrast')
           })}
+          {choiceRow(
+            'colorblind',
+            'Color-blind safe status colors',
+            'Moves the red, green, yellow and purple status colors apart so they can be told from each other. An approximation, not a simulation.',
+            COLORBLIND_CHOICES,
+            now.reading.colorblind,
+            async v => {
+              await setReading($, { colorblind: v })
+            },
+          )}
+          {choiceRow('glare', 'Soften glare', 'Dims bright whites: the main text on dark themes, the lightest surfaces on light themes.', GLARE_CHOICES, now.reading.glare, async v => {
+            await setReading($, { glare: v })
+          })}
+          {choiceRow('night', 'Night comfort', 'A warmer cast with less blue light.', NIGHT_CHOICES, now.reading.night, async v => {
+            await setReading($, { night: v })
+          })}
+          {now.reading.night === 0
+            ? null
+            : toggleRow(
+                'read-night-only',
+                'Only at night',
+                `Uses the hours set in Day and night: night starts at ${String(now.auto.to).padStart(2, '0')}:00 and ends at ${String(now.auto.from).padStart(2, '0')}:00. Checked when you send a prompt.`,
+                now.reading.nightOnly,
+                async () => {
+                  await setReading($, { nightOnly: !now.reading.nightOnly })
+                },
+              )}
+          {choiceRow('muted', 'Muted text', 'Makes the faintest text (hints, timestamps) easier to read.', MUTED_CHOICES, now.reading.muted, async v => {
+            await setReading($, { muted: v })
+          })}
+          {choiceRow(
+            'focus',
+            'Accent visibility',
+            'Makes the accent, used for focus rings and links, stand out more from the page. Borders are covered by High contrast above.',
+            FOCUS_CHOICES,
+            now.reading.focus,
+            async v => {
+              await setReading($, { focus: v })
+            },
+          )}
+          {!isReading(now.reading) ? null : (
+            <Box>
+              <Button
+                key="read-reset"
+                onPress={async () => {
+                  await setReading($, null)
+                }}
+              >
+                Reset these options
+              </Button>
+            </Box>
+          )}
         </Box>,
       )
 

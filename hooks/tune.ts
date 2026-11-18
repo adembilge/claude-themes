@@ -180,7 +180,7 @@ function lstar(hex: string): number {
  * text[2], then the surfaces from the menu down to the page on a dark theme; on a light one the menu and card
  * surfaces down to the page, then the text. The tests hold this to validateTheme on every combination.
  */
-function accepted(t: Theme): boolean {
+export function accepted(t: Theme): boolean {
   if (t.surfaces.some(s => contrast(t.text[0], s) < 4.5 || contrast(t.text[2], s) < 3)) {
     return false
   }

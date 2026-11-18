@@ -23,6 +23,15 @@ export type TuneState = {
   status: number
 }
 
+export type ReadingState = {
+  colorblind: 'off' | 'redgreen' | 'blueyellow'
+  glare: 0 | 1 | 2
+  night: 0 | 1 | 2
+  nightOnly: boolean
+  muted: 0 | 1 | 2
+  focus: 0 | 1 | 2
+}
+
 export type ThemeState = {
   id: ThemeId
   tab: 'dark' | 'light' | 'favorites' | 'maker' | 'appearance' | 'settings'
@@ -31,6 +40,8 @@ export type ThemeState = {
   backdrop: boolean
   highContrast: boolean
   codePair: boolean
+  reading: ReadingState
+  nightPeriod: string
   auto: { on: boolean; day: ThemeId; night: ThemeId; from: number; to: number }
   autoPeriod: string
   backdropStyle: string

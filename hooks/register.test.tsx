@@ -356,6 +356,62 @@ test('day and night applies the theme for the hour, and changes with the hours',
   }
 })
 
+test('readability options change the theme that is set, are saved, and can be reset', async ($, on) => {
+  const calls: string[] = []
+  const stored: Record<string, unknown> = {}
+  host(on, {}, calls, stored)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-appearance' })
+  expect(await ui.find({ key: 'read-reset' })).toBeUndefined()
+  const plain = calls[calls.length - 1]
+
+  await ui.press({ key: 'read-colorblind-redgreen' })
+  expect(calls[calls.length - 1]).not.toBe(plain)
+  expect((stored.prefs as { reading: { colorblind: string } }).reading.colorblind).toBe('redgreen')
+  expect(await ui.find({ key: 'read-reset' })).toBeDefined()
+
+  await ui.press({ key: 'read-muted-2' })
+  await ui.press({ key: 'read-glare-1' })
+  await ui.press({ key: 'read-focus-2' })
+  expect((stored.prefs as { reading: unknown }).reading).toEqual({ colorblind: 'redgreen', glare: 1, night: 0, nightOnly: false, muted: 2, focus: 2 })
+
+  // "Only at night" is offered once night comfort is on.
+  expect(await ui.find({ key: 'read-night-only' })).toBeUndefined()
+  await ui.press({ key: 'read-night-2' })
+  expect(await labelOf(ui, 'read-night-only')).toContain('Off')
+  await ui.press({ key: 'read-night-only' })
+  expect(await labelOf(ui, 'read-night-only')).toContain('On')
+
+  await ui.press({ key: 'read-reset' })
+  expect(calls[calls.length - 1]).toBe(plain)
+  expect((stored.prefs as { reading: unknown }).reading).toEqual({ colorblind: 'off', glare: 0, night: 0, nightOnly: false, muted: 0, focus: 0 })
+  expect(await ui.find({ key: 'read-reset' })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('saved readability options are applied at the start, and damaged ones are ignored', async ($, on) => {
+  const calls: string[] = []
+  host(on, { prefs: { reading: { colorblind: 'redgreen', muted: 2 } } }, calls)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-appearance' })
+  expect(await ui.find({ key: 'read-reset' })).toBeDefined()
+  await ui.unmount()
+})
+
+test('corrupted readability settings fall back to off', async ($, on) => {
+  host(on, { prefs: { reading: { colorblind: 'rainbow', glare: 9, night: 'x', muted: null, focus: [] } } })
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  await ui.press({ key: 'tab-appearance' })
+  expect(await ui.find({ key: 'read-reset' })).toBeUndefined()
+  await ui.unmount()
+})
+
 test('corrupted saved settings fall back to the defaults', async ($, on) => {
   host(on, { prefs: { auto: { on: 'x', day: 'nope', night: 5, from: 99, to: -1 }, highContrast: 'yes', codePair: 3 } })
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })

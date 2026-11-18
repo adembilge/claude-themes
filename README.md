@@ -2,7 +2,7 @@
 
 Recolor the whole Claude desktop app, not just the chat area. 64 themes, a gallery where you preview each one before you pick it, a theme maker, eight tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.3.1-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.4.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -47,7 +47,13 @@ Restart the session, then type `/claude-themes`.
 - **Backdrop** (Appearance tab). Nine smooth color fields drawn in the theme's own colors (Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, Halo), with a Strength switch (Subtle, Normal, Bold) and a Color switch (accent or second color).
 - **Day and night.** Pick a day theme, a night theme and the hours, or switch to **Follow system** so the app uses the night theme in dark mode and the day theme in light mode.
 - **Per folder.** Tie the current theme to the folder you are in (Settings tab); a session started there uses it.
-- **Readability.** A high-contrast switch for stronger borders and focus rings, and code colors in replies matched to the theme where the app has a matching one.
+- **Readability** (Appearance tab). High contrast for stronger borders and focus rings, and code colors matched to the theme, plus options that apply to every theme:
+  - **Color-blind safe status colors**: red-green or blue-yellow sets that keep danger, success, warning and purple apart (an approximation, not a simulation).
+  - **Soften glare**: dims the main text on dark themes and the lightest surfaces on light ones.
+  - **Night comfort**: a warmer cast with less blue, optionally only at night by the Day and night hours.
+  - **Muted text**: lifts the faintest text (hints, timestamps) to a readable contrast.
+  - **Accent visibility**: makes the accent, used for focus rings and links, stand out from the page.
+  Every combination is still checked against the app's rules, and an option backs off by itself where a theme could not take it. One button resets them. Border strength cannot be set apart from High contrast, because the app derives borders itself.
 
 ## Import
 
