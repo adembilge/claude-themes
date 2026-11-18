@@ -343,13 +343,13 @@ export const register: Register = on => {
                   )}
                   <Box flexDirection="column" alignItems="flex-start" flexGrow={1}>
                     <Box alignItems="center" gap={1} flexWrap="wrap">
-                      {/* Drawn in the row's own colors: a themed button would take the app's current theme and fade on a row of the other mode. */}
-                      <Button key={`pick-${p.id}`} plain label={p.name} onPress={pick(p.id)}>
-                        <Text weight="bold" color={isCurrent ? p.accent : p.text[0]}>
+                      {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so it sits on a plate of that same theme: its text stays readable on a row of the other mode. */}
+                      <Box paddingX={1} backgroundColor={c2}>
+                        <Button key={`pick-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
                           {isCurrent ? '✓ ' : ''}
                           {p.name}
-                        </Text>
-                      </Button>
+                        </Button>
+                      </Box>
                       {Svg === undefined ? (
                         <Text>
                           {dots.map((c, i) => (
