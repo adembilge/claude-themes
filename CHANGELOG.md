@@ -2,6 +2,17 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.7.0] - 2026-11-19
+
+### Changed
+- Share moved from the Maker tab to the Settings tab and split in two: Import (small text, the box for a code, link, web address or file path, and the From VS Code list) and Export (small text, Copy link, Copy code, and one button each for VS Code, base16 and Windows Terminal). Messages from both show at the top of Settings.
+- The title "Claude Themes" is at the top, then the animated color band, then the theme count.
+- The note on each theme row is drawn in the smallest text size. Names, previews and dots are as before.
+- Tuning: the range under each dial shows the low word on the left and the high word on the right, without the arrow.
+
+### Removed
+- The line "The backdrop is off while following the system..." from Day and night.
+
 ## [3.6.3] - 2026-11-19
 
 ### Changed

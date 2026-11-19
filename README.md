@@ -2,7 +2,7 @@
 
 Recolor the whole Claude desktop app, not just the chat area. 53 themes, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.6.3-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.7.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -54,13 +54,13 @@ Restart the session, then type `/claude-themes`.
 
 ## Import
 
-Paste into the Import box (Maker tab) or run `/claude-themes import <thing>`. The format is detected for you.
+Paste into the Import card (Settings tab) or run `/claude-themes import <thing>`. The format is detected for you.
 
 | Source | What to give it |
 |---|---|
 | A share code | A line starting with `claude-themes:` |
 | A share link | The `#...` link made by Copy link |
-| VS Code | A theme `.json` file, a web address, or pick one from the list of themes installed in VS Code, Cursor, Windsurf or VS Code OSS (Settings tab) |
+| VS Code | A theme `.json` file, a web address, or pick one from the From VS Code list in the same card, which shows the themes installed in VS Code, Cursor, Windsurf or VS Code OSS |
 | base16 / base24 | A `.yaml` or `.json` scheme |
 | Windows Terminal | A scheme `.json`, or your `settings.json` (the first scheme is read) |
 | iTerm2 | An `.itermcolors` file |
@@ -69,7 +69,7 @@ Paths work on every system, and `~/` at the start means your home folder. Import
 
 ## Export
 
-The Share card has one button per format and copies the theme you are on (with its tuning) to the clipboard. From the prompt, `/claude-themes export <format>` prints it.
+The Export card (Settings tab) has one button per format and copies the theme you are on (with its tuning) to the clipboard. From the prompt, `/claude-themes export <format>` prints it.
 
 | Format | Button / argument | File |
 |---|---|---|
@@ -81,7 +81,7 @@ The terminal formats get a full set of 16 ANSI colors built from the theme's acc
 
 ## Share
 
-**Copy link** and **Copy code** put the current theme in the clipboard as one line. Paste either into the Import box on another machine. A link opens a preview page in any browser (the page lives in `docs/t`, is static and has no tracking).
+**Copy link** and **Copy code** put the current theme in the clipboard as one line. Both are in the Export card; paste either into the Import card on another machine. A link opens a preview page in any browser (the page lives in `docs/t`, is static and has no tracking).
 
 ## Commands
 

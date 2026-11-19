@@ -1523,7 +1523,7 @@ export const register: Register = on => {
             ) : (
               <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={90} height={18} />
             )}
-            <Text color={p.text[2]}>{p.note}</Text>
+            <Text size="caption" color={p.text[2]}>{p.note}</Text>
           </Box>
           <Box backgroundColor={c2}>
             <Button key={`fav-${section}-${p.id}`} onPress={star(p.id)}>
@@ -1637,12 +1637,6 @@ export const register: Register = on => {
       const setAccent = async (v: string) => {
         await setDraft($, { accent: v.slice(0, 9) })
       }
-      const setImport = async (v: string) => {
-        await patch($, { importText: v.slice(0, 2000) })
-      }
-      const runImport = async (v: string) => {
-        await importAny($, v)
-      }
       const good = /^(Saved|Copied|Deleted)/.test(now.msg)
 
       const preview =
@@ -1727,7 +1721,7 @@ export const register: Register = on => {
         'mine',
         'My themes',
         now.custom.length === 0 ? (
-          <Text dimColor>No themes of your own yet. Make one above, or import a code below.</Text>
+          <Text dimColor>No themes of your own yet. Make one above, or import one in Settings.</Text>
         ) : (
           <Box flexDirection="column" gap={1}>
             {now.custom.map(t => (
@@ -1754,58 +1748,15 @@ export const register: Register = on => {
         ),
       )
 
-      const share = card(
-        'share',
-        'Share',
-        <Box flexDirection="column" gap={1}>
-          <Text dimColor>
-            Copy a link or a code for the theme you are on. To add one, paste a code, a link, a web address of a theme file or the path of a file below and press Enter. VS Code themes, base16 or base24 schemes and terminal schemes (Windows Terminal, iTerm2) work too.
-          </Text>
-          <Box gap={1} flexWrap="wrap">
-            <Button
-              key="share-link"
-              onPress={async (press: { surface: string }) => {
-                await copyLink($, press.surface)
-              }}
-            >
-              Copy link
-            </Button>
-            <Button
-              key="share-copy"
-              onPress={async (press: { surface: string }) => {
-                await copyCode($, press.surface)
-              }}
-            >
-              Copy code
-            </Button>
-          </Box>
-          <Text dimColor>Export the theme you are on as a file for another tool; it is copied to the clipboard.</Text>
-          <Box gap={1} flexWrap="wrap">
-            {EXPORTS.map(f => (
-              <Button
-                key={`export-${f.id}`}
-                onPress={async (press: { surface: string }) => {
-                  await copyExport($, press.surface, f.id)
-                }}
-              >
-                {f.label}
-              </Button>
-            ))}
-          </Box>
-          {field('share-import', 'Import', 'Code, link, web address or file path', now.importText, setImport, runImport)}
-        </Box>,
-      )
-
       return (
         <Box flexDirection="column" gap={1}>
           {guard('The maker', () => make)}
           {guard('My themes', () => mine)}
-          {guard('Share', () => share)}
         </Box>
       )
     }
 
-    // The Appearance tab holds the look and behaviour cards; the Settings tab holds the VS Code import, the folder theme, Reset and About.
+    // The Appearance tab holds the look and behaviour cards; the Settings tab holds Import, Export, the folder theme, Reset and About.
     const settingsTab = (which: 'appearance' | 'settings') => () => {
       const c3 = cur.surfaces[3]
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1910,44 +1861,97 @@ export const register: Register = on => {
         .filter(({ f }) => needle === '' || f.label.toLowerCase().includes(needle))
         .slice(0, 10)
 
-      const vscode = card(
-        'vscode',
-        'From VS Code',
+      const setImport = async (v: string) => {
+        await patch($, { importText: v.slice(0, 2000) })
+      }
+      const runImport = async (v: string) => {
+        await importAny($, v)
+      }
+
+      const importCard = card(
+        'import',
+        'Import',
         <Box flexDirection="column" gap={1}>
-          <Text dimColor>Lists the color themes of the editors installed on this computer (VS Code, Cursor and others); one press adds a theme here.</Text>
-          <Box gap={1} alignItems="center" flexWrap="wrap">
+          <Text size="caption" dimColor>
+            Paste a code, a link, a web address of a theme file or the path of a file, and press Enter. VS Code themes, base16 or base24 schemes and terminal schemes (Windows Terminal, iTerm2) work too.
+          </Text>
+          {field('share-import', 'Code, link, web address or file path', 'Paste or type here, then press Enter', now.importText, setImport, runImport)}
+          <Box flexDirection="column" gap={1}>
+            <Text weight="bold">From VS Code</Text>
+            <Text size="caption" dimColor>Lists the color themes of the editors installed on this computer (VS Code, Cursor and others); one press adds a theme here.</Text>
+            <Box gap={1} alignItems="center" flexWrap="wrap">
+              <Button
+                key="vscode-scan"
+                onPress={async () => {
+                  await scanVsCode($)
+                }}
+              >
+                Find my VS Code themes
+              </Button>
+              {now.scanMsg === '' ? null : <Text size="caption" dimColor>{now.scanMsg}</Text>}
+            </Box>
+            {now.found.length === 0 ? null : (
+              <Box flexDirection="column" gap={1}>
+                {field('vscode-search', 'Search', 'Name of a theme', now.foundQ, setFoundQ, setFoundQ)}
+                {foundShown.map(({ f, index }) => (
+                  <Box key={`found-${index}`} alignItems="center" gap={1}>
+                    <Box flexDirection="column" flexGrow={1}>
+                      <Text weight="bold">{f.label}</Text>
+                      <Text dimColor>{f.uiTheme === 'vs' ? 'light' : 'dark'}</Text>
+                    </Box>
+                    <Button
+                      key={`found-add-${index}`}
+                      onPress={async () => {
+                        await importFound($, index)
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </Box>
+                ))}
+                {foundShown.length === 0 ? <Text dimColor>No theme matches that.</Text> : null}
+              </Box>
+            )}
+          </Box>
+        </Box>,
+      )
+
+      const exportCard = card(
+        'export',
+        'Export',
+        <Box flexDirection="column" gap={1}>
+          <Text size="caption" dimColor>Copy a link or a code for the theme you are on, to paste into the Import box on another computer.</Text>
+          <Box gap={1} flexWrap="wrap">
             <Button
-              key="vscode-scan"
-              onPress={async () => {
-                await scanVsCode($)
+              key="share-link"
+              onPress={async (press: { surface: string }) => {
+                await copyLink($, press.surface)
               }}
             >
-              Find my VS Code themes
+              Copy link
             </Button>
-            {now.scanMsg === '' ? null : <Text dimColor>{now.scanMsg}</Text>}
+            <Button
+              key="share-copy"
+              onPress={async (press: { surface: string }) => {
+                await copyCode($, press.surface)
+              }}
+            >
+              Copy code
+            </Button>
           </Box>
-          {now.found.length === 0 ? null : (
-            <Box flexDirection="column" gap={1}>
-              {field('vscode-search', 'Search', 'Name of a theme', now.foundQ, setFoundQ, setFoundQ)}
-              {foundShown.map(({ f, index }) => (
-                <Box key={`found-${index}`} alignItems="center" gap={1}>
-                  <Box flexDirection="column" flexGrow={1}>
-                    <Text weight="bold">{f.label}</Text>
-                    <Text dimColor>{f.uiTheme === 'vs' ? 'light' : 'dark'}</Text>
-                  </Box>
-                  <Button
-                    key={`found-add-${index}`}
-                    onPress={async () => {
-                      await importFound($, index)
-                    }}
-                  >
-                    Add
-                  </Button>
-                </Box>
-              ))}
-              {foundShown.length === 0 ? <Text dimColor>No theme matches that.</Text> : null}
-            </Box>
-          )}
+          <Text size="caption" dimColor>Export the theme you are on as a file for another tool; it is copied to the clipboard.</Text>
+          <Box gap={1} flexWrap="wrap">
+            {EXPORTS.map(f => (
+              <Button
+                key={`export-${f.id}`}
+                onPress={async (press: { surface: string }) => {
+                  await copyExport($, press.surface, f.id)
+                }}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </Box>
         </Box>,
       )
 
@@ -1993,7 +1997,10 @@ export const register: Register = on => {
                       +
                     </Button>
                   </Box>
-                  <Text dimColor>{`${ax.low} ↔ ${ax.high}`}</Text>
+                  <Box justifyContent="space-between">
+                    <Text dimColor>{ax.low}</Text>
+                    <Text dimColor>{ax.high}</Text>
+                  </Box>
                 </Box>
               )
             })}
@@ -2128,9 +2135,7 @@ export const register: Register = on => {
                   await setAuto($, { night: v })
                 })}
               </Box>
-              {choice === 'system' ? (
-                <Text dimColor>The backdrop is off while following the system, since one backdrop cannot suit both looks.</Text>
-              ) : (
+              {choice === 'system' ? null : (
                 <Box gap={1} flexWrap="wrap">
                   {picker('auto-from', 'Day starts', hourOptions, String(now.auto.from), async v => {
                     await setAuto($, { from: Number(v) })
@@ -2196,7 +2201,11 @@ export const register: Register = on => {
       if (which === 'settings') {
         return (
           <Box flexDirection="column" gap={1}>
-            {guard('Import from VS Code', () => vscode)}
+            {now.msg === '' ? null : (
+              <Text color={/^(Saved|Copied|Deleted|Settings are|Everything|The app's own)/.test(now.msg) ? cur.roles.success : cur.roles.danger}>{now.msg}</Text>
+            )}
+            {guard('Import', () => importCard)}
+            {guard('Export', () => exportCard)}
             {project === null ? null : guard('Theme for this folder', () => project)}
             {guard('Reset', () => reset)}
             {guard('About', () => about)}
@@ -2216,11 +2225,11 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="column" gap={1} paddingX={1}>
-        {Svg === undefined ? null : (
-          <Svg source={bannerSvg(cur)} alt="Animated band in the current theme's colors" width={264} height={30} />
-        )}
-        <Box flexDirection="column" alignItems="center">
+        <Box flexDirection="column" alignItems="center" gap={1}>
           <Text weight="bold" size="title">Claude Themes</Text>
+          {Svg === undefined ? null : (
+            <Svg source={bannerSvg(cur)} alt="Animated band in the current theme's colors" width={264} height={30} />
+          )}
           <Text dimColor>{all.length} themes. Each one sets the app to its own dark or light look.</Text>
         </Box>
 
