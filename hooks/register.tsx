@@ -2274,6 +2274,7 @@ export const register: Register = on => {
           <Text dimColor>
             {`Claude Themes: ${familyCount(all)} themes${now.custom.length === 0 ? '' : `, ${now.custom.length} of them yours`}.`}
           </Text>
+          <Text dimColor>Colors apply to the Code tab. The Plugins and Artifacts pages and the terminal keep their own look.</Text>
           <Text dimColor>
             Documents and source code: <Link href={REPO_URL}>{REPO_URL}</Link>
           </Text>

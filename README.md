@@ -1,8 +1,8 @@
 # claude-themes
 
-Recolor the whole Claude desktop app, not just the chat area. 41 themes, each in dark and light, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
+Recolor the Code tab of the Claude desktop app, not just the chat area. 41 themes, each in dark and light, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.11.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.11.1-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -14,6 +14,8 @@ In Claude Code:
 ```
 
 Restart the session, then type `/claude-themes`.
+
+> **What a theme covers.** Colors apply to the Code tab of the desktop app. The app's other pages (Plugins, Artifacts) keep their own look, and so does the Claude Code terminal, whose theme is set separately (see [Claude Code terminal](#claude-code-terminal)). This is how the app's theme call works; the plugin cannot change it.
 
 ## What you get
 

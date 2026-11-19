@@ -2,6 +2,11 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.11.1] - 2026-11-19
+
+### Changed
+- The README, the plugin description and the About card now say what a theme covers: the Code tab of the desktop app. The Plugins and Artifacts pages and the terminal keep their own look (the app's theme call does not reach them).
+
 ## [3.11.0] - 2026-11-19
 
 ### Added
