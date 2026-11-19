@@ -4,6 +4,7 @@ import type { Register, ThemeSetArgs } from 'claude-code'
 import { colorHint, parseColor } from './color.js'
 import { altLooks } from './flip.js'
 import { displayName, familyCount, findFamily, hasPair } from './families.js'
+import { TERMINAL_PATH, toClaudeCode } from './claudecode.js'
 import { EXPORTS, exportFileName, exportTheme, formatOf } from './export.js'
 import type { ExportFormat } from './export.js'
 import { listVsCodeThemes, parseVsCode, vsCodeExtensionRoots } from './import.js'
@@ -1321,6 +1322,33 @@ async function copyExport($: any, surface: string, format: ExportFormat): Promis
   await copyText($, surface, exportTheme(t, format), `Copied ${t.name} as a ${label} theme. Paste it into a file named ${exportFileName(t, format)}.`)
 }
 
+/**
+ * Writes the current theme (with its tuning) as a Claude Code terminal theme in ~/.claude/themes/.
+ * The terminal reloads that folder by itself, so pressing this again after a new pick updates it live.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function matchTerminal($: any): Promise<void> {
+  const home = (await homeDir($)).replace(/[\\/]+$/, '')
+
+  if (home === '') {
+    await patch($, { msg: 'Terminal theme could not be written: the home folder is unknown.' })
+
+    return
+  }
+  const s = await read($, current)
+  const t = tunedOf(themeById(s.id, s.custom) ?? DEFAULT, s.tunes)
+  const path = `${home}/${TERMINAL_PATH}`
+
+  try {
+    await $.fs.write(path, toClaudeCode(t))
+    await patch($, {
+      msg: `Terminal theme written for ${t.name}. In Claude Code run /theme and pick "Claude Themes" (once). Restart Claude Code once if the folder was new.`,
+    })
+  } catch {
+    await patch($, { msg: `Terminal theme could not be written to ${path}.` })
+  }
+}
+
 /** Nine stops on a line with a dot at the current one: `──●──`. */
 const tuneBar = (v: number): string => Array.from({ length: 2 * TUNE_MAX + 1 }, (_, i) => (i === v + TUNE_MAX ? '●' : '─')).join('')
 
@@ -2216,6 +2244,29 @@ export const register: Register = on => {
               </Box>,
             )
 
+      const terminal = card(
+        'terminal',
+        'Claude Code terminal',
+        <Box flexDirection="column" gap={1}>
+          <Text dimColor>
+            This gallery recolors the desktop app. Press the button to write the theme you are on as a Claude Code terminal theme; it recolors the accent, diffs, status colors, borders and message backgrounds there. Your terminal keeps its own background and text color.
+          </Text>
+          <Box gap={1} flexWrap="wrap">
+            <Button
+              key="terminal-match"
+              onPress={async () => {
+                await matchTerminal($)
+              }}
+            >
+              {`Match terminal to ${displayName(cur)}`}
+            </Button>
+          </Box>
+          {/^Terminal theme/.test(now.msg) ? (
+            <Text color={now.msg.startsWith('Terminal theme written') ? cur.roles.success : cur.roles.danger}>{now.msg}</Text>
+          ) : null}
+        </Box>,
+      )
+
       const about = card(
         'about',
         'About',
@@ -2232,12 +2283,13 @@ export const register: Register = on => {
       if (which === 'settings') {
         return (
           <Box flexDirection="column" gap={1}>
-            {now.msg === '' ? null : (
+            {now.msg === '' || /^Terminal theme/.test(now.msg) ? null : (
               <Text color={/^(Saved|Deleted|Settings are|Everything|The app's own)/.test(now.msg) ? cur.roles.success : cur.roles.danger}>{now.msg}</Text>
             )}
             {guard('Reset', () => reset)}
             {guard('Import', () => importCard)}
             {project === null ? null : guard('Theme for this folder', () => project)}
+            {guard('Claude Code terminal', () => terminal)}
             {guard('About', () => about)}
           </Box>
         )

@@ -2,6 +2,14 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.11.0] - 2026-11-19
+
+### Added
+- **Match terminal** button (Settings tab, Claude Code terminal card). It writes the theme you are on, with its tuning, as a Claude Code custom theme at `~/.claude/themes/claude-themes.json`. Pick "Claude Themes" once in the terminal's `/theme`; pressing the button again updates it live.
+
+### Notes
+- The terminal theme covers accent, diffs, status colors, borders and message backgrounds. The terminal's own background and text color stay with your terminal app.
+
 ## [3.10.1] - 2026-11-19
 
 ### Changed

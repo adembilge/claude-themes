@@ -2,7 +2,7 @@
 
 Recolor the whole Claude desktop app, not just the chat area. 41 themes, each in dark and light, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.10.1-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.11.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -41,6 +41,10 @@ Restart the session, then type `/claude-themes`.
   - **Soften glare** (On or Off): dims the main text on dark themes and the lightest surfaces on light ones.
   - **Night comfort** (On or Off): a warmer cast with less blue, optionally only at night by the Day and night hours.
   Both are still checked against the app's rules, and an option backs off by itself where a theme could not take it. One button resets them.
+
+## Claude Code terminal
+
+The gallery recolors the desktop app. The Claude Code terminal draws no app theme, but it reads custom themes from `~/.claude/themes/`. In the Settings tab, **Match terminal to (your theme)** writes the theme you are on as `~/.claude/themes/claude-themes.json`: accent, diffs, status colors, borders and message backgrounds. In the terminal run `/theme` and pick **Claude Themes** once; pressing the button again after a new pick updates it live. Restart Claude Code once if `~/.claude/themes/` did not exist before. Your terminal app keeps its own background and text color (use the Windows Terminal export for those).
 
 ## Import
 

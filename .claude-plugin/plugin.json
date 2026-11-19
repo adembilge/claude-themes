@@ -1,6 +1,6 @@
 {
   "name": "desktop-themes",
-  "version": "3.10.1",
+  "version": "3.11.0",
   "description": "Recolor the whole Claude desktop app: 41 themes in dark and light (Catppuccin, Nightfox, Dracula, Nord, Gruvbox and more), import from VS Code, base16 and two terminal formats, export to three, seven tuning dials, and a gallery with live previews.",
   "author": { "name": "adembilge", "url": "https://github.com/adembilge" },
   "homepage": "https://github.com/adembilge/claude-themes",
