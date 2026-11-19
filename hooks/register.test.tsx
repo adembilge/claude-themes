@@ -224,8 +224,15 @@ test('the maker saves a theme of your own, refuses bad input and deletes it', as
     await ui.input({ key: 'maker-name', text: 'Test Blue' })
     await ui.input({ key: 'maker-accent', text: 'nope' })
     await ui.press({ key: 'maker-save' })
-    expect(await ui.find({ type: 'Text', text: /six-digit hex/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /not a color I can read/ })).toBeDefined()
     expect(await ui.find({ key: 'maker-del-my-test-blue' })).toBeUndefined()
+
+    // The accent box reads rgb(), hsl() and names (Enter turns them into the plain hex); the theme saves as usual.
+    for (const typed of ['rgb(59, 130, 246)', 'hsl(217, 91%, 60%)', 'dodgerblue']) {
+      await ui.input({ key: 'maker-accent', text: typed })
+      await ui.press({ key: 'maker-save' })
+      expect(await ui.find({ type: 'Text', text: /Saved "Test Blue"/ }), typed).toBeDefined()
+    }
 
     // A good one is saved, applied, listed under My themes and in the Dark tab.
     await ui.input({ key: 'maker-accent', text: '#3b82f6' })

@@ -2,6 +2,14 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.8.0] - 2026-11-19
+
+### Added
+- A better accent box in the Theme Maker: it reads hex (`#d98a4e`, `d98a4e`, `#abc`), `rgb()`, `hsl()`, three plain numbers and all CSS color names, shows a dot of the color, and says "Reads as #xxxxxx" or how to fix what was typed. Enter turns it into the plain hex.
+
+### Changed
+- The Theme Maker form is in a single column: Name, Base, Accent, then Save and apply.
+
 ## [3.7.1] - 2026-11-19
 
 ### Changed

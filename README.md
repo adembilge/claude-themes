@@ -2,7 +2,7 @@
 
 Recolor the whole Claude desktop app, not just the chat area. 53 themes, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.7.1-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.8.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -42,7 +42,7 @@ Restart the session, then type `/claude-themes`.
 
 ## Make your own
 
-- **Maker.** Type a name, an accent color and a dark or light base, and see the palette before you save. Colors the app would refuse are adjusted for you, and the tab lists what it changed.
+- **Maker.** Type a name, pick a dark or light base and an accent color, and see the palette before you save. The accent box reads `#d98a4e`, `rgb(217, 138, 78)`, `hsl(26, 65%, 56%)` and CSS color names such as `coral`, and says what it understood. Colors the app would refuse are adjusted for you, and the tab lists what it changed.
 - **Tuning.** Seven dials per theme, shown as compact cards and moved with `-` and `+`: warmth, saturation, surface brightness, text contrast, surface tint, accent and status colors. Every result still has to pass the app's checks, so a dial stops where the palette would break.
 - **Backdrop** (Appearance tab). Nine smooth color fields drawn in the theme's own colors (Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, Halo), with a Strength switch (Subtle, Normal, Bold).
 - **Day and night.** Pick a day theme, a night theme and the hours, or switch to **Follow system** so the app uses the night theme in dark mode and the day theme in light mode.
@@ -112,6 +112,7 @@ claude plugin test .
 | `hooks/import.ts` | VS Code and base16/24 readers |
 | `hooks/terminal.ts` | Windows Terminal and iTerm2 readers |
 | `hooks/export.ts` | The three exporters |
+| `hooks/color.ts` | Reads typed colors (hex, rgb, hsl, names) |
 | `hooks/tune.ts` | The seven tuning dials |
 | `hooks/share.ts` | Share links |
 | `hooks/packs.ts` | The 25 extra built-in themes |

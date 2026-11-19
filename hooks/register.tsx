@@ -1,6 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { Register, ThemeSetArgs } from 'claude-code'
 
+import { colorHint, parseColor } from './color.js'
 import { EXPORTS, exportFileName, exportTheme, formatOf } from './export.js'
 import type { ExportFormat } from './export.js'
 import { listVsCodeThemes, parseVsCode, vsCodeExtensionRoots } from './import.js'
@@ -583,11 +584,10 @@ function validateDraft(d: Draft): { theme: Theme; notes?: string[] } | { error: 
   if (name === '') {
     return { error: 'Give it a name.' }
   }
-  const raw = d.accent.trim()
-  const accent = /^[0-9a-f]{6}$/i.test(raw) ? `#${raw}` : raw
+  const accent = parseColor(d.accent)
 
-  if (!isHex(accent)) {
-    return { error: 'The accent must be a six-digit hex color such as #d98a4e.' }
+  if (accent === null || !isHex(accent)) {
+    return { error: 'That accent is not a color I can read. Use a hex such as #d98a4e, rgb(217, 138, 78), hsl(26, 65%, 56%) or a name such as coral.' }
   }
   const theme = buildCustom(name, accent, d.mode === 'light' ? 'light' : 'dark')
   const error = validateTheme(theme)
@@ -1611,7 +1611,7 @@ export const register: Register = on => {
       const c3 = cur.surfaces[3]
       // Until a name is typed the preview uses a stand-in; the missing name is only pointed out when saving.
       const built = validateDraft({ ...now.draft, name: now.draft.name.trim() === '' ? 'My theme' : now.draft.name })
-      const draftAccent = /^#[0-9a-f]{6}$/i.test(now.draft.accent.trim()) ? now.draft.accent.trim() : /^[0-9a-f]{6}$/i.test(now.draft.accent.trim()) ? `#${now.draft.accent.trim()}` : ''
+      const draftAccent = parseColor(now.draft.accent) ?? ''
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const card = (key: string, title: string, children: any) => (
         <Box key={`card-${key}`} flexDirection="column" gap={1} padding={1} borderStyle="round" borderColor={c3} backgroundColor={c0}>
@@ -1634,8 +1634,12 @@ export const register: Register = on => {
       const setName = async (v: string) => {
         await setDraft($, { name: v.slice(0, 24) })
       }
+      // Enter writes what was typed as the plain hex it reads as.
+      const setAccentDone = async (v: string) => {
+        await setDraft($, { accent: (parseColor(v) ?? v).slice(0, 40) })
+      }
       const setAccent = async (v: string) => {
-        await setDraft($, { accent: v.slice(0, 9) })
+        await setDraft($, { accent: v.slice(0, 40) })
       }
       const good = /^(Saved|Copied|Deleted)/.test(now.msg)
 
@@ -1662,46 +1666,47 @@ export const register: Register = on => {
         'Your theme',
         <Box flexDirection="column" gap={1}>
           {preview}
-          <Box gap={1} flexWrap="wrap">
-            {field('maker-name', 'Name', 'My theme', now.draft.name, setName, setName)}
-            {field(
-              'maker-accent',
-              'Accent',
-              '#d98a4e',
-              now.draft.accent,
-              setAccent,
-              setAccent,
-              Svg === undefined || draftAccent === '' ? null : (
-                <Svg
-                  source={`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="${draftAccent}" stroke="#808080" stroke-opacity="0.5"/></svg>`}
-                  alt={`Accent ${draftAccent}`}
-                  width={14}
-                  height={14}
-                />
-              ),
-            )}
+          {field('maker-name', 'Name', 'My theme', now.draft.name, setName, setName)}
+          <Box flexDirection="column" gap={1}>
+            <Text dimColor>Base</Text>
+            <Box gap={1} flexWrap="wrap">
+              <Button
+                key="maker-dark"
+                variant={now.draft.mode === 'dark' ? 'primary' : 'secondary'}
+                onPress={async () => {
+                  await setDraft($, { mode: 'dark' })
+                }}
+              >
+                ☾ Dark
+              </Button>
+              <Button
+                key="maker-light"
+                variant={now.draft.mode === 'light' ? 'primary' : 'secondary'}
+                onPress={async () => {
+                  await setDraft($, { mode: 'light' })
+                }}
+              >
+                ☀ Light
+              </Button>
+            </Box>
           </Box>
-          <Text dimColor>Base</Text>
-          <Box gap={1} flexWrap="wrap">
-            <Button
-              key="maker-dark"
-              variant={now.draft.mode === 'dark' ? 'primary' : 'secondary'}
-              onPress={async () => {
-                await setDraft($, { mode: 'dark' })
-              }}
-            >
-              ☾ Dark
-            </Button>
-            <Button
-              key="maker-light"
-              variant={now.draft.mode === 'light' ? 'primary' : 'secondary'}
-              onPress={async () => {
-                await setDraft($, { mode: 'light' })
-              }}
-            >
-              ☀ Light
-            </Button>
-          </Box>
+          {field(
+            'maker-accent',
+            'Accent',
+            '#d98a4e, rgb(217, 138, 78), hsl(26, 65%, 56%) or coral',
+            now.draft.accent,
+            setAccent,
+            setAccentDone,
+            Svg === undefined || draftAccent === '' ? null : (
+              <Svg
+                source={`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="${draftAccent}" stroke="#808080" stroke-opacity="0.5"/></svg>`}
+                alt={`Accent ${draftAccent}`}
+                width={14}
+                height={14}
+              />
+            ),
+          )}
+          {colorHint(now.draft.accent) === '' ? null : <Text dimColor>{colorHint(now.draft.accent)}</Text>}
           <Box gap={1} alignItems="center" flexWrap="wrap">
             <Button
               key="maker-save"
