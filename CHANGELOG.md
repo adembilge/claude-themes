@@ -2,6 +2,11 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.6.2] - 2026-11-19
+
+### Changed
+- Even smaller theme rows: the preview is 72 by 36, the color dots and the note share one line, the gaps are tighter, and the preview at the top is 288 by 144.
+
 ## [3.6.1] - 2026-11-19
 
 ### Changed

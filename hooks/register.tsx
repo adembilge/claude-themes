@@ -1496,7 +1496,7 @@ export const register: Register = on => {
         <Box
           key={`row-${section}-${p.id}`}
           alignItems="center"
-          gap="sm"
+          gap="xs"
           paddingX={1}
           borderStyle={isCurrent ? 'bold' : 'round'}
           borderColor={isCurrent ? p.accent : s3}
@@ -1504,7 +1504,7 @@ export const register: Register = on => {
           hover={{ borderColor: p.accent, backgroundColor: s1 }}
         >
           {Svg === undefined ? null : (
-            <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={96} height={48} />
+            <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={72} height={36} />
           )}
           <Box flexDirection="column" alignItems="center" flexGrow={1} gap="xs">
             {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so a button on a row sits on a plate of that same theme: it stays readable on a row of the other mode. */}
@@ -1513,16 +1513,18 @@ export const register: Register = on => {
                 <Text size="footnote">{`${isCurrent ? '✓ ' : ''}${p.name}`}</Text>
               </Button>
             </Box>
-            {Svg === undefined ? (
-              <Text>
-                {dots.map((c, i) => (
-                  <Text key={`dot${i}`} color={c}>●</Text>
-                ))}
-              </Text>
-            ) : (
-              <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={70} height={14} />
-            )}
-            <Text size="caption" color={p.text[2]}>{p.note}</Text>
+            <Box alignItems="center" gap="xs" flexWrap="wrap" justifyContent="center">
+              {Svg === undefined ? (
+                <Text>
+                  {dots.map((c, i) => (
+                    <Text key={`dot${i}`} color={c}>●</Text>
+                  ))}
+                </Text>
+              ) : (
+                <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={56} height={11} />
+              )}
+              <Text size="caption" color={p.text[2]}>{p.note}</Text>
+            </Box>
           </Box>
           <Box backgroundColor={c2}>
             <Button key={`fav-${section}-${p.id}`} onPress={star(p.id)}>
@@ -1554,7 +1556,7 @@ export const register: Register = on => {
             </Box>
           </Box>
         ) : (
-          <Svg source={previewSvg(curT, true)} alt={`${cur.name} preview`} width={360} height={180} />
+          <Svg source={previewSvg(curT, true)} alt={`${cur.name} preview`} width={288} height={144} />
         )}
         <Text weight="bold" color={cur.text[0]}>
           {now.off
