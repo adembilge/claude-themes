@@ -1705,14 +1705,13 @@ export const register: Register = on => {
           <Box gap={1} alignItems="center" flexWrap="wrap">
             <Button
               key="maker-save"
-              variant="primary"
               onPress={async () => {
                 await saveDraft($)
               }}
             >
               Save and apply
             </Button>
-            {now.msg === '' ? null : <Text color={good ? cur.roles.success : cur.roles.danger}>{now.msg}</Text>}
+            {now.msg === '' || /^(Copied|Could not copy)/.test(now.msg) ? null : <Text color={good ? cur.roles.success : cur.roles.danger}>{now.msg}</Text>}
           </Box>
         </Box>,
       )
@@ -1748,15 +1747,56 @@ export const register: Register = on => {
         ),
       )
 
+      const exportCard = card(
+        'share',
+        'Share',
+        <Box flexDirection="column" gap={1}>
+          <Text dimColor>Copy a link or a code for the theme you are on, to paste into the Import box on another computer.</Text>
+          <Box gap={1} flexWrap="wrap">
+            <Button
+              key="share-link"
+              onPress={async (press: { surface: string }) => {
+                await copyLink($, press.surface)
+              }}
+            >
+              Copy link
+            </Button>
+            <Button
+              key="share-copy"
+              onPress={async (press: { surface: string }) => {
+                await copyCode($, press.surface)
+              }}
+            >
+              Copy code
+            </Button>
+          </Box>
+          <Text dimColor>Export the theme you are on as a file for another tool; it is copied to the clipboard.</Text>
+          <Box gap={1} flexWrap="wrap">
+            {EXPORTS.map(f => (
+              <Button
+                key={`export-${f.id}`}
+                onPress={async (press: { surface: string }) => {
+                  await copyExport($, press.surface, f.id)
+                }}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </Box>
+          {/^(Copied|Could not copy)/.test(now.msg) ? <Text color={now.msg.startsWith('Copied') ? cur.roles.success : cur.roles.danger}>{now.msg}</Text> : null}
+        </Box>,
+      )
+
       return (
         <Box flexDirection="column" gap={1}>
           {guard('The maker', () => make)}
           {guard('My themes', () => mine)}
+          {guard('Share', () => exportCard)}
         </Box>
       )
     }
 
-    // The Appearance tab holds the look and behaviour cards; the Settings tab holds Import, Export, the folder theme, Reset and About.
+    // The Appearance tab holds the look and behaviour cards; the Settings tab holds Reset, Import, the folder theme and About.
     const settingsTab = (which: 'appearance' | 'settings') => () => {
       const c3 = cur.surfaces[3]
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1770,7 +1810,7 @@ export const register: Register = on => {
       const toggleRow = (key: string, title: string, about: string, isOn: boolean, toggle: () => Promise<void>, plain = false) => (
         <Box key={`row-${key}`} alignItems="center" gap={1}>
           <Box flexDirection="column" flexGrow={1}>
-            {plain ? <Text>{`${title}. ${about}`}</Text> : <Text weight="bold">{title}</Text>}
+            {plain ? <Text dimColor>{`${title}. ${about}`}</Text> : <Text weight="bold">{title}</Text>}
             {plain ? null : <Text dimColor>{about}</Text>}
           </Box>
           <Button key={key} variant={isOn ? 'primary' : 'secondary'} onPress={toggle}>
@@ -1792,7 +1832,7 @@ export const register: Register = on => {
           }, true)}
           {!now.backdrop ? null : (
             <Box flexDirection="column" gap={1}>
-              <Text dimColor>Style</Text>
+              <Text>Style</Text>
               <Box gap={1} flexWrap="wrap">
                 {GROUNDS.map(st => {
                   const selected = now.backdropStyle === st.value
@@ -1823,7 +1863,7 @@ export const register: Register = on => {
                   )
                 })}
               </Box>
-              <Text dimColor>Strength</Text>
+              <Text>Strength</Text>
               <Box gap={1} flexWrap="wrap">
                 {STRENGTHS.map(x => (
                   <Button
@@ -1872,13 +1912,13 @@ export const register: Register = on => {
         'import',
         'Import',
         <Box flexDirection="column" gap={1}>
-          <Text size="caption" dimColor>
+          <Text dimColor>
             Paste a code, a link, a web address of a theme file or the path of a file, and press Enter. VS Code themes, base16 or base24 schemes and terminal schemes (Windows Terminal, iTerm2) work too.
           </Text>
           {field('share-import', 'Code, link, web address or file path', 'Paste or type here, then press Enter', now.importText, setImport, runImport)}
           <Box flexDirection="column" gap={1}>
             <Text weight="bold">From VS Code</Text>
-            <Text size="caption" dimColor>Lists the color themes of the editors installed on this computer (VS Code, Cursor and others); one press adds a theme here.</Text>
+            <Text dimColor>Lists the color themes of the editors installed on this computer (VS Code, Cursor and others); one press adds a theme here.</Text>
             <Box gap={1} alignItems="center" flexWrap="wrap">
               <Button
                 key="vscode-scan"
@@ -1888,7 +1928,7 @@ export const register: Register = on => {
               >
                 Find my VS Code themes
               </Button>
-              {now.scanMsg === '' ? null : <Text size="caption" dimColor>{now.scanMsg}</Text>}
+              {now.scanMsg === '' ? null : <Text dimColor>{now.scanMsg}</Text>}
             </Box>
             {now.found.length === 0 ? null : (
               <Box flexDirection="column" gap={1}>
@@ -1912,45 +1952,6 @@ export const register: Register = on => {
                 {foundShown.length === 0 ? <Text dimColor>No theme matches that.</Text> : null}
               </Box>
             )}
-          </Box>
-        </Box>,
-      )
-
-      const exportCard = card(
-        'export',
-        'Export',
-        <Box flexDirection="column" gap={1}>
-          <Text size="caption" dimColor>Copy a link or a code for the theme you are on, to paste into the Import box on another computer.</Text>
-          <Box gap={1} flexWrap="wrap">
-            <Button
-              key="share-link"
-              onPress={async (press: { surface: string }) => {
-                await copyLink($, press.surface)
-              }}
-            >
-              Copy link
-            </Button>
-            <Button
-              key="share-copy"
-              onPress={async (press: { surface: string }) => {
-                await copyCode($, press.surface)
-              }}
-            >
-              Copy code
-            </Button>
-          </Box>
-          <Text size="caption" dimColor>Export the theme you are on as a file for another tool; it is copied to the clipboard.</Text>
-          <Box gap={1} flexWrap="wrap">
-            {EXPORTS.map(f => (
-              <Button
-                key={`export-${f.id}`}
-                onPress={async (press: { surface: string }) => {
-                  await copyExport($, press.surface, f.id)
-                }}
-              >
-                {f.label}
-              </Button>
-            ))}
           </Box>
         </Box>,
       )
@@ -2202,12 +2203,11 @@ export const register: Register = on => {
         return (
           <Box flexDirection="column" gap={1}>
             {now.msg === '' ? null : (
-              <Text color={/^(Saved|Copied|Deleted|Settings are|Everything|The app's own)/.test(now.msg) ? cur.roles.success : cur.roles.danger}>{now.msg}</Text>
+              <Text color={/^(Saved|Deleted|Settings are|Everything|The app's own)/.test(now.msg) ? cur.roles.success : cur.roles.danger}>{now.msg}</Text>
             )}
-            {guard('Import', () => importCard)}
-            {guard('Export', () => exportCard)}
-            {project === null ? null : guard('Theme for this folder', () => project)}
             {guard('Reset', () => reset)}
+            {guard('Import', () => importCard)}
+            {project === null ? null : guard('Theme for this folder', () => project)}
             {guard('About', () => about)}
           </Box>
         )

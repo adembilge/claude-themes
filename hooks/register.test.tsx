@@ -252,10 +252,11 @@ test('a theme code can be imported, and a bad code is explained', async ($, on) 
   for (const surface of SURFACES) {
     const ui = await $.ui.mount({ ...PANE, surface })
 
-    // Import and Export live on the Settings tab, not in the Maker.
+    // Import lives on the Settings tab and Share (the copy buttons) at the bottom of the Maker.
     await ui.press({ key: 'tab-maker' })
     expect(await ui.find({ key: 'share-import' })).toBeUndefined()
     await ui.press({ key: 'tab-settings' })
+    expect(await ui.find({ key: 'share-copy' })).toBeUndefined()
     // Anything that is not a code or link is read as a file or address, and says when it cannot be.
     await ui.input({ key: 'share-import', text: 'hello' })
     expect(await ui.find({ type: 'Text', text: /could not be read/ })).toBeDefined()
@@ -269,16 +270,16 @@ test('a theme code can be imported, and a bad code is explained', async ($, on) 
 
     await ui.input({ key: 'share-import', text: IMPORTED })
 
-    // The Export card offers the link, the code and each file format; the copy buttons answer either way and never break the pane.
+    await ui.press({ key: 'tab-maker' })
+    expect(await ui.find({ key: 'maker-del-my-imported-one' })).toBeDefined()
+    await ui.press({ key: 'maker-del-my-imported-one' })
+
+    // The Share card offers the link, the code and each file format; the copy buttons answer either way and never break the pane.
     for (const key of ['share-link', 'share-copy', 'export-vscode', 'export-base16', 'export-wt']) {
       expect(await ui.find({ key })).toBeDefined()
     }
     await ui.press({ key: 'share-copy' })
     expect(await ui.find({ key: 'share-copy' })).toBeDefined()
-
-    await ui.press({ key: 'tab-maker' })
-    expect(await ui.find({ key: 'maker-del-my-imported-one' })).toBeDefined()
-    await ui.press({ key: 'maker-del-my-imported-one' })
     await ui.press({ key: 'tab-dark' })
     await ui.unmount()
   }

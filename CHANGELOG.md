@@ -2,6 +2,14 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.7.1] - 2026-11-19
+
+### Changed
+- The Export card is now called Share and sits at the bottom of the Theme Maker tab. Settings holds Reset, Import, Theme for this folder and About, in that order.
+- The Import and Share descriptions are the same size as the other card descriptions.
+- Backdrop: the "Soft color behind the chat" line is drawn in the dimmer description color, and the Style and Strength labels in the normal color.
+- "Save and apply" in the Theme Maker is a regular button, no longer the filled one that looked selected.
+
 ## [3.7.0] - 2026-11-19
 
 ### Changed
