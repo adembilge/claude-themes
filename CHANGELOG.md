@@ -2,6 +2,11 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.6.3] - 2026-11-19
+
+### Changed
+- The theme rows are back to their 3.6.0 size and text: the smaller previews, footnote and caption text and tighter padding of 3.6.1 and 3.6.2 are undone, since the buttons did not shrink.
+
 ## [3.6.2] - 2026-11-19
 
 ### Changed

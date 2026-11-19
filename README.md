@@ -2,7 +2,7 @@
 
 Recolor the whole Claude desktop app, not just the chat area. 53 themes, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.6.2-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.6.3-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
