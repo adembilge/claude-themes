@@ -1496,22 +1496,21 @@ export const register: Register = on => {
         <Box
           key={`row-${section}-${p.id}`}
           alignItems="center"
-          gap={1}
-          padding={1}
+          gap="sm"
+          paddingX={1}
           borderStyle={isCurrent ? 'bold' : 'round'}
           borderColor={isCurrent ? p.accent : s3}
           backgroundColor={s0}
           hover={{ borderColor: p.accent, backgroundColor: s1 }}
         >
           {Svg === undefined ? null : (
-            <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={128} height={64} />
+            <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={96} height={48} />
           )}
-          <Box flexDirection="column" alignItems="center" flexGrow={1} gap={1}>
+          <Box flexDirection="column" alignItems="center" flexGrow={1} gap="xs">
             {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so a button on a row sits on a plate of that same theme: it stays readable on a row of the other mode. */}
             <Box backgroundColor={c2}>
               <Button key={`pick-${section}-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
-                {isCurrent ? '✓ ' : ''}
-                {p.name}
+                <Text size="footnote">{`${isCurrent ? '✓ ' : ''}${p.name}`}</Text>
               </Button>
             </Box>
             {Svg === undefined ? (
@@ -1521,13 +1520,13 @@ export const register: Register = on => {
                 ))}
               </Text>
             ) : (
-              <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={90} height={18} />
+              <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={70} height={14} />
             )}
-            <Text color={p.text[2]}>{p.note}</Text>
+            <Text size="caption" color={p.text[2]}>{p.note}</Text>
           </Box>
           <Box backgroundColor={c2}>
             <Button key={`fav-${section}-${p.id}`} onPress={star(p.id)}>
-              {isFav ? '★' : '☆'}
+              <Text size="footnote">{isFav ? '★' : '☆'}</Text>
             </Button>
           </Box>
         </Box>

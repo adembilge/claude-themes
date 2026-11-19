@@ -2,6 +2,11 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.6.1] - 2026-11-19
+
+### Changed
+- Smaller theme rows: the name and star are drawn in the footnote size, the note in caption size, the padding is tighter and the previews are smaller (96 by 48 and 70 by 14).
+
 ## [3.6.0] - 2026-11-19
 
 ### Removed
