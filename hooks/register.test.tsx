@@ -633,29 +633,36 @@ test('a theme file on this computer can be imported', async ($, on) => {
   await ui.unmount()
 })
 
-test('the Dark and Light buttons switch every theme to its other look', async ($, on) => {
+test('the Dark and Light buttons only change the list; a theme is applied when its row is pressed', async ($, on) => {
   const calls: string[] = []
   const stored: Record<string, unknown> = {}
   host(on, {}, calls, stored)
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
 
-  // GitHub has a dark and a light version under one name.
   await ui.press({ key: 'pick-all-github-dark' })
   expect(await ui.find({ type: 'Text', text: /Active: GitHub [(]dark[)]/ })).toBeDefined()
+  const before = calls.length
+
+  // Light shows every row in its light look, and nothing is applied or saved.
   await ui.press({ key: 'tab-light' })
+  expect(calls.length).toBe(before)
+  expect(stored.theme).toBe('github-dark')
+  expect(await ui.find({ type: 'Text', text: /Active: GitHub [(]dark[)]/ })).toBeDefined()
+  expect(await ui.find({ key: 'pick-all-github-light' })).toBeDefined()
+  expect(await ui.find({ key: 'pick-all-github-dark' })).toBeUndefined()
+  expect(await ui.find({ key: 'pick-all-dracula~alt' })).toBeDefined()
+  expect(await ui.find({ key: 'pick-all-dracula' })).toBeUndefined()
+
+  // Pressing a row applies that look.
+  await ui.press({ key: 'pick-all-github-light' })
   expect(await ui.find({ type: 'Text', text: /Active: GitHub [(]light[)]/ })).toBeDefined()
   expect(stored.theme).toBe('github-light')
-  await ui.press({ key: 'tab-dark' })
-  expect(await ui.find({ type: 'Text', text: /Active: GitHub [(]dark[)]/ })).toBeDefined()
-  expect(stored.theme).toBe('github-dark')
 
-  // Dracula only has a dark look by hand: Light shows a light look made from it, Dark brings the original back.
-  await ui.press({ key: 'pick-all-dracula' })
-  await ui.press({ key: 'tab-light' })
-  expect(await ui.find({ type: 'Text', text: /Active: Dracula [(]light[)]/ })).toBeDefined()
-  expect(stored.theme).toBe('dracula~alt')
+  // Dark brings the dark rows back, again without applying.
   await ui.press({ key: 'tab-dark' })
+  expect(await ui.find({ type: 'Text', text: /Active: GitHub [(]light[)]/ })).toBeDefined()
+  await ui.press({ key: 'pick-all-dracula' })
   expect(await ui.find({ type: 'Text', text: /Active: Dracula [(]dark[)]/ })).toBeDefined()
   expect(stored.theme).toBe('dracula')
   await ui.unmount()

@@ -2,6 +2,11 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.10.1] - 2026-11-19
+
+### Changed
+- The Dark and Light buttons no longer switch the theme you are on. They only change how the list is drawn (each theme in its dark or its light look); a theme is applied when its row is pressed. The "Active:" line and the ✓ stay on the look that is really in use.
+
 ## [3.10.0] - 2026-11-19
 
 ### Changed

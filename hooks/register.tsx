@@ -3,7 +3,7 @@ import type { Register, ThemeSetArgs } from 'claude-code'
 
 import { colorHint, parseColor } from './color.js'
 import { altLooks } from './flip.js'
-import { displayName, familyCount, findFamily, hasPair, inMode } from './families.js'
+import { displayName, familyCount, findFamily, hasPair } from './families.js'
 import { EXPORTS, exportFileName, exportTheme, formatOf } from './export.js'
 import type { ExportFormat } from './export.js'
 import { listVsCodeThemes, parseVsCode, vsCodeExtensionRoots } from './import.js'
@@ -1486,14 +1486,10 @@ export const register: Register = on => {
     const goTab = (t: Tab) => async () => {
       await patch($, { tab: t, confirm: '', msg: '' })
     }
-    // The Dark and Light buttons also switch the theme you are on to its other version, when it has one.
+    // The Dark and Light buttons only change how the list is drawn (each theme in its dark or its light look);
+    // nothing is applied until a row is pressed.
     const goMode = (mode: Mode) => async () => {
       await patch($, { tab: mode, confirm: '', msg: '' })
-      const other = inMode(all, cur, mode)
-
-      if (other !== undefined && other.id !== now.id && !now.off && !now.follow) {
-        await apply($, other.id, true)
-      }
     }
 
     const star = (id: string) => async () => {

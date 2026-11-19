@@ -2,7 +2,7 @@
 
 Recolor the whole Claude desktop app, not just the chat area. 41 themes, each in dark and light, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.10.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.10.1-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -18,7 +18,7 @@ Restart the session, then type `/claude-themes`.
 ## What you get
 
 - **A gallery pane.** `/claude-themes` opens it. The top shows the current theme as a drawn preview under an animated band in its colors. Below, each theme has a small preview, one name, color dots and a short note.
-- **One name, two looks.** Every theme is in one list, under one name, and has a dark and a light look. The Dark and Light buttons show the whole list in that look, and also switch the theme you are on to its other look, so GitHub Dark becomes GitHub Light. Twelve themes (GitHub, Catppuccin, Gruvbox and nine more) have both looks made by hand; for the others (Dracula, Notion and the rest) the other look is made from the original by turning its lightness over and keeping the hues. Picking a theme sets the app to its mode.
+- **One name, two looks.** Every theme is in one list, under one name, and has a dark and a light look. The Dark and Light buttons only change how the list is drawn, each theme in its dark or its light look; nothing is applied until you press a row, so pressing Light and then GitHub gives GitHub Light. Twelve themes (GitHub, Catppuccin, Gruvbox and nine more) have both looks made by hand; for the others (Dracula, Notion and the rest) the other look is made from the original by turning its lightness over and keeping the hues. Picking a theme sets the app to its mode.
 - **Tabs, search and favorites.** Dark and Light (the main page), Favorites, Maker, Appearance (backdrop, tuning, readability, day and night) and Settings (VS Code import, folder theme, reset, about). Search filters by name or note; the star adds a theme to Favorites.
 - **Switch from the prompt.** `/claude-themes dracula` changes theme without opening the pane. A name follows the mode you are in (`/claude-themes github`); `github light` and `github dark` name a look.
 
