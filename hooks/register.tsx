@@ -2,6 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { Register, ThemeSetArgs } from 'claude-code'
 
 import { colorHint, parseColor } from './color.js'
+import { displayName, familyCount, findFamily, inMode } from './families.js'
 import { EXPORTS, exportFileName, exportTheme, formatOf } from './export.js'
 import type { ExportFormat } from './export.js'
 import { listVsCodeThemes, parseVsCode, vsCodeExtensionRoots } from './import.js'
@@ -908,7 +909,7 @@ async function runAuto($: any, force: boolean): Promise<void> {
 
     // Only a switch the clock made on its own is announced, not one the person just asked for.
     if (!force) {
-      say($, `Day and night: switched to ${next.name}.`)
+      say($, `Day and night: switched to ${displayName(next)}.`)
     }
   }
 }
@@ -1283,9 +1284,12 @@ const MAX_OPTIONS = 64
  * The choices for a theme picker. The app's Select takes at most 64, so a long list keeps the chosen
  * theme, the favorites, your own themes and the preferred mode first, then fills up in the gallery's order.
  */
+/** A theme as a picker shows it: its gallery name and a mark for its mode (☾ dark, ☀ light). */
+const optionLabel = (p: Theme): string => `${displayName(p)} ${p.mode === 'dark' ? '☾' : '☀'}`
+
 function themeOptions(list: Theme[], selected: string, favs: string[], prefer?: Mode): { value: string; label: string }[] {
   if (list.length <= MAX_OPTIONS) {
-    return list.map(p => ({ value: p.id, label: p.name }))
+    return list.map(p => ({ value: p.id, label: optionLabel(p) }))
   }
   const chosen = new Set<string>()
   const add = (p: Theme | undefined) => {
@@ -1300,7 +1304,7 @@ function themeOptions(list: Theme[], selected: string, favs: string[], prefer?: 
   list.filter(p => prefer === undefined || p.mode === prefer).forEach(add)
   list.forEach(add)
 
-  return list.filter(p => chosen.has(p.id)).map(p => ({ value: p.id, label: p.name }))
+  return list.filter(p => chosen.has(p.id)).map(p => ({ value: p.id, label: optionLabel(p) }))
 }
 
 /** Copies the current theme (with its tuning) as another tool's theme file. */
@@ -1355,7 +1359,7 @@ export const register: Register = on => {
 
     if (!here.follow && mine !== undefined && mine.id !== here.id) {
       await apply($, mine.id, false)
-      say($, `This folder: using ${mine.name}.`)
+      say($, `This folder: using ${displayName(mine)}.`)
     }
 
     return next(e)
@@ -1434,12 +1438,17 @@ export const register: Register = on => {
       const mine = state.custom
       const found = themeById(want, mine)
 
-      if (found === undefined) {
-        return { text: `No theme called "${args}". Try: ${[...THEMES, ...mine].map(p => p.id).join(', ')}` }
-      }
-      await apply($, found.id, true)
+      const family = findFamily([...THEMES, ...mine], args)
+      const now0 = themeById(state.id, mine)
+      // A name that has both versions follows the mode you are in; a name with one version, or an exact id, is taken as it is.
+      const chosen = (family.length > 1 ? family.find(t => t.mode === now0?.mode) : undefined) ?? found ?? family[0]
 
-      return { text: `Theme: ${found.name} (${found.mode})` }
+      if (chosen === undefined) {
+        return { text: `No theme called "${args}". Try: ${[...new Set([...THEMES, ...mine].map(displayName))].join(', ')}` }
+      }
+      await apply($, chosen.id, true)
+
+      return { text: `Theme: ${displayName(chosen)} (${chosen.mode})` }
     }
     await $.ui.open({ id: PANE, title: 'Claude Themes' })
 
@@ -1463,13 +1472,22 @@ export const register: Register = on => {
     const [c0, c1, c2] = cur.surfaces
     const tab: Tab = now.tab === 'light' || now.tab === 'settings' || now.tab === 'appearance' || now.tab === 'favorites' || now.tab === 'maker' ? now.tab : 'dark'
     const q = now.q.trim().toLowerCase()
-    const matches = (p: Theme) => q === '' || `${p.name} ${p.note} ${p.id} ${p.mode}`.toLowerCase().includes(q)
+    const matches = (p: Theme) => q === '' || `${displayName(p)} ${p.name} ${p.note} ${p.id} ${p.mode}`.toLowerCase().includes(q)
 
     const pick = (id: string) => async () => {
       await apply($, id, true)
     }
     const goTab = (t: Tab) => async () => {
       await patch($, { tab: t, confirm: '', msg: '' })
+    }
+    // The Dark and Light buttons also switch the theme you are on to its other version, when it has one.
+    const goMode = (mode: Mode) => async () => {
+      await patch($, { tab: mode, confirm: '', msg: '' })
+      const other = inMode(all, cur, mode)
+
+      if (other !== undefined && other.id !== now.id && !now.off && !now.follow) {
+        await apply($, other.id, true)
+      }
     }
 
     const star = (id: string) => async () => {
@@ -1504,14 +1522,15 @@ export const register: Register = on => {
           hover={{ borderColor: p.accent, backgroundColor: s1 }}
         >
           {Svg === undefined ? null : (
-            <Svg source={previewSvg(p, false)} alt={`${p.name} preview`} width={128} height={64} />
+            <Svg source={previewSvg(p, false)} alt={`${displayName(p)} preview`} width={128} height={64} />
           )}
           <Box flexDirection="column" alignItems="center" flexGrow={1} gap={1}>
             {/* The desktop draws a Button in the app's current theme and ignores a Text color inside it, so a button on a row sits on a plate of that same theme: it stays readable on a row of the other mode. */}
             <Box backgroundColor={c2}>
               <Button key={`pick-${section}-${p.id}`} variant={isCurrent ? 'primary' : 'secondary'} onPress={pick(p.id)}>
                 {isCurrent ? '✓ ' : ''}
-                {p.name}
+                {displayName(p)}
+                {section === 'fav' ? ` ${p.mode === 'dark' ? '☾' : '☀'}` : ''}
               </Button>
             </Box>
             {Svg === undefined ? (
@@ -1521,7 +1540,7 @@ export const register: Register = on => {
                 ))}
               </Text>
             ) : (
-              <Svg source={dotsSvg(p)} alt={`${p.name} colors`} width={90} height={18} />
+              <Svg source={dotsSvg(p)} alt={`${displayName(p)} colors`} width={90} height={18} />
             )}
             <Text size="caption" color={p.text[2]}>{p.note}</Text>
           </Box>
@@ -1555,14 +1574,14 @@ export const register: Register = on => {
             </Box>
           </Box>
         ) : (
-          <Svg source={previewSvg(curT, true)} alt={`${cur.name} preview`} width={360} height={180} />
+          <Svg source={previewSvg(curT, true)} alt={`${displayName(cur)} preview`} width={360} height={180} />
         )}
         <Text weight="bold" color={cur.text[0]}>
           {now.off
             ? "Active: the app's own look"
             : now.follow
-              ? `Following the system: ${byId(now.auto.day)?.name ?? 'day'} by day, ${byId(now.auto.night)?.name ?? 'night'} by night`
-              : `Active: ${cur.name} (${cur.mode})${isTuned(now.tunes[cur.id] ?? NO_TUNE) ? ', tuned' : ''}`}
+              ? `Following the system: ${byId(now.auto.day) === undefined ? 'day' : displayName(byId(now.auto.day)!)} by day, ${byId(now.auto.night) === undefined ? 'night' : displayName(byId(now.auto.night)!)} by night`
+              : `Active: ${displayName(cur)} (${cur.mode})${isTuned(now.tunes[cur.id] ?? NO_TUNE) ? ', tuned' : ''}`}
         </Text>
       </Box>
     )
@@ -1963,7 +1982,7 @@ export const register: Register = on => {
 
       const tune = card(
         'tune',
-        `Tune ${cur.name}`,
+        `Tune ${displayName(cur)}`,
         <Box flexDirection="column" gap={1}>
           <Box flexWrap="wrap" gap={1}>
             {TUNE_AXES.map(ax => {
@@ -2166,7 +2185,7 @@ export const register: Register = on => {
               'Theme for this folder',
               <Box flexDirection="column" gap={1}>
                 <Text dimColor>
-                  {`This folder: ${mineHere === undefined ? 'no theme of its own yet.' : `uses ${mineHere.name} whenever a session starts here.`}`}
+                  {`This folder: ${mineHere === undefined ? 'no theme of its own yet.' : `uses ${displayName(mineHere)} whenever a session starts here.`}`}
                 </Text>
                 <Box gap={1} flexWrap="wrap">
                   <Button
@@ -2175,7 +2194,7 @@ export const register: Register = on => {
                       await setProject($, now.id)
                     }}
                   >
-                    {`Use ${cur.name} in this folder`}
+                    {`Use ${displayName(cur)} in this folder`}
                   </Button>
                   {mineHere === undefined ? null : (
                     <Button
@@ -2196,7 +2215,7 @@ export const register: Register = on => {
         'About',
         <Box flexDirection="column" gap={1}>
           <Text dimColor>
-            {`Claude Themes: ${all.length} themes${now.custom.length === 0 ? '' : `, ${now.custom.length} of them yours`}.`}
+            {`Claude Themes: ${familyCount(all)} themes${now.custom.length === 0 ? '' : `, ${now.custom.length} of them yours`}.`}
           </Text>
           <Text dimColor>
             Documents and source code: <Link href={REPO_URL}>{REPO_URL}</Link>
@@ -2235,17 +2254,17 @@ export const register: Register = on => {
           {Svg === undefined ? null : (
             <Svg source={bannerSvg(cur)} alt="Animated band in the current theme's colors" width={264} height={30} />
           )}
-          <Text dimColor>{all.length} themes. Each one sets the app to its own dark or light look.</Text>
+          <Text dimColor>{familyCount(all)} themes. Each one sets the app to its own dark or light look.</Text>
         </Box>
 
         {guard('The current theme', () => hero)}
 
 
         <Box gap={1} flexWrap="wrap">
-          <Button key="tab-dark" variant={tab === 'dark' ? 'primary' : 'secondary'} onPress={goTab('dark')}>
+          <Button key="tab-dark" variant={tab === 'dark' ? 'primary' : 'secondary'} onPress={goMode('dark')}>
             ☾ Dark
           </Button>
-          <Button key="tab-light" variant={tab === 'light' ? 'primary' : 'secondary'} onPress={goTab('light')}>
+          <Button key="tab-light" variant={tab === 'light' ? 'primary' : 'secondary'} onPress={goMode('light')}>
             ☀ Light
           </Button>
           <Button key="tab-favorites" variant={tab === 'favorites' ? 'primary' : 'secondary'} onPress={goTab('favorites')}>

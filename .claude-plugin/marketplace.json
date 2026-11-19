@@ -9,7 +9,7 @@
     {
       "name": "desktop-themes",
       "source": "./",
-      "description": "Recolor the whole Claude desktop app: 53 dark and light themes, import from VS Code, base16 and two terminal formats, export to three, seven tuning dials, follow the system's light and dark, and a gallery with live previews."
+      "description": "Recolor the whole Claude desktop app: 41 themes in dark and light, import from VS Code, base16 and two terminal formats, export to three, seven tuning dials, follow the system's light and dark, and a gallery with live previews."
     }
   ]
 }

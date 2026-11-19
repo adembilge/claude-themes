@@ -77,9 +77,13 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
     // The Dark tab opens first, and each theme is one press; the Light tab holds the light ones.
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
     expect(await ui.find({ type: 'Button', text: /Espresso/ })).toBeDefined()
-    expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeUndefined()
+    // One GitHub row in each mode, never "GitHub Light" or "GitHub Dark".
+    expect(await ui.find({ type: 'Button', text: /GitHub/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /GitHub (Light|Dark)/ })).toBeUndefined()
+    expect(await ui.find({ type: 'Button', text: /Solarized (Light|Dark)/ })).toBeUndefined()
     await ui.press({ key: 'tab-light' })
-    expect(await ui.find({ type: 'Button', text: /GitHub Light/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /GitHub/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /GitHub (Light|Dark)/ })).toBeUndefined()
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeUndefined()
     await ui.press({ key: 'tab-dark' })
 
@@ -356,7 +360,7 @@ test('day and night applies the theme for the hour, and changes with the hours',
     await ui.select({ key: 'auto-day', value: 'github-light' })
     await ui.select({ key: 'auto-from', value: '0' })
     await ui.select({ key: 'auto-to', value: '0' })
-    expect(await ui.find({ type: 'Text', text: /Active: GitHub Light/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /Active: GitHub [(]light[)]/ })).toBeDefined()
 
     // Hours that start next hour make it night now.
     const h = new Date().getHours()
@@ -519,7 +523,7 @@ test('reset: the app look, settings and everything each work, and the last two a
   await ui.press({ key: 'reset-all' })
   expect(await labelOf(ui, 'reset-all')).toContain('Press again')
   await ui.press({ key: 'reset-all' })
-  expect(await ui.find({ type: 'Text', text: /Active: Catppuccin Mocha/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /Active: Catppuccin/ })).toBeDefined()
   await ui.unmount()
 })
 
@@ -560,7 +564,7 @@ test('tuning steps shift one theme, say so, and reset', async ($, on) => {
   await ui.press({ key: 'tune-warmth-up' })
   await ui.press({ key: 'tune-warmth-up' })
   expect(calls[calls.length - 1]).not.toBe(plain)
-  expect(await ui.find({ type: 'Text', text: /Active: Catppuccin Mocha \(dark\), tuned/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /Active: Catppuccin \(dark\), tuned/ })).toBeDefined()
 
   // More dials than warmth: each reaches the theme.
   for (const dial of ['tint', 'accent', 'status']) {
@@ -625,4 +629,54 @@ test('a theme file on this computer can be imported', async ($, on) => {
   await ui.press({ key: 'tab-maker' })
   expect(await ui.find({ key: 'maker-del-my-dracula-pro' })).toBeDefined()
   await ui.unmount()
+})
+
+test('the Dark and Light buttons switch a theme to its other version, and leave a one-mode theme alone', async ($, on) => {
+  const calls: string[] = []
+  const stored: Record<string, unknown> = {}
+  host(on, {}, calls, stored)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  // GitHub has a dark and a light version under one name.
+  await ui.press({ key: 'pick-all-github-dark' })
+  expect(await ui.find({ type: 'Text', text: /Active: GitHub [(]dark[)]/ })).toBeDefined()
+  await ui.press({ key: 'tab-light' })
+  expect(await ui.find({ type: 'Text', text: /Active: GitHub [(]light[)]/ })).toBeDefined()
+  expect(stored.theme).toBe('github-light')
+  await ui.press({ key: 'tab-dark' })
+  expect(await ui.find({ type: 'Text', text: /Active: GitHub [(]dark[)]/ })).toBeDefined()
+  expect(stored.theme).toBe('github-dark')
+
+  // Dracula has no light version: the button shows the light list and keeps Dracula.
+  await ui.press({ key: 'pick-all-dracula' })
+  await ui.press({ key: 'tab-light' })
+  expect(await ui.find({ type: 'Text', text: /Active: Dracula [(]dark[)]/ })).toBeDefined()
+  expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeUndefined()
+  await ui.press({ key: 'tab-dark' })
+  expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('a theme can be named without its mode on the command line', async ($, on) => {
+  const stored: Record<string, unknown> = {}
+  host(on, {}, [], stored)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  const run = (args: string) =>
+    $.command.run({ command: 'claude-themes', args, origin: { kind: 'composer' }, presentation: { isFullscreen: false, columns: 80 } })
+
+  // On a dark theme, "github" means the dark version; after a light one, the light version.
+  await run('github')
+  expect(stored.theme).toBe('github-dark')
+  await run('github light')
+  expect(stored.theme).toBe('github-light')
+  await run('rose pine')
+  expect(stored.theme).toBe('rose-pine-dawn')
+  await run('dracula')
+  expect(stored.theme).toBe('dracula')
+  const result = await run('nonsense')
+
+  expect(String(result.text)).toContain('No theme called')
+  expect(String(result.text)).not.toMatch(/github-light|github-dark/)
 })

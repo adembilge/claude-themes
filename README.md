@@ -1,8 +1,8 @@
 # claude-themes
 
-Recolor the whole Claude desktop app, not just the chat area. 53 themes, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
+Recolor the whole Claude desktop app, not just the chat area. 41 themes (53 looks), a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.8.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.9.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -17,28 +17,20 @@ Restart the session, then type `/claude-themes`.
 
 ## What you get
 
-- **A gallery pane.** `/claude-themes` opens it. The top shows the current theme as a drawn preview under an animated band in its colors. Below, each theme has a small preview, a name, color dots and a short note.
-- **Themes set their own mode.** Pick a dark theme and the app goes dark; pick a light one and it goes light. There are no separate Dark, Light or Auto buttons.
-- **Tabs, search and favorites.** Dark, Light, Favorites, Maker, Appearance (backdrop, tuning, readability, day and night) and Settings (VS Code import, folder theme, reset, about). Search filters by name or note; the star adds a theme to Favorites.
-- **Switch from the prompt.** `/claude-themes dracula` changes theme without opening the pane.
+- **A gallery pane.** `/claude-themes` opens it. The top shows the current theme as a drawn preview under an animated band in its colors. Below, each theme has a small preview, one name, color dots and a short note.
+- **One name, two looks.** A theme that comes in both modes (GitHub, Catppuccin, Gruvbox and nine more) appears once, under one name. The Dark and Light buttons show the themes that have that look; pressing one also switches the theme you are on to its other version, so GitHub Dark becomes GitHub Light. A theme with only one look (Dracula, Notion) stays as it is. Picking a theme sets the app to its mode.
+- **Tabs, search and favorites.** Dark and Light (the main page), Favorites, Maker, Appearance (backdrop, tuning, readability, day and night) and Settings (VS Code import, folder theme, reset, about). Search filters by name or note; the star adds a theme to Favorites.
+- **Switch from the prompt.** `/claude-themes dracula` changes theme without opening the pane. A name with two looks, such as `/claude-themes github`, follows the mode you are in; `github light` and `github dark` name one.
 
 ## Themes
 
-53 themes: 38 classics and 15 more from popular families (Nightfox, Kanagawa, Poimandres, Cobalt2 and others). Palettes are the published ones, with small shifts to the lightest surface and the muted text where the app would otherwise refuse them (it rejects text that is too faint).
+41 themes in 53 looks. Palettes are the published ones, with small shifts to the lightest surface and the muted text where the app would otherwise refuse them (it rejects text that is too faint).
 
-| Dark | Light |
-|---|---|
-| Catppuccin Mocha (default) | Catppuccin Latte |
-| Espresso, Dracula, Nord, Monokai | GitHub Light, Solarized Light, Xcode, Notion |
-| Tokyo Night | Tokyo Night Day, One Light |
-| Gruvbox Dark | Gruvbox Light |
-| One Dark, Rosé Pine | Rosé Pine Dawn, Ayu Light |
-| Solarized Dark, GitHub Dark | Everforest Light |
-| Ayu Dark, Ayu Mirage, Everforest | Dawnfox, Dayfox, Kanagawa Lotus |
-| Material Ocean, Kanagawa Dragon | Oceanic Next Light, Bluloco Light |
-| Nightfox, Carbonfox, Synthwave, Matrix, Night Owl | Night Owl Light |
-| Cobalt2, Palenight, Poimandres, Vesper, Houston | |
-| Absolutely, Linear, Lobster, OG, Oscurange, Raycast, Sentry, Temple, Vercel, VS Code Plus | |
+**Dark and light** (one name, two looks): Catppuccin, GitHub, Solarized, Gruvbox, One, Rosé Pine, Tokyo Night, Ayu, Everforest, Night Owl, Nightfox (with Dayfox), Kanagawa (Dragon and Lotus).
+
+**Dark only:** Espresso, Dracula, Nord, Monokai, Material Ocean, Synthwave, Absolutely, Linear, Lobster, Matrix, OG, Oscurange, Raycast, Sentry, Temple, Vercel, VS Code Plus, Carbonfox, Poimandres, Cobalt2, Palenight, Ayu Mirage, Vesper, Houston.
+
+**Light only:** Notion, Xcode, Dawnfox, Oceanic Next, Bluloco.
 
 ## Make your own
 
@@ -113,6 +105,7 @@ claude plugin test .
 | `hooks/terminal.ts` | Windows Terminal and iTerm2 readers |
 | `hooks/export.ts` | The three exporters |
 | `hooks/color.ts` | Reads typed colors (hex, rgb, hsl, names) |
+| `hooks/families.ts` | Which themes are two looks of one name |
 | `hooks/tune.ts` | The seven tuning dials |
 | `hooks/share.ts` | Share links |
 | `hooks/packs.ts` | The 25 extra built-in themes |

@@ -2,6 +2,13 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.9.0] - 2026-11-19
+
+### Changed
+- Dark and light themes are combined: a theme that comes in both modes shows one name in the gallery (GitHub, Catppuccin, Solarized, Gruvbox, One, Rosé Pine, Tokyo Night, Ayu, Everforest, Night Owl, Nightfox, Kanagawa). The Dark and Light buttons show the themes that have that look and also switch the theme you are on to its other version. A theme with one look stays as it is.
+- No gallery name says Light or Dark any more ("Oceanic Next Light" is "Oceanic Next"); your own themes keep their names. Pickers and notices use the same names, with ☾ or ☀ where both looks could be meant.
+- `/claude-themes github` picks the version for the mode you are in; `github light` and `github dark` still name one. The count reads 41 themes instead of 53.
+
 ## [3.8.0] - 2026-11-19
 
 ### Added
