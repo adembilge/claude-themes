@@ -2,6 +2,16 @@
 
 All notable changes to claude-themes (the `desktop-themes` plugin). Versions follow [Semantic Versioning](https://semver.org/); the format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.10.0] - 2026-11-19
+
+### Changed
+- Every theme is in one list and has a dark and a light look. The Dark and Light buttons show the same list in that look (no theme is missing from either), and still switch the theme you are on to its other look.
+- A theme that has only one hand-made look gets the other made from it: the hues stay, the lightness is turned over, and the result goes through the same contrast checks and the same fix-up as every other palette. Twelve themes still have both looks by hand.
+- `/claude-themes dracula light` and `dracula dark` work for every theme.
+
+### Notes
+- Made looks have no matching code-highlighting theme, so the app keeps its own for them. Your own themes (Maker, imports) are single-look and show only under their own button.
+
 ## [3.9.0] - 2026-11-19
 
 ### Changed

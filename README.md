@@ -1,8 +1,8 @@
 # claude-themes
 
-Recolor the whole Claude desktop app, not just the chat area. 41 themes (53 looks), a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
+Recolor the whole Claude desktop app, not just the chat area. 41 themes, each in dark and light, a gallery where you preview each one before you pick it, a theme maker, seven tuning dials, and import and export for the tools you already use.
 
-![version](https://img.shields.io/badge/version-3.9.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-3.10.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
 
@@ -18,19 +18,17 @@ Restart the session, then type `/claude-themes`.
 ## What you get
 
 - **A gallery pane.** `/claude-themes` opens it. The top shows the current theme as a drawn preview under an animated band in its colors. Below, each theme has a small preview, one name, color dots and a short note.
-- **One name, two looks.** A theme that comes in both modes (GitHub, Catppuccin, Gruvbox and nine more) appears once, under one name. The Dark and Light buttons show the themes that have that look; pressing one also switches the theme you are on to its other version, so GitHub Dark becomes GitHub Light. A theme with only one look (Dracula, Notion) stays as it is. Picking a theme sets the app to its mode.
+- **One name, two looks.** Every theme is in one list, under one name, and has a dark and a light look. The Dark and Light buttons show the whole list in that look, and also switch the theme you are on to its other look, so GitHub Dark becomes GitHub Light. Twelve themes (GitHub, Catppuccin, Gruvbox and nine more) have both looks made by hand; for the others (Dracula, Notion and the rest) the other look is made from the original by turning its lightness over and keeping the hues. Picking a theme sets the app to its mode.
 - **Tabs, search and favorites.** Dark and Light (the main page), Favorites, Maker, Appearance (backdrop, tuning, readability, day and night) and Settings (VS Code import, folder theme, reset, about). Search filters by name or note; the star adds a theme to Favorites.
-- **Switch from the prompt.** `/claude-themes dracula` changes theme without opening the pane. A name with two looks, such as `/claude-themes github`, follows the mode you are in; `github light` and `github dark` name one.
+- **Switch from the prompt.** `/claude-themes dracula` changes theme without opening the pane. A name follows the mode you are in (`/claude-themes github`); `github light` and `github dark` name a look.
 
 ## Themes
 
-41 themes in 53 looks. Palettes are the published ones, with small shifts to the lightest surface and the muted text where the app would otherwise refuse them (it rejects text that is too faint).
+41 themes. Palettes are the published ones, with small shifts to the lightest surface and the muted text where the app would otherwise refuse them (it rejects text that is too faint).
 
-**Dark and light** (one name, two looks): Catppuccin, GitHub, Solarized, Gruvbox, One, Rosé Pine, Tokyo Night, Ayu, Everforest, Night Owl, Nightfox (with Dayfox), Kanagawa (Dragon and Lotus).
+**Both looks made by hand:** Catppuccin, GitHub, Solarized, Gruvbox, One, Rosé Pine, Tokyo Night, Ayu, Everforest, Night Owl, Nightfox (with Dayfox), Kanagawa (Dragon and Lotus).
 
-**Dark only:** Espresso, Dracula, Nord, Monokai, Material Ocean, Synthwave, Absolutely, Linear, Lobster, Matrix, OG, Oscurange, Raycast, Sentry, Temple, Vercel, VS Code Plus, Carbonfox, Poimandres, Cobalt2, Palenight, Ayu Mirage, Vesper, Houston.
-
-**Light only:** Notion, Xcode, Dawnfox, Oceanic Next, Bluloco.
+**Made from one look:** Espresso, Dracula, Nord, Monokai, Material Ocean, Synthwave, Absolutely, Linear, Lobster, Matrix, OG, Oscurange, Raycast, Sentry, Temple, Vercel, VS Code Plus, Carbonfox, Poimandres, Cobalt2, Palenight, Ayu Mirage, Vesper, Houston, Notion, Xcode, Dawnfox, Oceanic Next, Bluloco. The other look keeps the original's hues, turns the lightness over, and goes through the same contrast checks as every other theme.
 
 ## Make your own
 
@@ -106,6 +104,7 @@ claude plugin test .
 | `hooks/export.ts` | The three exporters |
 | `hooks/color.ts` | Reads typed colors (hex, rgb, hsl, names) |
 | `hooks/families.ts` | Which themes are two looks of one name |
+| `hooks/flip.ts` | Makes the other look of a theme that has one |
 | `hooks/tune.ts` | The seven tuning dials |
 | `hooks/share.ts` | Share links |
 | `hooks/packs.ts` | The 25 extra built-in themes |

@@ -1,3 +1,4 @@
+import { ALT_SUFFIX } from './flip.js'
 import type { Theme } from './model.js'
 
 // Themes that come in a dark and a light version share one name in the gallery ("GitHub"); the Dark and Light
@@ -44,11 +45,17 @@ export function displayName(t: Theme): string {
   return t.name.replace(/\s+(Light|Dark)$/i, '') || t.name
 }
 
-/** The same theme in the other mode, when it has one. */
-export function counterpart(themes: Theme[], t: Theme): Theme | undefined {
-  const id = PARTNER_OF.get(t.id)
+/** True for a theme that comes as a pair of two hand-made looks (GitHub Dark and GitHub Light). */
+export const hasPair = (t: Theme): boolean => PARTNER_OF.has(t.id)
 
-  return id === undefined ? undefined : themes.find(x => x.id === id)
+/**
+ * The same theme in the other mode, when it has one: the other half of its pair, or the look made from it
+ * (a theme without a pair has a made twin whose id ends in "~alt").
+ */
+export function counterpart(themes: Theme[], t: Theme): Theme | undefined {
+  const id = PARTNER_OF.get(t.id) ?? (t.id.endsWith(ALT_SUFFIX) ? t.id.slice(0, -ALT_SUFFIX.length) : `${t.id}${ALT_SUFFIX}`)
+
+  return themes.find(x => x.id === id)
 }
 
 /** The version of a family in a mode (the theme itself when it already is that mode). */

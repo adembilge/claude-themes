@@ -2,7 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { Register, ThemeSetArgs } from 'claude-code'
 
 import { colorHint, parseColor } from './color.js'
-import { displayName, familyCount, findFamily, inMode } from './families.js'
+import { altLooks } from './flip.js'
+import { displayName, familyCount, findFamily, hasPair, inMode } from './families.js'
 import { EXPORTS, exportFileName, exportTheme, formatOf } from './export.js'
 import type { ExportFormat } from './export.js'
 import { listVsCodeThemes, parseVsCode, vsCodeExtensionRoots } from './import.js'
@@ -171,8 +172,11 @@ const BASE_THEMES: Theme[] = [
     ['#d12f1b', '#1f8a50', '#a36b00', '#9b2393']),
 ]
 
-/** The built-ins: the hand-set themes and the packs. */
-const THEMES: Theme[] = [...BASE_THEMES, ...PACKS]
+/** The hand-set themes and the packs. */
+const HAND_MADE: Theme[] = [...BASE_THEMES, ...PACKS]
+
+/** The built-ins: the hand-made looks, and for each theme that has only one, a made look in the other mode, so every theme has a dark and a light version. */
+const THEMES: Theme[] = [...HAND_MADE, ...altLooks(HAND_MADE, hasPair)]
 
 const BY_ID = new Map(THEMES.map(t => [t.id, t]))
 const DEFAULT = (BY_ID.get(DEFAULT_THEME) ?? THEMES[0])!
@@ -1438,10 +1442,12 @@ export const register: Register = on => {
       const mine = state.custom
       const found = themeById(want, mine)
 
-      const family = findFamily([...THEMES, ...mine], args)
+      // "github light" names a look; "github" follows the mode you are in; an exact id is taken as it is.
+      const word = /\s+(dark|light)$/i.exec(args)
+      const family = findFamily([...THEMES, ...mine], word === null ? args : args.slice(0, -word[0].length))
       const now0 = themeById(state.id, mine)
-      // A name that has both versions follows the mode you are in; a name with one version, or an exact id, is taken as it is.
-      const chosen = (family.length > 1 ? family.find(t => t.mode === now0?.mode) : undefined) ?? found ?? family[0]
+      const wanted = word === null ? now0?.mode : (word[1]!.toLowerCase() as Mode)
+      const chosen = (word === null && found !== undefined ? undefined : family.find(t => t.mode === wanted)) ?? (word === null && family.length > 1 ? family.find(t => t.mode === wanted) : undefined) ?? found ?? family[0]
 
       if (chosen === undefined) {
         return { text: `No theme called "${args}". Try: ${[...new Set([...THEMES, ...mine].map(displayName))].join(', ')}` }
@@ -1587,7 +1593,11 @@ export const register: Register = on => {
     )
 
     const modeTab = (mode: Mode) => () => {
-      const shown = all.filter(p => p.mode === mode && matches(p))
+      // One list for both buttons: every theme once, in the same order, shown in the look of the chosen mode.
+      const names = [...new Set(all.map(displayName))]
+      const shown = names
+        .map(name => all.find(p => p.mode === mode && displayName(p) === name))
+        .filter((p): p is Theme => p !== undefined && matches(p))
 
       return (
         <Box flexDirection="column" gap={1}>

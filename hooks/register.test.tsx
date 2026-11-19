@@ -74,7 +74,7 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
 
   for (const surface of SURFACES) {
     const ui = await $.ui.mount({ ...PANE, surface })
-    // The Dark tab opens first, and each theme is one press; the Light tab holds the light ones.
+    // Every theme is in one list: the Dark button shows each in its dark look and the Light button in its light look.
     expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
     expect(await ui.find({ type: 'Button', text: /Espresso/ })).toBeDefined()
     // One GitHub row in each mode, never "GitHub Light" or "GitHub Dark".
@@ -84,7 +84,9 @@ test('the gallery draws a card for every theme, on every surface', async ($, on)
     await ui.press({ key: 'tab-light' })
     expect(await ui.find({ type: 'Button', text: /GitHub/ })).toBeDefined()
     expect(await ui.find({ type: 'Button', text: /GitHub (Light|Dark)/ })).toBeUndefined()
-    expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeUndefined()
+    // Dracula has no hand-made light look, so it is shown in one made from its dark one.
+    expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: /Espresso/ })).toBeDefined()
     await ui.press({ key: 'tab-dark' })
 
     // Tabs are offered; the link to the docs and source is on the Settings tab only.
@@ -631,7 +633,7 @@ test('a theme file on this computer can be imported', async ($, on) => {
   await ui.unmount()
 })
 
-test('the Dark and Light buttons switch a theme to its other version, and leave a one-mode theme alone', async ($, on) => {
+test('the Dark and Light buttons switch every theme to its other look', async ($, on) => {
   const calls: string[] = []
   const stored: Record<string, unknown> = {}
   host(on, {}, calls, stored)
@@ -648,13 +650,14 @@ test('the Dark and Light buttons switch a theme to its other version, and leave 
   expect(await ui.find({ type: 'Text', text: /Active: GitHub [(]dark[)]/ })).toBeDefined()
   expect(stored.theme).toBe('github-dark')
 
-  // Dracula has no light version: the button shows the light list and keeps Dracula.
+  // Dracula only has a dark look by hand: Light shows a light look made from it, Dark brings the original back.
   await ui.press({ key: 'pick-all-dracula' })
   await ui.press({ key: 'tab-light' })
-  expect(await ui.find({ type: 'Text', text: /Active: Dracula [(]dark[)]/ })).toBeDefined()
-  expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeUndefined()
+  expect(await ui.find({ type: 'Text', text: /Active: Dracula [(]light[)]/ })).toBeDefined()
+  expect(stored.theme).toBe('dracula~alt')
   await ui.press({ key: 'tab-dark' })
-  expect(await ui.find({ type: 'Button', text: /Dracula/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /Active: Dracula [(]dark[)]/ })).toBeDefined()
+  expect(stored.theme).toBe('dracula')
   await ui.unmount()
 })
 
@@ -674,7 +677,11 @@ test('a theme can be named without its mode on the command line', async ($, on) 
   await run('rose pine')
   expect(stored.theme).toBe('rose-pine-dawn')
   await run('dracula')
+  expect(stored.theme).toBe('dracula~alt')
+  await run('dracula dark')
   expect(stored.theme).toBe('dracula')
+  await run('dracula light')
+  expect(stored.theme).toBe('dracula~alt')
   const result = await run('nonsense')
 
   expect(String(result.text)).toContain('No theme called')
