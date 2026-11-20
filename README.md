@@ -50,6 +50,17 @@ For terminal sessions, see [Match the Claude Code terminal](docs/usage.md#match-
 - **Make your own theme.** Pick a base and an accent color in [Theme Maker](#theme-maker) and see the palette update as you edit.
 - **Bring or share a palette.** [Import a theme](docs/usage.md#import-a-theme), then [export or share it](docs/usage.md#export-or-share-a-theme).
 
+<details>
+<summary>Configure</summary>
+
+- **Tuning and backdrops.** In **Appearance**, adjust warmth, saturation, surface brightness, text contrast, surface tint, accent, and status colors. Choose from nine backdrops and three strengths.
+- **Readability.** Strengthen borders and focus rings, match code colors to the palette, soften glare, or use **Night comfort**.
+- **Day and night.** Choose a theme for each mode, set a schedule, or use **Follow system**.
+- **Folder themes.** Save a theme for the current folder in **Settings**. New sessions in that folder use the saved theme.
+- **Terminal matching.** Use **Match terminal to…** in **Settings**, then choose **Claude Themes** from the terminal’s `/theme` menu. [Terminal matching guide](docs/usage.md#match-the-claude-code-terminal)
+
+</details>
+
 ## Theme Maker
 
 Choose a dark or light base, enter an accent color and see the palette update as you edit. Save it when the preview looks right.
