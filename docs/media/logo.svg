@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="176" viewBox="0 0 640 176" role="img" aria-labelledby="title desc">
   <title id="title">Claude-Themes</title>
-  <desc id="desc">Themes for Claude Desktop’s Code tab</desc>
-  <rect x="1" y="1" width="638" height="174" rx="25" fill="#161721" stroke="#393b4c" stroke-width="2"/>
+  <desc id="desc">Themes for Claude Desktop</desc>
+  <rect x="1" y="1" width="638" height="174" rx="25" fill="#17110d" stroke="#6d4c35" stroke-width="2"/>
   <g transform="translate(40 43)">
-    <rect x="19" y="2" width="60" height="64" rx="12" fill="#e6e9ef" transform="rotate(10 49 34)"/>
-    <rect x="3" y="16" width="60" height="64" rx="12" fill="#282a36" stroke="#8b80ac" stroke-width="2" transform="rotate(-8 33 48)"/>
-    <path d="M19 44h27M19 63h27" stroke="#dce0e8" stroke-width="4" stroke-linecap="round"/>
-    <circle cx="21" cy="53.5" r="3" fill="#bd93f9"/>
-    <circle cx="32" cy="53.5" r="3" fill="#7aa2f7"/>
-    <circle cx="43" cy="53.5" r="3" fill="#ffb86c"/>
+    <rect x="19" y="2" width="60" height="64" rx="12" fill="#d98a4e" transform="rotate(10 49 34)"/>
+    <rect x="3" y="16" width="60" height="64" rx="12" fill="#281e17" stroke="#a8978a" stroke-width="2" transform="rotate(-8 33 48)"/>
+    <path d="M19 44h27M19 63h27" stroke="#f1e6da" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="21" cy="53.5" r="3" fill="#d98a4e"/>
+    <circle cx="32" cy="53.5" r="3" fill="#6b9a4d"/>
+    <circle cx="43" cy="53.5" r="3" fill="#c99a2e"/>
   </g>
-  <text x="139" y="89" fill="#f5f3ff" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="54" font-weight="700" letter-spacing="-2">Claude-Themes</text>
-  <text x="142" y="124" fill="#c4bfd9" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="21">Themes for Claude Desktop’s Code tab</text>
+  <text x="139" y="89" fill="#f1e6da" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="54" font-weight="700" letter-spacing="-2">Claude-Themes</text>
+  <text x="142" y="124" fill="#cfbfae" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="21">Themes for Claude Desktop</text>
 </svg>
