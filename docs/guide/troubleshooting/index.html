@@ -1,0 +1,112 @@
+<!doctype html>
+<!-- Generated from docs/handbook/troubleshooting.md. Run npm run build:docs after editing. -->
+<html lang="en" data-type="software">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="page-type" content="software">
+  <meta name="site-kind" content="software">
+  <meta name="description" content="Check the session, the active theme settings, and the input format when a command or palette behaves differently than you expect.">
+  <meta property="og:title" content="Troubleshooting · Claude-Themes Docs">
+  <meta property="og:description" content="Check the session, the active theme settings, and the input format when a command or palette behaves differently than you expect.">
+  <meta property="og:url" content="https://adembilge.github.io/claude-themes/guide/troubleshooting/">
+  <link rel="canonical" href="https://adembilge.github.io/claude-themes/guide/troubleshooting/">
+  <title>Troubleshooting · Claude-Themes Docs</title>
+  <link rel="icon" href="../../media/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../site.css">
+  <link rel="stylesheet" href="../guide.css">
+  <script src="../../site-palettes.js"></script>
+  <script src="../../site.js"></script>
+  <script src="../guide.js" defer></script>
+</head>
+<body class="guide" id="top">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="guide-topbar guide-wrap">
+      <a class="wordmark" href="../../"><img class="mark" src="../../media/theme-mark.svg" alt="" width="24" height="24">Claude-Themes</a>
+      <button class="guide-search guide-control" type="button" aria-haspopup="dialog" aria-controls="docs-search" data-search-trigger hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span>Search docs</span><kbd aria-hidden="true">Ctrl K</kbd></button>
+      <div class="guide-header-actions">
+        <a class="guide-control guide-github" href="https://github.com/adembilge/claude-themes">GitHub <span aria-hidden="true">↗</span></a>
+        <button class="guide-control" id="themes-button" type="button" aria-label="Documentation theme" popovertarget="site-picker" aria-controls="site-picker" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 1.6-3.2 1.9 1.9 0 0 1 1.6-3H18a3 3 0 0 0 3-3c0-4.9-4-8.8-9-8.8Z"/><path d="M7.5 11h.01m3-3.5h.01m4 0h.01m3 3.5h.01" stroke-width="2.6"/></svg><span class="guide-themes-label">Themes</span></button>
+        <div class="picker theme-picker" id="site-picker" popover hidden>
+          <p class="picker-title">Documentation theme</p>
+          <p class="picker-help" id="active-look"></p>
+          <div class="picker-field"><label for="palette">Palette</label><select id="palette"></select></div>
+          <div class="picker-field"><label for="mode">Mode</label><select id="mode"><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="guide-layout guide-wrap">
+    <details class="doc-rail topics" open>
+      <summary>Docs topics <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="Documentation topics">
+        <p class="rail-group">Getting started</p>
+        <ul><li><a href="../">Introduction</a></li><li><a href="../installation/">Installation</a></li></ul>
+        <p class="rail-group">Guides</p>
+        <ul><li><a href="../themes/">Browse Themes</a></li><li><a href="../theme-maker/">Theme Maker</a></li><li><a href="../import-export/">Import, Export &amp; Share</a></li><li><a href="../terminal/">Terminal Matching</a></li></ul>
+        <p class="rail-group">Reference</p>
+        <ul><li><a href="../commands/">Command Reference</a></li><li><a href="./" aria-current="page">Troubleshooting</a></li></ul>
+      </nav>
+    </details>
+    <details class="doc-rail toc" open>
+      <summary>On this page <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="On this page">
+        <p class="rail-group">On this page</p>
+        <ul><li><a href="#the-gallery-command-is-missing">The gallery command is missing</a></li><li><a href="#a-theme-or-mode-changed-unexpectedly">A theme or mode changed unexpectedly</a></li><li><a href="#a-file-or-share-link-will-not-import">A file or share link will not import</a></li><li><a href="#the-claude-code-theme-is-missing-from-the-terminal">The Claude Code theme is missing from the terminal</a></li><li><a href="#report-an-issue">Report an issue</a></li></ul>
+        <a class="guide-top-link" href="#top">Back to top <span aria-hidden="true">↑</span></a>
+      </nav>
+    </details>
+    <main class="guide-article" id="main" tabindex="-1">
+      <header class="article-header" data-enter>
+        <p class="breadcrumb"><a href="../">Docs</a><span aria-hidden="true">/</span>Reference</p>
+        <h1>Troubleshooting</h1>
+        <div class="guide-lede"><p>Check the session, the active theme settings, and the input format when a command or palette behaves differently than you expect.</p>
+</div>
+        <div class="page-tools" hidden>
+          <button class="guide-control" type="button" data-page-copy><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copy page</span></button>
+          <a class="guide-control" data-page-markdown download="troubleshooting.md">Download Markdown</a>
+        </div>
+      </header>
+      <div class="article-body">
+<h2 id="the-gallery-command-is-missing">The gallery command is missing <a class="heading-link" href="#the-gallery-command-is-missing" aria-label="Link to The gallery command is missing">#</a></h2>
+<p>Confirm that you’re in a local <strong>Code</strong> session in Claude Desktop. Check that the marketplace and plugin installation commands in <a href="../installation/#install-the-plugin">Installation</a> completed successfully. Restart the Code session after installing or updating, then retry <code>/claude-themes</code>.</p>
+<h2 id="a-theme-or-mode-changed-unexpectedly">A theme or mode changed unexpectedly <a class="heading-link" href="#a-theme-or-mode-changed-unexpectedly" aria-label="Link to A theme or mode changed unexpectedly">#</a></h2>
+<ul>
+<li>If you ran a family name alone, add an explicit mode such as <code>/claude-themes github light</code>.</li>
+<li>For changes after opening a folder, check the folder theme card in <strong>Settings</strong>.</li>
+<li>For changes after submitting a prompt or changing the system mode, check <strong>Day and night</strong> and <strong>Follow system</strong> in <strong>Appearance</strong>.</li>
+<li>If you only want to go back to Claude Desktop’s default colors, run <code>/claude-themes reset look</code>. This keeps your themes and favorites.</li>
+</ul>
+<h2 id="a-file-or-share-link-will-not-import">A file or share link will not import <a class="heading-link" href="#a-file-or-share-link-will-not-import" aria-label="Link to A file or share link will not import">#</a></h2>
+<ul>
+<li>Confirm that the file is in a <a href="../import-export/#import-a-palette">supported format</a>. For URLs, check that opening one returns the palette file itself.</li>
+<li>For a local path, check that the session can read the file. Quote paths with spaces and use <code>~/</code> for your home folder if helpful.</li>
+<li>For a share link, copy the entire URL including its fragment. For a share code, keep the <code>claude-themes:</code> prefix.</li>
+<li>If the import succeeds but the accent or surfaces change, review the adjustment message. Imported colors may be changed by the plugin’s palette and contrast checks.</li>
+</ul>
+<h2 id="the-claude-code-theme-is-missing-from-the-terminal">The Claude Code theme is missing from the terminal <a class="heading-link" href="#the-claude-code-theme-is-missing-from-the-terminal" aria-label="Link to The Claude Code theme is missing from the terminal">#</a></h2>
+<p>Check whether <strong>Match terminal to…</strong> reports a successful write. Confirm that <code>~/.claude/themes/claude-themes.json</code> exists under the CLI account’s home directory. Restart the CLI if the directory was newly created, then run <code>/theme</code> and choose <strong>Claude Themes</strong>. See <a href="../terminal/">Terminal Matching</a> for refresh and terminal emulator settings.</p>
+<h2 id="report-an-issue">Report an issue <a class="heading-link" href="#report-an-issue" aria-label="Link to Report an issue">#</a></h2>
+<p>Include the plugin and Claude Desktop versions, operating system, the command or button you used, what you expected, and what happened. If the issue is specific to an import, include its format and a shareable example.</p>
+<p><a href="https://github.com/adembilge/claude-themes/issues/new/choose">Open a GitHub issue</a>.</p>
+      </div>
+      <nav class="page-nav" aria-label="Adjacent documentation">
+        <a class="page-link page-link-previous" href="../commands/"><span>Previous</span><strong>Command Reference</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+      </nav>
+    </main>
+  </div>
+  <dialog class="search-dialog" id="docs-search" aria-labelledby="search-title" data-index="../search-index.json">
+    <div class="search-header">
+      <h2 id="search-title" class="visually-hidden">Search the documentation</h2>
+      <label class="search-field"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span class="visually-hidden">Search topics, headings, and commands</span><input type="search" placeholder="Search topics and commands" autofocus></label>
+      <form method="dialog"><button class="guide-control search-close" aria-label="Close search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></form>
+    </div>
+    <p class="search-status" role="status"></p>
+    <ul class="search-results" aria-label="Search results"></ul>
+  </dialog>
+  <p id="copy-status" class="visually-hidden" role="status"></p>
+  <script type="application/json" id="page-source">"# Troubleshooting\n\nCheck the session, the active theme settings, and the input format when a command or palette behaves differently than you expect.\n\n## The gallery command is missing\n\nConfirm that you’re in a local **Code** session in Claude Desktop. Check that the marketplace and plugin installation commands in [Installation](installation.md#install-the-plugin) completed successfully. Restart the Code session after installing or updating, then retry `/claude-themes`.\n\n## A theme or mode changed unexpectedly\n\n- If you ran a family name alone, add an explicit mode such as `/claude-themes github light`.\n- For changes after opening a folder, check the folder theme card in **Settings**.\n- For changes after submitting a prompt or changing the system mode, check **Day and night** and **Follow system** in **Appearance**.\n- If you only want to go back to Claude Desktop’s default colors, run `/claude-themes reset look`. This keeps your themes and favorites.\n\n## A file or share link will not import\n\n- Confirm that the file is in a [supported format](import-export.md#import-a-palette). For URLs, check that opening one returns the palette file itself.\n- For a local path, check that the session can read the file. Quote paths with spaces and use `~/` for your home folder if helpful.\n- For a share link, copy the entire URL including its fragment. For a share code, keep the `claude-themes:` prefix.\n- If the import succeeds but the accent or surfaces change, review the adjustment message. Imported colors may be changed by the plugin’s palette and contrast checks.\n\n## The Claude Code theme is missing from the terminal\n\nCheck whether **Match terminal to…** reports a successful write. Confirm that `~/.claude/themes/claude-themes.json` exists under the CLI account’s home directory. Restart the CLI if the directory was newly created, then run `/theme` and choose **Claude Themes**. See [Terminal Matching](terminal.md) for refresh and terminal emulator settings.\n\n## Report an issue\n\nInclude the plugin and Claude Desktop versions, operating system, the command or button you used, what you expected, and what happened. If the issue is specific to an import, include its format and a shareable example.\n\n[Open a GitHub issue](https://github.com/adembilge/claude-themes/issues/new/choose).\n"</script>
+</body>
+</html>

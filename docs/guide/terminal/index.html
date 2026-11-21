@@ -1,0 +1,124 @@
+<!doctype html>
+<!-- Generated from docs/handbook/terminal.md. Run npm run build:docs after editing. -->
+<html lang="en" data-type="software">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="page-type" content="software">
+  <meta name="site-kind" content="software">
+  <meta name="description" content="Copy the active Desktop palette to the Claude Code CLI, then select it once in the terminal’s /theme menu.">
+  <meta property="og:title" content="Terminal Matching · Claude-Themes Docs">
+  <meta property="og:description" content="Copy the active Desktop palette to the Claude Code CLI, then select it once in the terminal’s /theme menu.">
+  <meta property="og:url" content="https://adembilge.github.io/claude-themes/guide/terminal/">
+  <link rel="canonical" href="https://adembilge.github.io/claude-themes/guide/terminal/">
+  <title>Terminal Matching · Claude-Themes Docs</title>
+  <link rel="icon" href="../../media/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../site.css">
+  <link rel="stylesheet" href="../guide.css">
+  <script src="../../site-palettes.js"></script>
+  <script src="../../site.js"></script>
+  <script src="../guide.js" defer></script>
+</head>
+<body class="guide" id="top">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="guide-topbar guide-wrap">
+      <a class="wordmark" href="../../"><img class="mark" src="../../media/theme-mark.svg" alt="" width="24" height="24">Claude-Themes</a>
+      <button class="guide-search guide-control" type="button" aria-haspopup="dialog" aria-controls="docs-search" data-search-trigger hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span>Search docs</span><kbd aria-hidden="true">Ctrl K</kbd></button>
+      <div class="guide-header-actions">
+        <a class="guide-control guide-github" href="https://github.com/adembilge/claude-themes">GitHub <span aria-hidden="true">↗</span></a>
+        <button class="guide-control" id="themes-button" type="button" aria-label="Documentation theme" popovertarget="site-picker" aria-controls="site-picker" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 1.6-3.2 1.9 1.9 0 0 1 1.6-3H18a3 3 0 0 0 3-3c0-4.9-4-8.8-9-8.8Z"/><path d="M7.5 11h.01m3-3.5h.01m4 0h.01m3 3.5h.01" stroke-width="2.6"/></svg><span class="guide-themes-label">Themes</span></button>
+        <div class="picker theme-picker" id="site-picker" popover hidden>
+          <p class="picker-title">Documentation theme</p>
+          <p class="picker-help" id="active-look"></p>
+          <div class="picker-field"><label for="palette">Palette</label><select id="palette"></select></div>
+          <div class="picker-field"><label for="mode">Mode</label><select id="mode"><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="guide-layout guide-wrap">
+    <details class="doc-rail topics" open>
+      <summary>Docs topics <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="Documentation topics">
+        <p class="rail-group">Getting started</p>
+        <ul><li><a href="../">Introduction</a></li><li><a href="../installation/">Installation</a></li></ul>
+        <p class="rail-group">Guides</p>
+        <ul><li><a href="../themes/">Browse Themes</a></li><li><a href="../theme-maker/">Theme Maker</a></li><li><a href="../import-export/">Import, Export &amp; Share</a></li><li><a href="./" aria-current="page">Terminal Matching</a></li></ul>
+        <p class="rail-group">Reference</p>
+        <ul><li><a href="../commands/">Command Reference</a></li><li><a href="../troubleshooting/">Troubleshooting</a></li></ul>
+      </nav>
+    </details>
+    <details class="doc-rail toc" open>
+      <summary>On this page <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="On this page">
+        <p class="rail-group">On this page</p>
+        <ul><li><a href="#match-the-terminal">Match the terminal</a></li><li><a href="#refresh-after-switching">Refresh after switching</a></li><li><a href="#desktop-cli-and-terminal-colors">Desktop, CLI, and terminal colors</a></li></ul>
+        <a class="guide-top-link" href="#top">Back to top <span aria-hidden="true">↑</span></a>
+      </nav>
+    </details>
+    <main class="guide-article" id="main" tabindex="-1">
+      <header class="article-header" data-enter>
+        <p class="breadcrumb"><a href="../">Docs</a><span aria-hidden="true">/</span>Guides</p>
+        <h1>Terminal Matching</h1>
+        <div class="guide-lede"><p>Copy the active Desktop palette to the Claude Code CLI, then select it once in the terminal’s <code>/theme</code> menu.</p>
+</div>
+        <div class="page-tools" hidden>
+          <button class="guide-control" type="button" data-page-copy><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copy page</span></button>
+          <a class="guide-control" data-page-markdown download="terminal.md">Download Markdown</a>
+        </div>
+      </header>
+      <div class="article-body">
+<span id="enable" class="old-anchor" aria-hidden="true"></span><h2 id="match-the-terminal">Match the terminal <a class="heading-link" href="#match-the-terminal" aria-label="Link to Match the terminal">#</a></h2>
+<ol>
+<li>Apply your preferred theme in Claude Desktop’s Code tab.</li>
+<li>Open <code>/claude-themes</code>, go to <strong>Settings</strong>, and choose <strong>Match terminal to…</strong>.</li>
+<li>The plugin writes the current palette with its tuning to <code>~/.claude/themes/claude-themes.json</code>.</li>
+<li>Open Claude Code in a terminal, run <code>/theme</code>, and choose <strong>Claude Themes</strong>. If <code>.claude/themes</code> was just created, restart the CLI once before opening <code>/theme</code> again.</li>
+</ol>
+<p>The Desktop app and CLI need to use the same home directory for the CLI to find the file the plugin wrote. This matters if you run the CLI in WSL, an SSH session, or under a different user account.</p>
+<span id="refresh" class="old-anchor" aria-hidden="true"></span><h2 id="refresh-after-switching">Refresh after switching <a class="heading-link" href="#refresh-after-switching" aria-label="Link to Refresh after switching">#</a></h2>
+<p>After changing or tuning the Desktop theme, choose <strong>Match terminal to…</strong> again to rewrite the same file. A CLI session already using <strong>Claude Themes</strong> can pick up the updated file. To stop using the palette, choose a different entry in <code>/theme</code>.</p>
+<h2 id="desktop-cli-and-terminal-colors">Desktop, CLI, and terminal colors <a class="heading-link" href="#desktop-cli-and-terminal-colors" aria-label="Link to Desktop, CLI, and terminal colors">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>How to set its colors</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Claude Desktop Code tab</td>
+<td>Select a theme in the Claude-Themes gallery.</td>
+</tr>
+<tr>
+<td>Claude Code CLI interface</td>
+<td>Write the file with <strong>Match terminal to…</strong>, then select <strong>Claude Themes</strong>.</td>
+</tr>
+<tr>
+<td>Windows Terminal window and shell</td>
+<td><a href="../import-export/#export-a-palette">Export a Windows Terminal scheme</a> and apply it in Windows Terminal.</td>
+</tr>
+</tbody></table>
+<p>The Claude Code theme colors its interface, including accents, diffs, status colors, borders, and message backgrounds. The terminal emulator supplies its own window and shell colors.</p>
+      </div>
+      <nav class="page-nav" aria-label="Adjacent documentation">
+        <a class="page-link page-link-previous" href="../import-export/"><span>Previous</span><strong>Import, Export &amp; Share</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+        <a class="page-link page-link-next" href="../commands/"><span>Next</span><strong>Command Reference</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+      </nav>
+    </main>
+  </div>
+  <dialog class="search-dialog" id="docs-search" aria-labelledby="search-title" data-index="../search-index.json">
+    <div class="search-header">
+      <h2 id="search-title" class="visually-hidden">Search the documentation</h2>
+      <label class="search-field"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span class="visually-hidden">Search topics, headings, and commands</span><input type="search" placeholder="Search topics and commands" autofocus></label>
+      <form method="dialog"><button class="guide-control search-close" aria-label="Close search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></form>
+    </div>
+    <p class="search-status" role="status"></p>
+    <ul class="search-results" aria-label="Search results"></ul>
+  </dialog>
+  <p id="copy-status" class="visually-hidden" role="status"></p>
+  <script type="application/json" id="page-source">"# Terminal Matching\n\nCopy the active Desktop palette to the Claude Code CLI, then select it once in the terminal’s `/theme` menu.\n\n## Match the terminal\n\n1. Apply your preferred theme in Claude Desktop’s Code tab.\n2. Open `/claude-themes`, go to **Settings**, and choose **Match terminal to…**.\n3. The plugin writes the current palette with its tuning to `~/.claude/themes/claude-themes.json`.\n4. Open Claude Code in a terminal, run `/theme`, and choose **Claude Themes**. If `.claude/themes` was just created, restart the CLI once before opening `/theme` again.\n\nThe Desktop app and CLI need to use the same home directory for the CLI to find the file the plugin wrote. This matters if you run the CLI in WSL, an SSH session, or under a different user account.\n\n## Refresh after switching\n\nAfter changing or tuning the Desktop theme, choose **Match terminal to…** again to rewrite the same file. A CLI session already using **Claude Themes** can pick up the updated file. To stop using the palette, choose a different entry in `/theme`.\n\n## Desktop, CLI, and terminal colors\n\n| Surface | How to set its colors |\n| --- | --- |\n| Claude Desktop Code tab | Select a theme in the Claude-Themes gallery. |\n| Claude Code CLI interface | Write the file with **Match terminal to…**, then select **Claude Themes**. |\n| Windows Terminal window and shell | [Export a Windows Terminal scheme](import-export.md#export-a-palette) and apply it in Windows Terminal. |\n\nThe Claude Code theme colors its interface, including accents, diffs, status colors, borders, and message backgrounds. The terminal emulator supplies its own window and shell colors.\n"</script>
+</body>
+</html>

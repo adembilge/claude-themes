@@ -1,0 +1,138 @@
+<!doctype html>
+<!-- Generated from docs/handbook/theme-maker.md. Run npm run build:docs after editing. -->
+<html lang="en" data-type="software">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="page-type" content="software">
+  <meta name="site-kind" content="software">
+  <meta name="description" content="Create a palette from a name, a light or dark base, and an accent color. Then use Appearance to tune it and choose when Claude-Themes applies it.">
+  <meta property="og:title" content="Theme Maker · Claude-Themes Docs">
+  <meta property="og:description" content="Create a palette from a name, a light or dark base, and an accent color. Then use Appearance to tune it and choose when Claude-Themes applies it.">
+  <meta property="og:url" content="https://adembilge.github.io/claude-themes/guide/theme-maker/">
+  <link rel="canonical" href="https://adembilge.github.io/claude-themes/guide/theme-maker/">
+  <title>Theme Maker · Claude-Themes Docs</title>
+  <link rel="icon" href="../../media/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../site.css">
+  <link rel="stylesheet" href="../guide.css">
+  <script src="../../site-palettes.js"></script>
+  <script src="../../site.js"></script>
+  <script src="../guide.js" defer></script>
+</head>
+<body class="guide" id="top">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="guide-topbar guide-wrap">
+      <a class="wordmark" href="../../"><img class="mark" src="../../media/theme-mark.svg" alt="" width="24" height="24">Claude-Themes</a>
+      <button class="guide-search guide-control" type="button" aria-haspopup="dialog" aria-controls="docs-search" data-search-trigger hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span>Search docs</span><kbd aria-hidden="true">Ctrl K</kbd></button>
+      <div class="guide-header-actions">
+        <a class="guide-control guide-github" href="https://github.com/adembilge/claude-themes">GitHub <span aria-hidden="true">↗</span></a>
+        <button class="guide-control" id="themes-button" type="button" aria-label="Documentation theme" popovertarget="site-picker" aria-controls="site-picker" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 1.6-3.2 1.9 1.9 0 0 1 1.6-3H18a3 3 0 0 0 3-3c0-4.9-4-8.8-9-8.8Z"/><path d="M7.5 11h.01m3-3.5h.01m4 0h.01m3 3.5h.01" stroke-width="2.6"/></svg><span class="guide-themes-label">Themes</span></button>
+        <div class="picker theme-picker" id="site-picker" popover hidden>
+          <p class="picker-title">Documentation theme</p>
+          <p class="picker-help" id="active-look"></p>
+          <div class="picker-field"><label for="palette">Palette</label><select id="palette"></select></div>
+          <div class="picker-field"><label for="mode">Mode</label><select id="mode"><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="guide-layout guide-wrap">
+    <details class="doc-rail topics" open>
+      <summary>Docs topics <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="Documentation topics">
+        <p class="rail-group">Getting started</p>
+        <ul><li><a href="../">Introduction</a></li><li><a href="../installation/">Installation</a></li></ul>
+        <p class="rail-group">Guides</p>
+        <ul><li><a href="../themes/">Browse Themes</a></li><li><a href="./" aria-current="page">Theme Maker</a></li><li><a href="../import-export/">Import, Export &amp; Share</a></li><li><a href="../terminal/">Terminal Matching</a></li></ul>
+        <p class="rail-group">Reference</p>
+        <ul><li><a href="../commands/">Command Reference</a></li><li><a href="../troubleshooting/">Troubleshooting</a></li></ul>
+      </nav>
+    </details>
+    <details class="doc-rail toc" open>
+      <summary>On this page <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="On this page">
+        <p class="rail-group">On this page</p>
+        <ul><li><a href="#build-a-theme">Build a theme</a></li><li><a href="#tune-appearance">Tune appearance</a></li><li><a href="#set-day-night-and-folder-themes">Set day, night, and folder themes</a></li><li class="toc-nested"><a href="#choose-a-schedule">Choose a schedule</a></li><li class="toc-nested"><a href="#follow-system-mode">Follow system mode</a></li><li class="toc-nested"><a href="#keep-a-theme-for-a-folder">Keep a theme for a folder</a></li></ul>
+        <a class="guide-top-link" href="#top">Back to top <span aria-hidden="true">↑</span></a>
+      </nav>
+    </details>
+    <main class="guide-article" id="main" tabindex="-1">
+      <header class="article-header" data-enter>
+        <p class="breadcrumb"><a href="../">Docs</a><span aria-hidden="true">/</span>Guides</p>
+        <h1>Theme Maker</h1>
+        <div class="guide-lede"><p>Create a palette from a name, a light or dark base, and an accent color. Then use <strong>Appearance</strong> to tune it and choose when Claude-Themes applies it.</p>
+</div>
+        <div class="page-tools" hidden>
+          <button class="guide-control" type="button" data-page-copy><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copy page</span></button>
+          <a class="guide-control" data-page-markdown download="theme-maker.md">Download Markdown</a>
+        </div>
+      </header>
+      <div class="article-body">
+<span id="build" class="old-anchor" aria-hidden="true"></span><h2 id="build-a-theme">Build a theme <a class="heading-link" href="#build-a-theme" aria-label="Link to Build a theme">#</a></h2>
+<ol>
+<li>Open <code>/claude-themes</code> and select <strong>Theme Maker</strong>.</li>
+<li>Enter a name, choose <strong>Dark</strong> or <strong>Light</strong>, and enter an accent. For example, use <code>#d98a4e</code>, <code>rgb(217, 138, 78)</code>, <code>hsl(26, 65%, 56%)</code>, or <code>coral</code>.</li>
+<li>Review the preview for text, surfaces, accent, and status colors. The preview reports adjustments made by the palette’s contrast checks.</li>
+<li>Save the theme to apply it and add it to your custom themes.</li>
+</ol>
+<p><a href="../../media/theme-maker.gif">Watch the Theme Maker demo</a>.</p>
+<span id="appearance" class="old-anchor" aria-hidden="true"></span><h2 id="tune-appearance">Tune appearance <a class="heading-link" href="#tune-appearance" aria-label="Link to Tune appearance">#</a></h2>
+<p>Open <strong>Appearance</strong> while the theme you want to adjust is active. Its seven tuning controls cover warmth, saturation, surface brightness, text contrast, surface tint, accent, and status colors. The available stops depend on the palette’s contrast checks.</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>When to use it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Backdrop</strong></td>
+<td>Add a soft background behind the chat. Choose Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, or Halo at Subtle, Normal, or Bold strength.</td>
+</tr>
+<tr>
+<td><strong>High contrast</strong></td>
+<td>Make borders and focus rings easier to distinguish.</td>
+</tr>
+<tr>
+<td><strong>Palette-matched code colors</strong></td>
+<td>Bring syntax colors into the current palette.</td>
+</tr>
+<tr>
+<td><strong>Soften glare</strong></td>
+<td>Reduce the glare of a bright light palette.</td>
+</tr>
+<tr>
+<td><strong>Night comfort</strong></td>
+<td>Add a warmer look. Enable its night-only option to use the hours configured under <strong>Day and night</strong>.</td>
+</tr>
+</tbody></table>
+<p>Export or share the active theme after tuning. See <a href="../import-export/#export-a-palette">what each format carries</a>.</p>
+<span id="day-night" class="old-anchor" aria-hidden="true"></span><h2 id="set-day-night-and-folder-themes">Set day, night, and folder themes <a class="heading-link" href="#set-day-night-and-folder-themes" aria-label="Link to Set day, night, and folder themes">#</a></h2>
+<h3 id="choose-a-schedule">Choose a schedule <a class="heading-link" href="#choose-a-schedule" aria-label="Link to Choose a schedule">#</a></h3>
+<p>In <strong>Appearance</strong>, open <strong>Day and night</strong>, select <strong>By the hour</strong>, choose a day theme and a night theme, and set the hours. The plugin checks the period when a session starts and when you submit a prompt. If the clock crosses a boundary during an idle session, the next prompt can trigger the switch.</p>
+<h3 id="follow-system-mode">Follow system mode <a class="heading-link" href="#follow-system-mode" aria-label="Link to Follow system mode">#</a></h3>
+<p><strong>Follow system</strong> uses the configured day palette in light mode and the night palette in dark mode. It disables the clock-based schedule. Choose <strong>By the hour</strong> to use the configured hours again. Picking a theme manually turns off <strong>Follow system</strong>.</p>
+<h3 id="keep-a-theme-for-a-folder">Keep a theme for a folder <a class="heading-link" href="#keep-a-theme-for-a-folder" aria-label="Link to Keep a theme for a folder">#</a></h3>
+<p>Open the folder in a local Code session, apply the palette, then use the folder theme card in <strong>Settings</strong> to save it for that folder. A saved folder theme takes precedence over the default and the schedule in new sessions. <strong>Follow system</strong> takes precedence when enabled. Use the same card to clear the folder choice.</p>
+      </div>
+      <nav class="page-nav" aria-label="Adjacent documentation">
+        <a class="page-link page-link-previous" href="../themes/"><span>Previous</span><strong>Browse Themes</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+        <a class="page-link page-link-next" href="../import-export/"><span>Next</span><strong>Import, Export &amp; Share</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+      </nav>
+    </main>
+  </div>
+  <dialog class="search-dialog" id="docs-search" aria-labelledby="search-title" data-index="../search-index.json">
+    <div class="search-header">
+      <h2 id="search-title" class="visually-hidden">Search the documentation</h2>
+      <label class="search-field"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span class="visually-hidden">Search topics, headings, and commands</span><input type="search" placeholder="Search topics and commands" autofocus></label>
+      <form method="dialog"><button class="guide-control search-close" aria-label="Close search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></form>
+    </div>
+    <p class="search-status" role="status"></p>
+    <ul class="search-results" aria-label="Search results"></ul>
+  </dialog>
+  <p id="copy-status" class="visually-hidden" role="status"></p>
+  <script type="application/json" id="page-source">"# Theme Maker\n\nCreate a palette from a name, a light or dark base, and an accent color. Then use **Appearance** to tune it and choose when Claude-Themes applies it.\n\n## Build a theme\n\n1. Open `/claude-themes` and select **Theme Maker**.\n2. Enter a name, choose **Dark** or **Light**, and enter an accent. For example, use `#d98a4e`, `rgb(217, 138, 78)`, `hsl(26, 65%, 56%)`, or `coral`.\n3. Review the preview for text, surfaces, accent, and status colors. The preview reports adjustments made by the palette’s contrast checks.\n4. Save the theme to apply it and add it to your custom themes.\n\n[Watch the Theme Maker demo](../media/theme-maker.gif).\n\n## Tune appearance\n\nOpen **Appearance** while the theme you want to adjust is active. Its seven tuning controls cover warmth, saturation, surface brightness, text contrast, surface tint, accent, and status colors. The available stops depend on the palette’s contrast checks.\n\n| Setting | When to use it |\n| --- | --- |\n| **Backdrop** | Add a soft background behind the chat. Choose Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, or Halo at Subtle, Normal, or Bold strength. |\n| **High contrast** | Make borders and focus rings easier to distinguish. |\n| **Palette-matched code colors** | Bring syntax colors into the current palette. |\n| **Soften glare** | Reduce the glare of a bright light palette. |\n| **Night comfort** | Add a warmer look. Enable its night-only option to use the hours configured under **Day and night**. |\n\nExport or share the active theme after tuning. See [what each format carries](import-export.md#export-a-palette).\n\n## Set day, night, and folder themes\n\n### Choose a schedule\n\nIn **Appearance**, open **Day and night**, select **By the hour**, choose a day theme and a night theme, and set the hours. The plugin checks the period when a session starts and when you submit a prompt. If the clock crosses a boundary during an idle session, the next prompt can trigger the switch.\n\n### Follow system mode\n\n**Follow system** uses the configured day palette in light mode and the night palette in dark mode. It disables the clock-based schedule. Choose **By the hour** to use the configured hours again. Picking a theme manually turns off **Follow system**.\n\n### Keep a theme for a folder\n\nOpen the folder in a local Code session, apply the palette, then use the folder theme card in **Settings** to save it for that folder. A saved folder theme takes precedence over the default and the schedule in new sessions. **Follow system** takes precedence when enabled. Use the same card to clear the folder choice.\n"</script>
+</body>
+</html>

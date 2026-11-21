@@ -1,0 +1,135 @@
+<!doctype html>
+<!-- Generated from docs/handbook/themes.md. Run npm run build:docs after editing. -->
+<html lang="en" data-type="software">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="page-type" content="software">
+  <meta name="site-kind" content="software">
+  <meta name="description" content="Preview dark and light palettes in the gallery, save individual variants as favorites, or select a palette by name from the Code prompt.">
+  <meta property="og:title" content="Browse Themes · Claude-Themes Docs">
+  <meta property="og:description" content="Preview dark and light palettes in the gallery, save individual variants as favorites, or select a palette by name from the Code prompt.">
+  <meta property="og:url" content="https://adembilge.github.io/claude-themes/guide/themes/">
+  <link rel="canonical" href="https://adembilge.github.io/claude-themes/guide/themes/">
+  <title>Browse Themes · Claude-Themes Docs</title>
+  <link rel="icon" href="../../media/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../site.css">
+  <link rel="stylesheet" href="../guide.css">
+  <script src="../../site-palettes.js"></script>
+  <script src="../../site.js"></script>
+  <script src="../guide.js" defer></script>
+</head>
+<body class="guide" id="top">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="guide-topbar guide-wrap">
+      <a class="wordmark" href="../../"><img class="mark" src="../../media/theme-mark.svg" alt="" width="24" height="24">Claude-Themes</a>
+      <button class="guide-search guide-control" type="button" aria-haspopup="dialog" aria-controls="docs-search" data-search-trigger hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span>Search docs</span><kbd aria-hidden="true">Ctrl K</kbd></button>
+      <div class="guide-header-actions">
+        <a class="guide-control guide-github" href="https://github.com/adembilge/claude-themes">GitHub <span aria-hidden="true">↗</span></a>
+        <button class="guide-control" id="themes-button" type="button" aria-label="Documentation theme" popovertarget="site-picker" aria-controls="site-picker" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 1.6-3.2 1.9 1.9 0 0 1 1.6-3H18a3 3 0 0 0 3-3c0-4.9-4-8.8-9-8.8Z"/><path d="M7.5 11h.01m3-3.5h.01m4 0h.01m3 3.5h.01" stroke-width="2.6"/></svg><span class="guide-themes-label">Themes</span></button>
+        <div class="picker theme-picker" id="site-picker" popover hidden>
+          <p class="picker-title">Documentation theme</p>
+          <p class="picker-help" id="active-look"></p>
+          <div class="picker-field"><label for="palette">Palette</label><select id="palette"></select></div>
+          <div class="picker-field"><label for="mode">Mode</label><select id="mode"><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="guide-layout guide-wrap">
+    <details class="doc-rail topics" open>
+      <summary>Docs topics <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="Documentation topics">
+        <p class="rail-group">Getting started</p>
+        <ul><li><a href="../">Introduction</a></li><li><a href="../installation/">Installation</a></li></ul>
+        <p class="rail-group">Guides</p>
+        <ul><li><a href="./" aria-current="page">Browse Themes</a></li><li><a href="../theme-maker/">Theme Maker</a></li><li><a href="../import-export/">Import, Export &amp; Share</a></li><li><a href="../terminal/">Terminal Matching</a></li></ul>
+        <p class="rail-group">Reference</p>
+        <ul><li><a href="../commands/">Command Reference</a></li><li><a href="../troubleshooting/">Troubleshooting</a></li></ul>
+      </nav>
+    </details>
+    <details class="doc-rail toc" open>
+      <summary>On this page <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="On this page">
+        <p class="rail-group">On this page</p>
+        <ul><li><a href="#open-the-gallery">Open the gallery</a></li><li><a href="#find-and-save-palettes">Find and save palettes</a></li><li><a href="#switch-from-the-prompt">Switch from the prompt</a></li></ul>
+        <a class="guide-top-link" href="#top">Back to top <span aria-hidden="true">↑</span></a>
+      </nav>
+    </details>
+    <main class="guide-article" id="main" tabindex="-1">
+      <header class="article-header" data-enter>
+        <p class="breadcrumb"><a href="../">Docs</a><span aria-hidden="true">/</span>Guides</p>
+        <h1>Browse Themes</h1>
+        <div class="guide-lede"><p>Preview dark and light palettes in the gallery, save individual variants as favorites, or select a palette by name from the Code prompt.</p>
+</div>
+        <div class="page-tools" hidden>
+          <button class="guide-control" type="button" data-page-copy><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copy page</span></button>
+          <a class="guide-control" data-page-markdown download="themes.md">Download Markdown</a>
+        </div>
+      </header>
+      <div class="article-body">
+<span id="browse" class="old-anchor" aria-hidden="true"></span><h2 id="open-the-gallery">Open the gallery <a class="heading-link" href="#open-the-gallery" aria-label="Link to Open the gallery">#</a></h2>
+<div class="command guide-command"><pre><code class="language-text">/claude-themes
+</code></pre>
+<button class="copy" type="button" hidden>Copy</button></div>
+<p>Use <strong>Dark</strong> and <strong>Light</strong> to switch the visible cards. When you select a card, the plugin applies that palette and sets the Code tab to its mode. Each family has both variants. For example, GitHub Light uses a bright surface and a blue accent.</p>
+<p><img class="guide-image" src="../../media/github-light.webp" alt="GitHub Light preview in the Code tab" loading="lazy" decoding="async"></p>
+<p><a href="../../media/demo.gif">Watch the gallery demo</a>.</p>
+<span id="favorites" class="old-anchor" aria-hidden="true"></span><h2 id="find-and-save-palettes">Find and save palettes <a class="heading-link" href="#find-and-save-palettes" aria-label="Link to Find and save palettes">#</a></h2>
+<ol>
+<li>Search by theme name or by a term in its description, such as <code>pastels</code>.</li>
+<li>Select the star on a theme card. Favorites are saved by variant, so you can star both the dark and light looks of one family.</li>
+<li>Open <strong>Favorites</strong> to find the saved cards. Select the star again to remove a favorite.</li>
+</ol>
+<span id="switch" class="old-anchor" aria-hidden="true"></span><h2 id="switch-from-the-prompt">Switch from the prompt <a class="heading-link" href="#switch-from-the-prompt" aria-label="Link to Switch from the prompt">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/claude-themes github</code></td>
+<td>Picks the GitHub variant that matches the current palette’s mode.</td>
+</tr>
+<tr>
+<td><code>/claude-themes github light</code></td>
+<td>Picks the light GitHub variant regardless of the current mode.</td>
+</tr>
+<tr>
+<td><code>/claude-themes github-light</code></td>
+<td>Applies the exact ID <code>github-light</code>.</td>
+</tr>
+<tr>
+<td><code>/claude-themes catppuccin-mocha</code></td>
+<td>Applies Catppuccin Mocha by its ID.</td>
+</tr>
+</tbody></table>
+<p>When a name matches an exact ID, the exact match wins unless you specify a mode. Use the spaced <code>dark</code> or <code>light</code> suffix when you want to select a family variant explicitly.</p>
+<div class="command guide-command"><pre><code class="language-text">/claude-themes github light
+</code></pre>
+<button class="copy" type="button" hidden>Copy</button></div>
+<p>If a theme changes when a new session starts, check <a href="../theme-maker/#set-day-night-and-folder-themes">Day and night, Follow system, and folder themes</a>.</p>
+      </div>
+      <nav class="page-nav" aria-label="Adjacent documentation">
+        <a class="page-link page-link-previous" href="../installation/"><span>Previous</span><strong>Installation</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+        <a class="page-link page-link-next" href="../theme-maker/"><span>Next</span><strong>Theme Maker</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+      </nav>
+    </main>
+  </div>
+  <dialog class="search-dialog" id="docs-search" aria-labelledby="search-title" data-index="../search-index.json">
+    <div class="search-header">
+      <h2 id="search-title" class="visually-hidden">Search the documentation</h2>
+      <label class="search-field"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span class="visually-hidden">Search topics, headings, and commands</span><input type="search" placeholder="Search topics and commands" autofocus></label>
+      <form method="dialog"><button class="guide-control search-close" aria-label="Close search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></form>
+    </div>
+    <p class="search-status" role="status"></p>
+    <ul class="search-results" aria-label="Search results"></ul>
+  </dialog>
+  <p id="copy-status" class="visually-hidden" role="status"></p>
+  <script type="application/json" id="page-source">"# Browse Themes\n\nPreview dark and light palettes in the gallery, save individual variants as favorites, or select a palette by name from the Code prompt.\n\n## Open the gallery\n\n```text\n/claude-themes\n```\n\nUse **Dark** and **Light** to switch the visible cards. When you select a card, the plugin applies that palette and sets the Code tab to its mode. Each family has both variants. For example, GitHub Light uses a bright surface and a blue accent.\n\n![GitHub Light preview in the Code tab](../media/github-light.webp)\n\n[Watch the gallery demo](../media/demo.gif).\n\n## Find and save palettes\n\n1. Search by theme name or by a term in its description, such as `pastels`.\n2. Select the star on a theme card. Favorites are saved by variant, so you can star both the dark and light looks of one family.\n3. Open **Favorites** to find the saved cards. Select the star again to remove a favorite.\n\n## Switch from the prompt\n\n| Input | Result |\n| --- | --- |\n| `/claude-themes github` | Picks the GitHub variant that matches the current palette’s mode. |\n| `/claude-themes github light` | Picks the light GitHub variant regardless of the current mode. |\n| `/claude-themes github-light` | Applies the exact ID `github-light`. |\n| `/claude-themes catppuccin-mocha` | Applies Catppuccin Mocha by its ID. |\n\nWhen a name matches an exact ID, the exact match wins unless you specify a mode. Use the spaced `dark` or `light` suffix when you want to select a family variant explicitly.\n\n```text\n/claude-themes github light\n```\n\nIf a theme changes when a new session starts, check [Day and night, Follow system, and folder themes](theme-maker.md#set-day-night-and-folder-themes).\n"</script>
+</body>
+</html>

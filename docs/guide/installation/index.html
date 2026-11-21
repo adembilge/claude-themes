@@ -1,0 +1,136 @@
+<!doctype html>
+<!-- Generated from docs/handbook/installation.md. Run npm run build:docs after editing. -->
+<html lang="en" data-type="software">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="page-type" content="software">
+  <meta name="site-kind" content="software">
+  <meta name="description" content="Install Claude-Themes in a local session in the Code tab of Claude Desktop on macOS or Windows. You can use the gallery from that session after restarting it.">
+  <meta property="og:title" content="Installation · Claude-Themes Docs">
+  <meta property="og:description" content="Install Claude-Themes in a local session in the Code tab of Claude Desktop on macOS or Windows. You can use the gallery from that session after restarting it.">
+  <meta property="og:url" content="https://adembilge.github.io/claude-themes/guide/installation/">
+  <link rel="canonical" href="https://adembilge.github.io/claude-themes/guide/installation/">
+  <title>Installation · Claude-Themes Docs</title>
+  <link rel="icon" href="../../media/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../site.css">
+  <link rel="stylesheet" href="../guide.css">
+  <script src="../../site-palettes.js"></script>
+  <script src="../../site.js"></script>
+  <script src="../guide.js" defer></script>
+</head>
+<body class="guide" id="top">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="guide-topbar guide-wrap">
+      <a class="wordmark" href="../../"><img class="mark" src="../../media/theme-mark.svg" alt="" width="24" height="24">Claude-Themes</a>
+      <button class="guide-search guide-control" type="button" aria-haspopup="dialog" aria-controls="docs-search" data-search-trigger hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span>Search docs</span><kbd aria-hidden="true">Ctrl K</kbd></button>
+      <div class="guide-header-actions">
+        <a class="guide-control guide-github" href="https://github.com/adembilge/claude-themes">GitHub <span aria-hidden="true">↗</span></a>
+        <button class="guide-control" id="themes-button" type="button" aria-label="Documentation theme" popovertarget="site-picker" aria-controls="site-picker" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 1.6-3.2 1.9 1.9 0 0 1 1.6-3H18a3 3 0 0 0 3-3c0-4.9-4-8.8-9-8.8Z"/><path d="M7.5 11h.01m3-3.5h.01m4 0h.01m3 3.5h.01" stroke-width="2.6"/></svg><span class="guide-themes-label">Themes</span></button>
+        <div class="picker theme-picker" id="site-picker" popover hidden>
+          <p class="picker-title">Documentation theme</p>
+          <p class="picker-help" id="active-look"></p>
+          <div class="picker-field"><label for="palette">Palette</label><select id="palette"></select></div>
+          <div class="picker-field"><label for="mode">Mode</label><select id="mode"><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="guide-layout guide-wrap">
+    <details class="doc-rail topics" open>
+      <summary>Docs topics <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="Documentation topics">
+        <p class="rail-group">Getting started</p>
+        <ul><li><a href="../">Introduction</a></li><li><a href="./" aria-current="page">Installation</a></li></ul>
+        <p class="rail-group">Guides</p>
+        <ul><li><a href="../themes/">Browse Themes</a></li><li><a href="../theme-maker/">Theme Maker</a></li><li><a href="../import-export/">Import, Export &amp; Share</a></li><li><a href="../terminal/">Terminal Matching</a></li></ul>
+        <p class="rail-group">Reference</p>
+        <ul><li><a href="../commands/">Command Reference</a></li><li><a href="../troubleshooting/">Troubleshooting</a></li></ul>
+      </nav>
+    </details>
+    <details class="doc-rail toc" open>
+      <summary>On this page <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="On this page">
+        <p class="rail-group">On this page</p>
+        <ul><li><a href="#install-the-plugin">Install the plugin</a></li><li><a href="#quick-start">Quick Start</a></li><li><a href="#update">Update</a></li><li><a href="#uninstall">Uninstall</a></li></ul>
+        <a class="guide-top-link" href="#top">Back to top <span aria-hidden="true">↑</span></a>
+      </nav>
+    </details>
+    <main class="guide-article" id="main" tabindex="-1">
+      <header class="article-header" data-enter>
+        <p class="breadcrumb"><a href="../">Docs</a><span aria-hidden="true">/</span>Getting started</p>
+        <h1>Installation</h1>
+        <div class="guide-lede"><p>Install Claude-Themes in a local session in the <strong>Code</strong> tab of Claude Desktop on macOS or Windows. You can use the gallery from that session after restarting it.</p>
+</div>
+        <div class="page-tools" hidden>
+          <button class="guide-control" type="button" data-page-copy><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copy page</span></button>
+          <a class="guide-control" data-page-markdown download="installation.md">Download Markdown</a>
+        </div>
+      </header>
+      <div class="article-body">
+<span id="install" class="old-anchor" aria-hidden="true"></span><h2 id="install-the-plugin">Install the plugin <a class="heading-link" href="#install-the-plugin" aria-label="Link to Install the plugin">#</a></h2>
+<ol>
+<li><p>Open Claude Desktop and start a local session in <strong>Code</strong>.</p>
+</li>
+<li><p>Add the marketplace at the Code prompt.</p>
+<div class="command guide-command"><pre><code class="language-text">/plugin marketplace add adembilge/claude-themes
+</code></pre>
+<button class="copy" type="button" hidden>Copy</button></div>
+</li>
+<li><p>Install the plugin in a separate command.</p>
+<div class="command guide-command"><pre><code class="language-text">/plugin install desktop-themes@claude-themes
+</code></pre>
+<button class="copy" type="button" hidden>Copy</button></div>
+</li>
+<li><p>Restart the Code session so it loads the plugin.</p>
+</li>
+</ol>
+<p>The identifier <code>desktop-themes@claude-themes</code> combines the plugin name (<code>desktop-themes</code>) and marketplace name (<code>claude-themes</code>). Use that full identifier for install, update, and uninstall.</p>
+<h2 id="quick-start">Quick Start <a class="heading-link" href="#quick-start" aria-label="Link to Quick Start">#</a></h2>
+<p>Run the following at the Code prompt in the restarted session.</p>
+<div class="command guide-command"><pre><code class="language-text">/claude-themes
+</code></pre>
+<button class="copy" type="button" hidden>Copy</button></div>
+<p>Choose <strong>Dark</strong> or <strong>Light</strong>, then select a theme card. The Code tab should change immediately. If the command is missing or colors appear on a different surface than expected, see <a href="../troubleshooting/">Troubleshooting</a>.</p>
+<h2 id="update">Update <a class="heading-link" href="#update" aria-label="Link to Update">#</a></h2>
+<p>From a terminal with the Claude Code CLI installed, refresh the marketplace, then update the plugin.</p>
+<div class="command guide-command"><pre><code class="language-sh">claude plugin marketplace update claude-themes
+claude plugin update desktop-themes@claude-themes
+</code></pre>
+<button class="copy" type="button" hidden>Copy</button></div>
+<p>Restart the Code session to load the update. Open <code>/claude-themes</code> again to confirm the gallery loads.</p>
+<h2 id="uninstall">Uninstall <a class="heading-link" href="#uninstall" aria-label="Link to Uninstall">#</a></h2>
+<ol>
+<li><p>In Claude Desktop’s Code tab, run <code>/claude-themes reset look</code> to restore the app’s appearance.</p>
+</li>
+<li><p>In a terminal with the Claude Code CLI installed, uninstall the plugin.</p>
+<div class="command guide-command"><pre><code class="language-sh">claude plugin uninstall desktop-themes@claude-themes
+</code></pre>
+<button class="copy" type="button" hidden>Copy</button></div>
+</li>
+<li><p>For a project or local installation, append <code>--scope project</code> or <code>--scope local</code> to match the scope you used. Restart the Code session.</p>
+</li>
+</ol>
+<p>If you exported a Claude Code terminal theme, use <code>/theme</code> in the CLI to select another theme. Then you can remove <code>~/.claude/themes/claude-themes.json</code> if you no longer need it.</p>
+      </div>
+      <nav class="page-nav" aria-label="Adjacent documentation">
+        <a class="page-link page-link-previous" href="../"><span>Previous</span><strong>Introduction</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+        <a class="page-link page-link-next" href="../themes/"><span>Next</span><strong>Browse Themes</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+      </nav>
+    </main>
+  </div>
+  <dialog class="search-dialog" id="docs-search" aria-labelledby="search-title" data-index="../search-index.json">
+    <div class="search-header">
+      <h2 id="search-title" class="visually-hidden">Search the documentation</h2>
+      <label class="search-field"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span class="visually-hidden">Search topics, headings, and commands</span><input type="search" placeholder="Search topics and commands" autofocus></label>
+      <form method="dialog"><button class="guide-control search-close" aria-label="Close search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></form>
+    </div>
+    <p class="search-status" role="status"></p>
+    <ul class="search-results" aria-label="Search results"></ul>
+  </dialog>
+  <p id="copy-status" class="visually-hidden" role="status"></p>
+  <script type="application/json" id="page-source">"# Installation\n\nInstall Claude-Themes in a local session in the **Code** tab of Claude Desktop on macOS or Windows. You can use the gallery from that session after restarting it.\n\n## Install the plugin\n\n1. Open Claude Desktop and start a local session in **Code**.\n2. Add the marketplace at the Code prompt.\n\n   ```text\n   /plugin marketplace add adembilge/claude-themes\n   ```\n\n3. Install the plugin in a separate command.\n\n   ```text\n   /plugin install desktop-themes@claude-themes\n   ```\n\n4. Restart the Code session so it loads the plugin.\n\nThe identifier `desktop-themes@claude-themes` combines the plugin name (`desktop-themes`) and marketplace name (`claude-themes`). Use that full identifier for install, update, and uninstall.\n\n## Quick Start\n\nRun the following at the Code prompt in the restarted session.\n\n```text\n/claude-themes\n```\n\nChoose **Dark** or **Light**, then select a theme card. The Code tab should change immediately. If the command is missing or colors appear on a different surface than expected, see [Troubleshooting](troubleshooting.md).\n\n## Update\n\nFrom a terminal with the Claude Code CLI installed, refresh the marketplace, then update the plugin.\n\n```sh\nclaude plugin marketplace update claude-themes\nclaude plugin update desktop-themes@claude-themes\n```\n\nRestart the Code session to load the update. Open `/claude-themes` again to confirm the gallery loads.\n\n## Uninstall\n\n1. In Claude Desktop’s Code tab, run `/claude-themes reset look` to restore the app’s appearance.\n2. In a terminal with the Claude Code CLI installed, uninstall the plugin.\n\n   ```sh\n   claude plugin uninstall desktop-themes@claude-themes\n   ```\n\n3. For a project or local installation, append `--scope project` or `--scope local` to match the scope you used. Restart the Code session.\n\nIf you exported a Claude Code terminal theme, use `/theme` in the CLI to select another theme. Then you can remove `~/.claude/themes/claude-themes.json` if you no longer need it.\n"</script>
+</body>
+</html>

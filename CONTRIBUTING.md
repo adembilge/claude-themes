@@ -23,6 +23,16 @@ For a CLI development session, run `claude --plugin-dir .` from the checkout. Fo
 - Open `/claude-themes` in the Code tab. Find the theme by name, select its row under **Dark**, then select it again under **Light**. Check the preview and the applied Code tab in both modes, including muted text, the active sidebar row, and the composer.
 - For a change to the built-in collection, update the theme gallery image, count, and names in the README.
 
+## Documentation changes
+
+Edit the Markdown in `docs/handbook/`. Generate the GitHub Pages guide and its search index, then commit the Markdown and generated files together.
+
+```sh
+npm ci
+npm run build:docs
+npm run check:docs
+```
+
 ## Pull requests
 
 Describe the change, how you verified it, and which platform you used. Include dark and light screenshots for palette or gallery changes. Link any related issue and include the results of the validation and test commands above.

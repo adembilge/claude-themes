@@ -1,0 +1,11 @@
+{
+  "name": "claude-themes-docs",
+  "private": true,
+  "scripts": {
+    "build:docs": "node scripts/build-docs.mjs",
+    "check:docs": "node scripts/build-docs.mjs --check"
+  },
+  "devDependencies": {
+    "marked": "18.2.1"
+  }
+}

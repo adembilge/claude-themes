@@ -1,0 +1,178 @@
+<!doctype html>
+<!-- Generated from docs/handbook/commands.md. Run npm run build:docs after editing. -->
+<html lang="en" data-type="software">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="page-type" content="software">
+  <meta name="site-kind" content="software">
+  <meta name="description" content="Run these /claude-themes commands at the Code prompt after installing the plugin. See Installation for the separate Claude Code CLI commands that manage the plugin.">
+  <meta property="og:title" content="Command Reference · Claude-Themes Docs">
+  <meta property="og:description" content="Run these /claude-themes commands at the Code prompt after installing the plugin. See Installation for the separate Claude Code CLI commands that manage the plugin.">
+  <meta property="og:url" content="https://adembilge.github.io/claude-themes/guide/commands/">
+  <link rel="canonical" href="https://adembilge.github.io/claude-themes/guide/commands/">
+  <title>Command Reference · Claude-Themes Docs</title>
+  <link rel="icon" href="../../media/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../site.css">
+  <link rel="stylesheet" href="../guide.css">
+  <script src="../../site-palettes.js"></script>
+  <script src="../../site.js"></script>
+  <script src="../guide.js" defer></script>
+</head>
+<body class="guide" id="top">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="guide-topbar guide-wrap">
+      <a class="wordmark" href="../../"><img class="mark" src="../../media/theme-mark.svg" alt="" width="24" height="24">Claude-Themes</a>
+      <button class="guide-search guide-control" type="button" aria-haspopup="dialog" aria-controls="docs-search" data-search-trigger hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span>Search docs</span><kbd aria-hidden="true">Ctrl K</kbd></button>
+      <div class="guide-header-actions">
+        <a class="guide-control guide-github" href="https://github.com/adembilge/claude-themes">GitHub <span aria-hidden="true">↗</span></a>
+        <button class="guide-control" id="themes-button" type="button" aria-label="Documentation theme" popovertarget="site-picker" aria-controls="site-picker" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 1.6-3.2 1.9 1.9 0 0 1 1.6-3H18a3 3 0 0 0 3-3c0-4.9-4-8.8-9-8.8Z"/><path d="M7.5 11h.01m3-3.5h.01m4 0h.01m3 3.5h.01" stroke-width="2.6"/></svg><span class="guide-themes-label">Themes</span></button>
+        <div class="picker theme-picker" id="site-picker" popover hidden>
+          <p class="picker-title">Documentation theme</p>
+          <p class="picker-help" id="active-look"></p>
+          <div class="picker-field"><label for="palette">Palette</label><select id="palette"></select></div>
+          <div class="picker-field"><label for="mode">Mode</label><select id="mode"><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="guide-layout guide-wrap">
+    <details class="doc-rail topics" open>
+      <summary>Docs topics <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="Documentation topics">
+        <p class="rail-group">Getting started</p>
+        <ul><li><a href="../">Introduction</a></li><li><a href="../installation/">Installation</a></li></ul>
+        <p class="rail-group">Guides</p>
+        <ul><li><a href="../themes/">Browse Themes</a></li><li><a href="../theme-maker/">Theme Maker</a></li><li><a href="../import-export/">Import, Export &amp; Share</a></li><li><a href="../terminal/">Terminal Matching</a></li></ul>
+        <p class="rail-group">Reference</p>
+        <ul><li><a href="./" aria-current="page">Command Reference</a></li><li><a href="../troubleshooting/">Troubleshooting</a></li></ul>
+      </nav>
+    </details>
+    <details class="doc-rail toc" open>
+      <summary>On this page <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="On this page">
+        <p class="rail-group">On this page</p>
+        <ul><li><a href="#browse-and-apply">Browse and apply</a></li><li><a href="#import-and-export">Import and export</a></li><li><a href="#follow-system-and-reset">Follow system and reset</a></li></ul>
+        <a class="guide-top-link" href="#top">Back to top <span aria-hidden="true">↑</span></a>
+      </nav>
+    </details>
+    <main class="guide-article" id="main" tabindex="-1">
+      <header class="article-header" data-enter>
+        <p class="breadcrumb"><a href="../">Docs</a><span aria-hidden="true">/</span>Reference</p>
+        <h1>Command Reference</h1>
+        <div class="guide-lede"><p>Run these <code>/claude-themes</code> commands at the Code prompt after installing the plugin. See <a href="../installation/">Installation</a> for the separate Claude Code CLI commands that manage the plugin.</p>
+</div>
+        <div class="page-tools" hidden>
+          <button class="guide-control" type="button" data-page-copy><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copy page</span></button>
+          <a class="guide-control" data-page-markdown download="commands.md">Download Markdown</a>
+        </div>
+      </header>
+      <div class="article-body">
+<span id="themes" class="old-anchor" aria-hidden="true"></span><h2 id="browse-and-apply">Browse and apply <a class="heading-link" href="#browse-and-apply" aria-label="Link to Browse and apply">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/claude-themes</code></td>
+<td>Open the gallery.</td>
+</tr>
+<tr>
+<td><code>/claude-themes &lt;name&gt;</code></td>
+<td>Apply a named theme, for example <code>/claude-themes dracula</code>.</td>
+</tr>
+<tr>
+<td><code>/claude-themes &lt;name&gt; dark</code></td>
+<td>Apply the dark variant of a family.</td>
+</tr>
+<tr>
+<td><code>/claude-themes &lt;name&gt; light</code></td>
+<td>Apply the light variant of a family.</td>
+</tr>
+<tr>
+<td><code>/claude-themes &lt;id&gt;</code></td>
+<td>Apply the exact variant, for example <code>/claude-themes github-light</code>.</td>
+</tr>
+</tbody></table>
+<p>Replace <code>&lt;name&gt;</code> or <code>&lt;id&gt;</code> with a real value. See <a href="../themes/#switch-from-the-prompt">theme name and ID examples</a>.</p>
+<span id="sharing" class="old-anchor" aria-hidden="true"></span><h2 id="import-and-export">Import and export <a class="heading-link" href="#import-and-export" aria-label="Link to Import and export">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/claude-themes import &lt;code, link, path or URL&gt;</code></td>
+<td>Detect the input format, then save and apply the imported palette.</td>
+</tr>
+<tr>
+<td><code>/claude-themes export vscode</code></td>
+<td>Print a VS Code theme JSON export.</td>
+</tr>
+<tr>
+<td><code>/claude-themes export base16</code></td>
+<td>Print a base16 YAML export.</td>
+</tr>
+<tr>
+<td><code>/claude-themes export wt</code></td>
+<td>Print a Windows Terminal JSON scheme.</td>
+</tr>
+</tbody></table>
+<p>See <a href="../import-export/">supported formats and examples</a>.</p>
+<span id="appearance" class="old-anchor" aria-hidden="true"></span><h2 id="follow-system-and-reset">Follow system and reset <a class="heading-link" href="#follow-system-and-reset" aria-label="Link to Follow system and reset">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/claude-themes follow on</code></td>
+<td>Follow the system mode using the configured day and night palettes. This turns off the clock-based schedule.</td>
+</tr>
+<tr>
+<td><code>/claude-themes follow off</code></td>
+<td>Stop following system mode. To resume switching by time, choose <strong>By the hour</strong> under <strong>Day and night</strong> in Appearance.</td>
+</tr>
+<tr>
+<td><code>/claude-themes reset look</code></td>
+<td>Restore Claude Desktop’s appearance and retain plugin data. Pick another gallery theme to turn the plugin’s colors back on.</td>
+</tr>
+<tr>
+<td><code>/claude-themes reset settings</code></td>
+<td>Restore appearance and schedule defaults and clear tuning. Custom themes, favorites, and folder assignments are retained.</td>
+</tr>
+<tr>
+<td><code>/claude-themes reset all</code></td>
+<td>Immediately erase custom themes, favorites, folder assignments, and tuning, then apply the plugin’s default palette.</td>
+</tr>
+</tbody></table>
+<p>The <code>reset all</code> slash command applies immediately. Use <a href="../import-export/#share-a-theme">Copy code</a> on any custom palettes you want to keep before running it. The <strong>Reset</strong> card in Settings offers a confirmation step.</p>
+      </div>
+      <nav class="page-nav" aria-label="Adjacent documentation">
+        <a class="page-link page-link-previous" href="../terminal/"><span>Previous</span><strong>Terminal Matching</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+        <a class="page-link page-link-next" href="../troubleshooting/"><span>Next</span><strong>Troubleshooting</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+      </nav>
+    </main>
+  </div>
+  <dialog class="search-dialog" id="docs-search" aria-labelledby="search-title" data-index="../search-index.json">
+    <div class="search-header">
+      <h2 id="search-title" class="visually-hidden">Search the documentation</h2>
+      <label class="search-field"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span class="visually-hidden">Search topics, headings, and commands</span><input type="search" placeholder="Search topics and commands" autofocus></label>
+      <form method="dialog"><button class="guide-control search-close" aria-label="Close search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></form>
+    </div>
+    <p class="search-status" role="status"></p>
+    <ul class="search-results" aria-label="Search results"></ul>
+  </dialog>
+  <p id="copy-status" class="visually-hidden" role="status"></p>
+  <script type="application/json" id="page-source">"# Command Reference\n\nRun these `/claude-themes` commands at the Code prompt after installing the plugin. See [Installation](installation.md) for the separate Claude Code CLI commands that manage the plugin.\n\n## Browse and apply\n\n| Command | Action |\n| --- | --- |\n| `/claude-themes` | Open the gallery. |\n| `/claude-themes \u003cname>` | Apply a named theme, for example `/claude-themes dracula`. |\n| `/claude-themes \u003cname> dark` | Apply the dark variant of a family. |\n| `/claude-themes \u003cname> light` | Apply the light variant of a family. |\n| `/claude-themes \u003cid>` | Apply the exact variant, for example `/claude-themes github-light`. |\n\nReplace `\u003cname>` or `\u003cid>` with a real value. See [theme name and ID examples](themes.md#switch-from-the-prompt).\n\n## Import and export\n\n| Command | Action |\n| --- | --- |\n| `/claude-themes import \u003ccode, link, path or URL>` | Detect the input format, then save and apply the imported palette. |\n| `/claude-themes export vscode` | Print a VS Code theme JSON export. |\n| `/claude-themes export base16` | Print a base16 YAML export. |\n| `/claude-themes export wt` | Print a Windows Terminal JSON scheme. |\n\nSee [supported formats and examples](import-export.md).\n\n## Follow system and reset\n\n| Command | Effect |\n| --- | --- |\n| `/claude-themes follow on` | Follow the system mode using the configured day and night palettes. This turns off the clock-based schedule. |\n| `/claude-themes follow off` | Stop following system mode. To resume switching by time, choose **By the hour** under **Day and night** in Appearance. |\n| `/claude-themes reset look` | Restore Claude Desktop’s appearance and retain plugin data. Pick another gallery theme to turn the plugin’s colors back on. |\n| `/claude-themes reset settings` | Restore appearance and schedule defaults and clear tuning. Custom themes, favorites, and folder assignments are retained. |\n| `/claude-themes reset all` | Immediately erase custom themes, favorites, folder assignments, and tuning, then apply the plugin’s default palette. |\n\nThe `reset all` slash command applies immediately. Use [Copy code](import-export.md#share-a-theme) on any custom palettes you want to keep before running it. The **Reset** card in Settings offers a confirmation step.\n"</script>
+</body>
+</html>

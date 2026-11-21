@@ -1,0 +1,230 @@
+[
+  {
+    "href": "./",
+    "page": "Introduction",
+    "title": "Introduction",
+    "text": "Claude-Themes adds 40 theme families to the Code tab in Claude Desktop. Every family has a light and dark variant. Use the gallery to try them, or build a palette from an accent color in Theme Maker."
+  },
+  {
+    "href": "#getting-started",
+    "page": "Introduction",
+    "title": "Getting started",
+    "text": "Follow Installation in a local Code session on macOS or Windows. Open the gallery with the command below. Choose Dark or Light , then select a theme card to apply it. Star a palette to find that variant again under Favorites . /claude-themes To switch without opening the gallery, try /claude-themes github light . Browse Themes explains what happens when you omit the mode."
+  },
+  {
+    "href": "#what-you-can-do",
+    "page": "Introduction",
+    "title": "What you can do",
+    "text": "If you want to… Read Find a light or dark palette and save favorites Browse Themes Make a palette, adjust its contrast or keep a look for one folder Theme Maker Bring in a VS Code theme or share a palette with another machine Import, Export & Share Use the same colors in the Claude Code CLI Terminal Matching Look up a slash command or see what a reset clears Command Reference"
+  },
+  {
+    "href": "#where-colors-apply",
+    "page": "Introduction",
+    "title": "Where colors apply",
+    "text": "Applying a Desktop theme changes the Code tab. The Plugins and Artifacts pages keep their own appearance. The Claude Code CLI reads a separate theme file, and your terminal emulator has its own color settings. See how the three surfaces differ . The Themes control on the documentation site previews colors in your browser. Use the gallery in Claude Desktop to apply a palette there."
+  },
+  {
+    "href": "installation/",
+    "page": "Installation",
+    "title": "Installation",
+    "text": "Install Claude-Themes in a local session in the Code tab of Claude Desktop on macOS or Windows. You can use the gallery from that session after restarting it."
+  },
+  {
+    "href": "installation/#install-the-plugin",
+    "page": "Installation",
+    "title": "Install the plugin",
+    "text": "Open Claude Desktop and start a local session in Code . Add the marketplace at the Code prompt. /plugin marketplace add adembilge/claude-themes Install the plugin in a separate command. /plugin install desktop-themes@claude-themes Restart the Code session so it loads the plugin. The identifier desktop-themes@claude-themes combines the plugin name ( desktop-themes ) and marketplace name ( claude-themes ). Use that full identifier for install, update, and uninstall."
+  },
+  {
+    "href": "installation/#quick-start",
+    "page": "Installation",
+    "title": "Quick Start",
+    "text": "Run the following at the Code prompt in the restarted session. /claude-themes Choose Dark or Light , then select a theme card. The Code tab should change immediately. If the command is missing or colors appear on a different surface than expected, see Troubleshooting ."
+  },
+  {
+    "href": "installation/#update",
+    "page": "Installation",
+    "title": "Update",
+    "text": "From a terminal with the Claude Code CLI installed, refresh the marketplace, then update the plugin. claude plugin marketplace update claude-themes claude plugin update desktop-themes@claude-themes Restart the Code session to load the update. Open /claude-themes again to confirm the gallery loads."
+  },
+  {
+    "href": "installation/#uninstall",
+    "page": "Installation",
+    "title": "Uninstall",
+    "text": "In Claude Desktop’s Code tab, run /claude-themes reset look to restore the app’s appearance. In a terminal with the Claude Code CLI installed, uninstall the plugin. claude plugin uninstall desktop-themes@claude-themes For a project or local installation, append --scope project or --scope local to match the scope you used. Restart the Code session. If you exported a Claude Code terminal theme, use /theme in the CLI to select another theme. Then you can remove ~/.claude/themes/claude-themes.json if you no longer need it."
+  },
+  {
+    "href": "themes/",
+    "page": "Browse Themes",
+    "title": "Browse Themes",
+    "text": "Preview dark and light palettes in the gallery, save individual variants as favorites, or select a palette by name from the Code prompt."
+  },
+  {
+    "href": "themes/#open-the-gallery",
+    "page": "Browse Themes",
+    "title": "Open the gallery",
+    "text": "/claude-themes Use Dark and Light to switch the visible cards. When you select a card, the plugin applies that palette and sets the Code tab to its mode. Each family has both variants. For example, GitHub Light uses a bright surface and a blue accent. GitHub Light preview in the Code tab Watch the gallery demo ."
+  },
+  {
+    "href": "themes/#find-and-save-palettes",
+    "page": "Browse Themes",
+    "title": "Find and save palettes",
+    "text": "Search by theme name or by a term in its description, such as pastels . Select the star on a theme card. Favorites are saved by variant, so you can star both the dark and light looks of one family. Open Favorites to find the saved cards. Select the star again to remove a favorite."
+  },
+  {
+    "href": "themes/#switch-from-the-prompt",
+    "page": "Browse Themes",
+    "title": "Switch from the prompt",
+    "text": "Input Result /claude-themes github Picks the GitHub variant that matches the current palette’s mode. /claude-themes github light Picks the light GitHub variant regardless of the current mode. /claude-themes github-light Applies the exact ID github-light . /claude-themes catppuccin-mocha Applies Catppuccin Mocha by its ID. When a name matches an exact ID, the exact match wins unless you specify a mode. Use the spaced dark or light suffix when you want to select a family variant explicitly. /claude-themes github light If a theme changes when a new session starts, check Day and night, Follow system, and folder themes ."
+  },
+  {
+    "href": "theme-maker/",
+    "page": "Theme Maker",
+    "title": "Theme Maker",
+    "text": "Create a palette from a name, a light or dark base, and an accent color. Then use Appearance to tune it and choose when Claude-Themes applies it."
+  },
+  {
+    "href": "theme-maker/#build-a-theme",
+    "page": "Theme Maker",
+    "title": "Build a theme",
+    "text": "Open /claude-themes and select Theme Maker . Enter a name, choose Dark or Light , and enter an accent. For example, use #d98a4e , rgb(217, 138, 78) , hsl(26, 65%, 56%) , or coral . Review the preview for text, surfaces, accent, and status colors. The preview reports adjustments made by the palette’s contrast checks. Save the theme to apply it and add it to your custom themes. Watch the Theme Maker demo ."
+  },
+  {
+    "href": "theme-maker/#tune-appearance",
+    "page": "Theme Maker",
+    "title": "Tune appearance",
+    "text": "Open Appearance while the theme you want to adjust is active. Its seven tuning controls cover warmth, saturation, surface brightness, text contrast, surface tint, accent, and status colors. The available stops depend on the palette’s contrast checks. Setting When to use it Backdrop Add a soft background behind the chat. Choose Glow, Sunrise, Spotlight, Duotone, Vignette, Dusk, Twilight, Ember, or Halo at Subtle, Normal, or Bold strength. High contrast Make borders and focus rings easier to distinguish. Palette-matched code colors Bring syntax colors into the current palette. Soften glare Reduce the glare of a bright light palette. Night comfort Add a warmer look. Enable its night-only option to use the hours configured under Day and night . Export or share the active theme after tuning. See what each format carries ."
+  },
+  {
+    "href": "theme-maker/#set-day-night-and-folder-themes",
+    "page": "Theme Maker",
+    "title": "Set day, night, and folder themes",
+    "text": ""
+  },
+  {
+    "href": "theme-maker/#choose-a-schedule",
+    "page": "Theme Maker",
+    "title": "Choose a schedule",
+    "text": "In Appearance , open Day and night , select By the hour , choose a day theme and a night theme, and set the hours. The plugin checks the period when a session starts and when you submit a prompt. If the clock crosses a boundary during an idle session, the next prompt can trigger the switch."
+  },
+  {
+    "href": "theme-maker/#follow-system-mode",
+    "page": "Theme Maker",
+    "title": "Follow system mode",
+    "text": "Follow system uses the configured day palette in light mode and the night palette in dark mode. It disables the clock-based schedule. Choose By the hour to use the configured hours again. Picking a theme manually turns off Follow system ."
+  },
+  {
+    "href": "theme-maker/#keep-a-theme-for-a-folder",
+    "page": "Theme Maker",
+    "title": "Keep a theme for a folder",
+    "text": "Open the folder in a local Code session, apply the palette, then use the folder theme card in Settings to save it for that folder. A saved folder theme takes precedence over the default and the schedule in new sessions. Follow system takes precedence when enabled. Use the same card to clear the folder choice."
+  },
+  {
+    "href": "import-export/",
+    "page": "Import, Export & Share",
+    "title": "Import, Export & Share",
+    "text": "Bring a palette from another editor or terminal into Claude Desktop, or take a Claude-Themes palette to another machine or tool."
+  },
+  {
+    "href": "import-export/#import-a-palette",
+    "page": "Import, Export & Share",
+    "title": "Import a palette",
+    "text": "Open /claude-themes and find Import in Settings . Paste a theme code, share link, local file path, or direct URL to a theme file. You can also use /claude-themes import followed by the same input. Read the import message. A successful import adds a custom theme, applies it, and reports any color adjustments. Source What to provide Claude-Themes A complete claude-themes: code or the preview URL from Copy link , including its # fragment. VS Code A theme JSON file, a direct URL to it, or a selection from From VS Code . The picker can find installed themes from VS Code, Cursor, Windsurf, and VS Code OSS. base16 or base24 A YAML or JSON scheme. Windows Terminal A scheme JSON file or settings.json . A settings file supplies the first scheme in its schemes array. iTerm2 An .itermcolors file. Example with a local file. ~/ expands to your home folder. Surround a path containing spaces with double quotes. /claude-themes import \"~/themes/My Palette.json\" An editor theme supplies colors for a different interface, so Claude-Themes builds an approximate Code tab palette from it. With a GitHub-hosted file, use the raw URL so the plugin receives the theme contents."
+  },
+  {
+    "href": "import-export/#export-a-palette",
+    "page": "Import, Export & Share",
+    "title": "Export a palette",
+    "text": "The Share card at the bottom of Theme Maker has export buttons that copy the current theme to the clipboard. The slash command prints the export and a suggested filename in the session. Format Command argument Suggested extension VS Code theme JSON vscode .json base16 scheme base16 .yaml Windows Terminal scheme wt .json /claude-themes export wt Paste the output into the suggested file and follow the destination app’s instructions for loading it. Exports use the active palette with its color tuning applied. Windows Terminal exports include 16 ANSI colors derived from that palette. For the Claude Code CLI’s own format, use Terminal Matching ."
+  },
+  {
+    "href": "import-export/#share-a-theme",
+    "page": "Import, Export & Share",
+    "title": "Share a theme",
+    "text": "Copy code produces a single claude-themes: line to paste into Import on another machine. Copy link produces a browser preview URL that you can also paste into Import . Send the whole link, including the part after # , because it contains the palette. Use either option when you want to share a Claude-Themes palette without choosing another app’s file format. Favorites, folder assignments, and schedule settings belong to your installation."
+  },
+  {
+    "href": "terminal/",
+    "page": "Terminal Matching",
+    "title": "Terminal Matching",
+    "text": "Copy the active Desktop palette to the Claude Code CLI, then select it once in the terminal’s /theme menu."
+  },
+  {
+    "href": "terminal/#match-the-terminal",
+    "page": "Terminal Matching",
+    "title": "Match the terminal",
+    "text": "Apply your preferred theme in Claude Desktop’s Code tab. Open /claude-themes , go to Settings , and choose Match terminal to… . The plugin writes the current palette with its tuning to ~/.claude/themes/claude-themes.json . Open Claude Code in a terminal, run /theme , and choose Claude Themes . If .claude/themes was just created, restart the CLI once before opening /theme again. The Desktop app and CLI need to use the same home directory for the CLI to find the file the plugin wrote. This matters if you run the CLI in WSL, an SSH session, or under a different user account."
+  },
+  {
+    "href": "terminal/#refresh-after-switching",
+    "page": "Terminal Matching",
+    "title": "Refresh after switching",
+    "text": "After changing or tuning the Desktop theme, choose Match terminal to… again to rewrite the same file. A CLI session already using Claude Themes can pick up the updated file. To stop using the palette, choose a different entry in /theme ."
+  },
+  {
+    "href": "terminal/#desktop-cli-and-terminal-colors",
+    "page": "Terminal Matching",
+    "title": "Desktop, CLI, and terminal colors",
+    "text": "Surface How to set its colors Claude Desktop Code tab Select a theme in the Claude-Themes gallery. Claude Code CLI interface Write the file with Match terminal to… , then select Claude Themes . Windows Terminal window and shell Export a Windows Terminal scheme and apply it in Windows Terminal. The Claude Code theme colors its interface, including accents, diffs, status colors, borders, and message backgrounds. The terminal emulator supplies its own window and shell colors."
+  },
+  {
+    "href": "commands/",
+    "page": "Command Reference",
+    "title": "Command Reference",
+    "text": "Run these /claude-themes commands at the Code prompt after installing the plugin. See Installation for the separate Claude Code CLI commands that manage the plugin."
+  },
+  {
+    "href": "commands/#browse-and-apply",
+    "page": "Command Reference",
+    "title": "Browse and apply",
+    "text": "Command Action /claude-themes Open the gallery. /claude-themes <name> Apply a named theme, for example /claude-themes dracula . /claude-themes <name> dark Apply the dark variant of a family. /claude-themes <name> light Apply the light variant of a family. /claude-themes <id> Apply the exact variant, for example /claude-themes github-light . Replace <name> or <id> with a real value. See theme name and ID examples ."
+  },
+  {
+    "href": "commands/#import-and-export",
+    "page": "Command Reference",
+    "title": "Import and export",
+    "text": "Command Action /claude-themes import <code, link, path or URL> Detect the input format, then save and apply the imported palette. /claude-themes export vscode Print a VS Code theme JSON export. /claude-themes export base16 Print a base16 YAML export. /claude-themes export wt Print a Windows Terminal JSON scheme. See supported formats and examples ."
+  },
+  {
+    "href": "commands/#follow-system-and-reset",
+    "page": "Command Reference",
+    "title": "Follow system and reset",
+    "text": "Command Effect /claude-themes follow on Follow the system mode using the configured day and night palettes. This turns off the clock-based schedule. /claude-themes follow off Stop following system mode. To resume switching by time, choose By the hour under Day and night in Appearance. /claude-themes reset look Restore Claude Desktop’s appearance and retain plugin data. Pick another gallery theme to turn the plugin’s colors back on. /claude-themes reset settings Restore appearance and schedule defaults and clear tuning. Custom themes, favorites, and folder assignments are retained. /claude-themes reset all Immediately erase custom themes, favorites, folder assignments, and tuning, then apply the plugin’s default palette. The reset all slash command applies immediately. Use Copy code on any custom palettes you want to keep before running it. The Reset card in Settings offers a confirmation step."
+  },
+  {
+    "href": "troubleshooting/",
+    "page": "Troubleshooting",
+    "title": "Troubleshooting",
+    "text": "Check the session, the active theme settings, and the input format when a command or palette behaves differently than you expect."
+  },
+  {
+    "href": "troubleshooting/#the-gallery-command-is-missing",
+    "page": "Troubleshooting",
+    "title": "The gallery command is missing",
+    "text": "Confirm that you’re in a local Code session in Claude Desktop. Check that the marketplace and plugin installation commands in Installation completed successfully. Restart the Code session after installing or updating, then retry /claude-themes ."
+  },
+  {
+    "href": "troubleshooting/#a-theme-or-mode-changed-unexpectedly",
+    "page": "Troubleshooting",
+    "title": "A theme or mode changed unexpectedly",
+    "text": "If you ran a family name alone, add an explicit mode such as /claude-themes github light . For changes after opening a folder, check the folder theme card in Settings . For changes after submitting a prompt or changing the system mode, check Day and night and Follow system in Appearance . If you only want to go back to Claude Desktop’s default colors, run /claude-themes reset look . This keeps your themes and favorites."
+  },
+  {
+    "href": "troubleshooting/#a-file-or-share-link-will-not-import",
+    "page": "Troubleshooting",
+    "title": "A file or share link will not import",
+    "text": "Confirm that the file is in a supported format . For URLs, check that opening one returns the palette file itself. For a local path, check that the session can read the file. Quote paths with spaces and use ~/ for your home folder if helpful. For a share link, copy the entire URL including its fragment. For a share code, keep the claude-themes: prefix. If the import succeeds but the accent or surfaces change, review the adjustment message. Imported colors may be changed by the plugin’s palette and contrast checks."
+  },
+  {
+    "href": "troubleshooting/#the-claude-code-theme-is-missing-from-the-terminal",
+    "page": "Troubleshooting",
+    "title": "The Claude Code theme is missing from the terminal",
+    "text": "Check whether Match terminal to… reports a successful write. Confirm that ~/.claude/themes/claude-themes.json exists under the CLI account’s home directory. Restart the CLI if the directory was newly created, then run /theme and choose Claude Themes . See Terminal Matching for refresh and terminal emulator settings."
+  },
+  {
+    "href": "troubleshooting/#report-an-issue",
+    "page": "Troubleshooting",
+    "title": "Report an issue",
+    "text": "Include the plugin and Claude Desktop versions, operating system, the command or button you used, what you expected, and what happened. If the issue is specific to an import, include its format and a shareable example. Open a GitHub issue ."
+  }
+]

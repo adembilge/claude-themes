@@ -1,0 +1,167 @@
+<!doctype html>
+<!-- Generated from docs/handbook/import-export.md. Run npm run build:docs after editing. -->
+<html lang="en" data-type="software">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="page-type" content="software">
+  <meta name="site-kind" content="software">
+  <meta name="description" content="Bring a palette from another editor or terminal into Claude Desktop, or take a Claude-Themes palette to another machine or tool.">
+  <meta property="og:title" content="Import, Export &amp; Share · Claude-Themes Docs">
+  <meta property="og:description" content="Bring a palette from another editor or terminal into Claude Desktop, or take a Claude-Themes palette to another machine or tool.">
+  <meta property="og:url" content="https://adembilge.github.io/claude-themes/guide/import-export/">
+  <link rel="canonical" href="https://adembilge.github.io/claude-themes/guide/import-export/">
+  <title>Import, Export &amp; Share · Claude-Themes Docs</title>
+  <link rel="icon" href="../../media/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../site.css">
+  <link rel="stylesheet" href="../guide.css">
+  <script src="../../site-palettes.js"></script>
+  <script src="../../site.js"></script>
+  <script src="../guide.js" defer></script>
+</head>
+<body class="guide" id="top">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="guide-topbar guide-wrap">
+      <a class="wordmark" href="../../"><img class="mark" src="../../media/theme-mark.svg" alt="" width="24" height="24">Claude-Themes</a>
+      <button class="guide-search guide-control" type="button" aria-haspopup="dialog" aria-controls="docs-search" data-search-trigger hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span>Search docs</span><kbd aria-hidden="true">Ctrl K</kbd></button>
+      <div class="guide-header-actions">
+        <a class="guide-control guide-github" href="https://github.com/adembilge/claude-themes">GitHub <span aria-hidden="true">↗</span></a>
+        <button class="guide-control" id="themes-button" type="button" aria-label="Documentation theme" popovertarget="site-picker" aria-controls="site-picker" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 1.6-3.2 1.9 1.9 0 0 1 1.6-3H18a3 3 0 0 0 3-3c0-4.9-4-8.8-9-8.8Z"/><path d="M7.5 11h.01m3-3.5h.01m4 0h.01m3 3.5h.01" stroke-width="2.6"/></svg><span class="guide-themes-label">Themes</span></button>
+        <div class="picker theme-picker" id="site-picker" popover hidden>
+          <p class="picker-title">Documentation theme</p>
+          <p class="picker-help" id="active-look"></p>
+          <div class="picker-field"><label for="palette">Palette</label><select id="palette"></select></div>
+          <div class="picker-field"><label for="mode">Mode</label><select id="mode"><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="guide-layout guide-wrap">
+    <details class="doc-rail topics" open>
+      <summary>Docs topics <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="Documentation topics">
+        <p class="rail-group">Getting started</p>
+        <ul><li><a href="../">Introduction</a></li><li><a href="../installation/">Installation</a></li></ul>
+        <p class="rail-group">Guides</p>
+        <ul><li><a href="../themes/">Browse Themes</a></li><li><a href="../theme-maker/">Theme Maker</a></li><li><a href="./" aria-current="page">Import, Export &amp; Share</a></li><li><a href="../terminal/">Terminal Matching</a></li></ul>
+        <p class="rail-group">Reference</p>
+        <ul><li><a href="../commands/">Command Reference</a></li><li><a href="../troubleshooting/">Troubleshooting</a></li></ul>
+      </nav>
+    </details>
+    <details class="doc-rail toc" open>
+      <summary>On this page <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <nav aria-label="On this page">
+        <p class="rail-group">On this page</p>
+        <ul><li><a href="#import-a-palette">Import a palette</a></li><li><a href="#export-a-palette">Export a palette</a></li><li><a href="#share-a-theme">Share a theme</a></li></ul>
+        <a class="guide-top-link" href="#top">Back to top <span aria-hidden="true">↑</span></a>
+      </nav>
+    </details>
+    <main class="guide-article" id="main" tabindex="-1">
+      <header class="article-header" data-enter>
+        <p class="breadcrumb"><a href="../">Docs</a><span aria-hidden="true">/</span>Guides</p>
+        <h1>Import, Export &amp; Share</h1>
+        <div class="guide-lede"><p>Bring a palette from another editor or terminal into Claude Desktop, or take a Claude-Themes palette to another machine or tool.</p>
+</div>
+        <div class="page-tools" hidden>
+          <button class="guide-control" type="button" data-page-copy><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copy page</span></button>
+          <a class="guide-control" data-page-markdown download="import-export.md">Download Markdown</a>
+        </div>
+      </header>
+      <div class="article-body">
+<span id="import" class="old-anchor" aria-hidden="true"></span><h2 id="import-a-palette">Import a palette <a class="heading-link" href="#import-a-palette" aria-label="Link to Import a palette">#</a></h2>
+<ol>
+<li>Open <code>/claude-themes</code> and find <strong>Import</strong> in <strong>Settings</strong>.</li>
+<li>Paste a theme code, share link, local file path, or direct URL to a theme file. You can also use <code>/claude-themes import</code> followed by the same input.</li>
+<li>Read the import message. A successful import adds a custom theme, applies it, and reports any color adjustments.</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>What to provide</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Claude-Themes</td>
+<td>A complete <code>claude-themes:</code> code or the preview URL from <strong>Copy link</strong>, including its <code>#</code> fragment.</td>
+</tr>
+<tr>
+<td>VS Code</td>
+<td>A theme JSON file, a direct URL to it, or a selection from <strong>From VS Code</strong>. The picker can find installed themes from VS Code, Cursor, Windsurf, and VS Code OSS.</td>
+</tr>
+<tr>
+<td>base16 or base24</td>
+<td>A YAML or JSON scheme.</td>
+</tr>
+<tr>
+<td>Windows Terminal</td>
+<td>A scheme JSON file or <code>settings.json</code>. A settings file supplies the first scheme in its <code>schemes</code> array.</td>
+</tr>
+<tr>
+<td>iTerm2</td>
+<td>An <code>.itermcolors</code> file.</td>
+</tr>
+</tbody></table>
+<p>Example with a local file. <code>~/</code> expands to your home folder. Surround a path containing spaces with double quotes.</p>
+<div class="command guide-command"><pre><code class="language-text">/claude-themes import &quot;~/themes/My Palette.json&quot;
+</code></pre>
+<button class="copy" type="button" hidden>Copy</button></div>
+<p>An editor theme supplies colors for a different interface, so Claude-Themes builds an approximate Code tab palette from it. With a GitHub-hosted file, use the raw URL so the plugin receives the theme contents.</p>
+<span id="export" class="old-anchor" aria-hidden="true"></span><h2 id="export-a-palette">Export a palette <a class="heading-link" href="#export-a-palette" aria-label="Link to Export a palette">#</a></h2>
+<p>The <strong>Share</strong> card at the bottom of <strong>Theme Maker</strong> has export buttons that copy the current theme to the clipboard. The slash command prints the export and a suggested filename in the session.</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Command argument</th>
+<th>Suggested extension</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>VS Code theme JSON</td>
+<td><code>vscode</code></td>
+<td><code>.json</code></td>
+</tr>
+<tr>
+<td>base16 scheme</td>
+<td><code>base16</code></td>
+<td><code>.yaml</code></td>
+</tr>
+<tr>
+<td>Windows Terminal scheme</td>
+<td><code>wt</code></td>
+<td><code>.json</code></td>
+</tr>
+</tbody></table>
+<div class="command guide-command"><pre><code class="language-text">/claude-themes export wt
+</code></pre>
+<button class="copy" type="button" hidden>Copy</button></div>
+<p>Paste the output into the suggested file and follow the destination app’s instructions for loading it. Exports use the active palette with its color tuning applied. Windows Terminal exports include 16 ANSI colors derived from that palette. For the Claude Code CLI’s own format, use <a href="../terminal/">Terminal Matching</a>.</p>
+<span id="share" class="old-anchor" aria-hidden="true"></span><h2 id="share-a-theme">Share a theme <a class="heading-link" href="#share-a-theme" aria-label="Link to Share a theme">#</a></h2>
+<ul>
+<li><strong>Copy code</strong> produces a single <code>claude-themes:</code> line to paste into <strong>Import</strong> on another machine.</li>
+<li><strong>Copy link</strong> produces a browser preview URL that you can also paste into <strong>Import</strong>. Send the whole link, including the part after <code>#</code>, because it contains the palette.</li>
+</ul>
+<p>Use either option when you want to share a Claude-Themes palette without choosing another app’s file format. Favorites, folder assignments, and schedule settings belong to your installation.</p>
+      </div>
+      <nav class="page-nav" aria-label="Adjacent documentation">
+        <a class="page-link page-link-previous" href="../theme-maker/"><span>Previous</span><strong>Theme Maker</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+        <a class="page-link page-link-next" href="../terminal/"><span>Next</span><strong>Terminal Matching</strong><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
+      </nav>
+    </main>
+  </div>
+  <dialog class="search-dialog" id="docs-search" aria-labelledby="search-title" data-index="../search-index.json">
+    <div class="search-header">
+      <h2 id="search-title" class="visually-hidden">Search the documentation</h2>
+      <label class="search-field"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m16 16 4 4"/></svg><span class="visually-hidden">Search topics, headings, and commands</span><input type="search" placeholder="Search topics and commands" autofocus></label>
+      <form method="dialog"><button class="guide-control search-close" aria-label="Close search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></form>
+    </div>
+    <p class="search-status" role="status"></p>
+    <ul class="search-results" aria-label="Search results"></ul>
+  </dialog>
+  <p id="copy-status" class="visually-hidden" role="status"></p>
+  <script type="application/json" id="page-source">"# Import, Export & Share\n\nBring a palette from another editor or terminal into Claude Desktop, or take a Claude-Themes palette to another machine or tool.\n\n## Import a palette\n\n1. Open `/claude-themes` and find **Import** in **Settings**.\n2. Paste a theme code, share link, local file path, or direct URL to a theme file. You can also use `/claude-themes import` followed by the same input.\n3. Read the import message. A successful import adds a custom theme, applies it, and reports any color adjustments.\n\n| Source | What to provide |\n| --- | --- |\n| Claude-Themes | A complete `claude-themes:` code or the preview URL from **Copy link**, including its `#` fragment. |\n| VS Code | A theme JSON file, a direct URL to it, or a selection from **From VS Code**. The picker can find installed themes from VS Code, Cursor, Windsurf, and VS Code OSS. |\n| base16 or base24 | A YAML or JSON scheme. |\n| Windows Terminal | A scheme JSON file or `settings.json`. A settings file supplies the first scheme in its `schemes` array. |\n| iTerm2 | An `.itermcolors` file. |\n\nExample with a local file. `~/` expands to your home folder. Surround a path containing spaces with double quotes.\n\n```text\n/claude-themes import \"~/themes/My Palette.json\"\n```\n\nAn editor theme supplies colors for a different interface, so Claude-Themes builds an approximate Code tab palette from it. With a GitHub-hosted file, use the raw URL so the plugin receives the theme contents.\n\n## Export a palette\n\nThe **Share** card at the bottom of **Theme Maker** has export buttons that copy the current theme to the clipboard. The slash command prints the export and a suggested filename in the session.\n\n| Format | Command argument | Suggested extension |\n| --- | --- | --- |\n| VS Code theme JSON | `vscode` | `.json` |\n| base16 scheme | `base16` | `.yaml` |\n| Windows Terminal scheme | `wt` | `.json` |\n\n```text\n/claude-themes export wt\n```\n\nPaste the output into the suggested file and follow the destination app’s instructions for loading it. Exports use the active palette with its color tuning applied. Windows Terminal exports include 16 ANSI colors derived from that palette. For the Claude Code CLI’s own format, use [Terminal Matching](terminal.md).\n\n## Share a theme\n\n- **Copy code** produces a single `claude-themes:` line to paste into **Import** on another machine.\n- **Copy link** produces a browser preview URL that you can also paste into **Import**. Send the whole link, including the part after `#`, because it contains the palette.\n\nUse either option when you want to share a Claude-Themes palette without choosing another app’s file format. Favorites, folder assignments, and schedule settings belong to your installation.\n"</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Browse dark and light palettes for Claude Desktop, make your own theme, and learn how to install Claude-Themes.">
+  <meta property="og:title" content="Claude-Themes">
+  <meta property="og:description" content="Pick from 40 palettes, or make one that feels like yours.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://adembilge.github.io/claude-themes/media/gallery-poster.webp">
+  <title>Claude-Themes · Themes for Claude Desktop</title>
+  <link rel="icon" href="media/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="site.css">
+  <script src="site-palettes.js"></script>
+  <script src="site.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="wordmark" href="./"><img class="mark" src="media/theme-mark.svg" alt="" width="24" height="24">Claude-Themes</a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="#install">Install</a>
+        <a href="guide/">Docs</a>
+      </nav>
+      <a class="button star-link" href="https://github.com/adembilge/claude-themes"><svg class="github-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"/></svg> Star on GitHub</a>
+    </div>
+  </header>
+  <div class="themes-dock">
+        <button class="themes-trigger" id="themes-button" type="button" popovertarget="site-picker" aria-controls="site-picker" hidden><img class="mark" src="media/theme-mark.svg" alt="" width="24" height="24"><span class="themes-trigger-copy"><span>Themes</span><span id="active-look">Espresso · Dark</span></span></button>
+        <div class="picker theme-picker" id="site-picker" popover hidden>
+          <p class="picker-title">Themes</p><p class="picker-help">Try a Claude-Themes palette on this site.</p>
+          <label>Palette <select id="palette"></select></label>
+          <label>Mode
+            <select id="mode">
+              <option value="system">System</option>
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </label>
+          <div class="swatches" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+  </div>
+  <main id="main">
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="hero-platform">macOS &amp; Windows</p>
+          <h1>Themes for<br> Claude Desktop.</h1>
+        </div>
+        <div class="hero-summary">
+          <p class="lede">Pick from 40 palettes, or make one that feels like yours.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#install">Install the plugin <span aria-hidden="true">↓</span></a>
+            <a class="button secondary" href="guide/">Read the Docs</a>
+          </div>
+        </div>
+        <div class="demo" id="appearance">
+          <div class="demo-title">
+            <span>Claude Desktop</span>
+            <span>Theme switching</span>
+          </div>
+          <video controls playsinline preload="none" width="1100" height="612"
+            poster="media/gallery-poster.webp"
+            aria-label="Demo showing Dracula and Catppuccin Light applied in Claude Desktop">
+            <source src="media/gallery-demo.mp4" type="video/mp4">
+            <a href="media/demo.gif">Watch the theme switching demo</a>
+          </video>
+        </div>
+      </div>
+    </section>
+    <section class="section install" id="install">
+      <div class="wrap install-grid">
+        <div>
+          <h2>Install Claude-Themes</h2>
+          <p class="section-intro">Open a local session in Claude Desktop’s <strong>Code</strong> tab on macOS or Windows.</p>
+          <p>Run both commands separately. Restart the session, then run <code>/claude-themes</code> to open the gallery.</p>
+        </div>
+        <div class="command-stack" aria-label="Installation commands">
+          <div class="command"><code>/plugin marketplace add adembilge/claude-themes</code><button class="copy" type="button" hidden>Copy</button></div>
+          <div class="command"><code>/plugin install desktop-themes@claude-themes</code><button class="copy" type="button" hidden>Copy</button></div>
+          <div class="command"><code>/claude-themes</code><button class="copy" type="button" hidden>Copy</button></div>
+
+        </div>
+      </div>
+    </section>
+    <section class="section documents" id="documents">
+      <div class="wrap docs-entry">
+        <div>
+          <h2>Documents</h2>
+          <p class="section-intro">Learn how to browse palettes, build your own theme, and use it in the terminal.</p>
+          <a class="button secondary" href="guide/">Open the docs <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="doc-links">
+          <a href="guide/installation/">Installation and quick start <span aria-hidden="true">↗</span></a>
+          <a href="guide/theme-maker/">Make and tune a theme <span aria-hidden="true">↗</span></a>
+          <a href="guide/commands/">Command reference <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <p class="visually-hidden" id="copy-status" role="status"></p>
+  <footer>
+    <div class="wrap footer-inner">
+      <a class="wordmark" href="#main"><img class="mark" src="media/theme-mark.svg" alt="" width="24" height="24">Claude-Themes</a>
+      <a href="https://github.com/adembilge/claude-themes/releases">Releases</a>
+      <a href="https://github.com/adembilge/claude-themes/blob/main/LICENSE">MIT License</a>
+    </div>
+  </footer>
+</body>
+</html>
