@@ -8,7 +8,7 @@
   <a href="https://github.com/adembilge/claude-themes/releases"><img alt="Plugin version 3.11.1" src="https://img.shields.io/badge/version-3.11.1-blue"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green"></a>
   <a href="https://github.com/adembilge/claude-themes/actions/workflows/ci.yml"><img alt="CI status on main" src="https://github.com/adembilge/claude-themes/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="docs/usage.md"><img alt="Documents — Claude-Themes usage guide" src="https://img.shields.io/badge/Documents-usage%20guide-7957b5"></a>
+  <a href="docs/handbook/index.md"><img alt="Claude-Themes documentation" src="https://img.shields.io/badge/Docs-user%20guide-7957b5"></a>
 </p>
 
 <p align="center">
@@ -33,7 +33,7 @@ Open a local session in the **Code** tab of Claude Desktop on macOS or Windows. 
 
 Restart the session, then run **`/claude-themes`** to open the gallery.
 
-For terminal sessions, see [Match the Claude Code terminal](docs/usage.md#match-the-claude-code-terminal).
+For terminal sessions, see [Terminal Matching](docs/handbook/terminal.md).
 
 ## Themes
 
@@ -48,7 +48,7 @@ For terminal sessions, see [Match the Claude Code terminal](docs/usage.md#match-
 - **Browse the gallery.** Search by name, switch between **Dark** and **Light**, or star a palette to find it under **Favorites**.
 - **Switch from the prompt.** Apply a theme directly with a [slash command](#commands).
 - **Make your own theme.** Pick a base and an accent color in [Theme Maker](#theme-maker) and see the palette update as you edit.
-- **Bring or share a palette.** [Import a theme](docs/usage.md#import-a-theme), then [export or share it](docs/usage.md#export-or-share-a-theme).
+- **Bring or share a palette.** [Import a palette](docs/handbook/import-export.md#import-a-palette), then [export](docs/handbook/import-export.md#export-a-palette) or [share it](docs/handbook/import-export.md#share-a-theme).
 
 <details>
 <summary>Configure</summary>
@@ -57,7 +57,7 @@ For terminal sessions, see [Match the Claude Code terminal](docs/usage.md#match-
 - **Readability.** Strengthen borders and focus rings, match code colors to the palette, soften glare, or use **Night comfort**.
 - **Day and night.** Choose a theme for each mode, set a schedule, or use **Follow system**.
 - **Folder themes.** Save a theme for the current folder in **Settings**. New sessions in that folder use the saved theme.
-- **Terminal matching.** Use **Match terminal to…** in **Settings**, then choose **Claude Themes** from the terminal’s `/theme` menu. [Terminal matching guide](docs/usage.md#match-the-claude-code-terminal)
+- **Terminal matching.** Use **Match terminal to…** in **Settings**, then choose **Claude Themes** from the terminal’s `/theme` menu. [Terminal matching guide](docs/handbook/terminal.md)
 
 </details>
 
@@ -69,7 +69,7 @@ Choose a dark or light base, enter an accent color and see the palette update as
   <a href="docs/media/theme-maker.gif"><img src="docs/media/theme-maker.gif" alt="In Claude Desktop’s Theme Maker, naming a theme Lavender Dusk, selecting a light base, and entering a purple accent updates the preview as you edit." width="720"></a>
 </p>
 
-[Tune colors and backdrops](docs/usage.md#make-and-tune-a-theme) · [Import a palette](docs/usage.md#import-a-theme) · [Export or share a theme](docs/usage.md#export-or-share-a-theme)
+[Tune colors and backdrops](docs/handbook/theme-maker.md#tune-appearance) · [Import, export, or share a theme](docs/handbook/import-export.md)
 
 ## Commands
 
@@ -81,7 +81,7 @@ Choose a dark or light base, enter an accent color and see the palette update as
 | `/claude-themes follow on` | Follow the system’s light and dark modes. |
 | `/claude-themes reset look` | Restore Claude Desktop’s default look. |
 
-[Full command reference](docs/usage.md#command-reference)
+[Full command reference](docs/handbook/commands.md)
 
 ## Maintenance
 
