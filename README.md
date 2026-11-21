@@ -8,7 +8,7 @@
   <a href="https://github.com/adembilge/claude-themes/releases"><img alt="Plugin version 3.11.1" src="https://img.shields.io/badge/version-3.11.1-blue"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green"></a>
   <a href="https://github.com/adembilge/claude-themes/actions/workflows/ci.yml"><img alt="CI status on main" src="https://github.com/adembilge/claude-themes/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="docs/handbook/index.md"><img alt="Claude-Themes documentation" src="https://img.shields.io/badge/Docs-user%20guide-7957b5"></a>
+  <a href="https://adembilge.github.io/claude-themes/guide/"><img alt="Claude-Themes documentation" src="https://img.shields.io/badge/Docs-user%20guide-7957b5"></a>
 </p>
 
 <p align="center">
